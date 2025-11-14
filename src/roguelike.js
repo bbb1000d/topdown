@@ -57,51 +57,53 @@ const DAY_NIGHT_DURATION = 180;
 const SKY_STARS = 45;
 
 const TILE_TYPES = {
-  grass: { color: '#2f6f52', variants: ['#32795a', '#2a6247', '#3a7f5c'] },
-  meadow: { color: '#3c8b63', variants: ['#3f946b', '#35805a', '#45a06f'] },
-  grove: { color: '#2b4e7d', variants: ['#2f5888', '#2c4f80', '#336091'] },
-  path: { color: '#8c6b4d', variants: ['#966f50', '#a17758', '#b08262'] },
-  sand: { color: '#d0a871', variants: ['#d7b17c', '#e0bc87', '#cfa36b'] },
-  water: { color: '#1d4d7a', variants: ['#1f5888', '#226497', '#2670a6'], blocked: true },
-  stone: { color: '#4b5568', variants: ['#5b6476', '#4f5a6d', '#616b83'], blocked: true },
-  plaza: { color: '#58537b', variants: ['#5f5b85', '#66628f', '#6d69a0'] },
-  townTile: { color: '#4f4a82', variants: ['#5a5591', '#655f9f', '#7069ae'] },
-  farmland: { color: '#7c5f43', variants: ['#8a6a4b', '#9b7855', '#a8845d'] },
-  sanctuary: { color: '#284b76', variants: ['#2e5686', '#335f93', '#3a6aa3'] },
-  dungeonFloor: { color: '#2d323f', variants: ['#343a48', '#3a4151', '#41495a'] },
-  dungeonWall: { color: '#1b1f28', variants: ['#202531', '#242a38', '#293041'], blocked: true },
-  cityStreet: { color: '#3c4a6d', variants: ['#44527a', '#4c5a86', '#526293'] },
-  cityPlaza: { color: '#5b5f93', variants: ['#676aa3', '#7275b2', '#7d80c0'] },
-  cityGarden: { color: '#245f5a', variants: ['#266963', '#2b746d', '#2f7f76'] },
-  cityCanal: { color: '#1b3f66', variants: ['#1e466f', '#214d79', '#245382'], blocked: true },
-  cityRoof: { color: '#8b4fd9', variants: ['#9b5bea', '#7d3fcc', '#6f35b8'], blocked: true },
-  cityBridge: { color: '#6b7280', variants: ['#747c8a', '#7d8694', '#868f9e'] },
+  grass: { color: '#168a7c', variants: ['#12937f', '#1f9d88', '#0f7f70'] },
+  meadow: { color: '#1fa38f', variants: ['#27b49d', '#1c9689', '#23c2a6'] },
+  grove: { color: '#0f4f63', variants: ['#155b6f', '#0e4658', '#1b6473'] },
+  path: { color: '#ff6f91', variants: ['#ff8da6', '#ff5a7d', '#ff7a9e'] },
+  sand: { color: '#f9d472', variants: ['#f7c65c', '#f9dd8e', '#f4be45'] },
+  water: { color: '#05355f', variants: ['#0b3f73', '#0f4d89', '#0a2f5e'], blocked: true },
+  stone: { color: '#231d3f', variants: ['#2b2549', '#1a1534', '#31275b'], blocked: true },
+  plaza: { color: '#c084fc', variants: ['#d946ef', '#a855f7', '#f472b6'] },
+  townTile: { color: '#ff9ab5', variants: ['#ff7aa1', '#ff86ad', '#ffb4c8'] },
+  farmland: { color: '#2fd5bf', variants: ['#25c3ac', '#3ee3d1', '#1fb7a0'] },
+  sanctuary: { color: '#36f1cd', variants: ['#2ae4bf', '#42f2d7', '#2ad5ba'] },
+  dungeonFloor: { color: '#241f3d', variants: ['#2e294a', '#1c1534', '#312a4f'] },
+  dungeonWall: { color: '#110c26', variants: ['#190f33', '#0c081b', '#21113b'], blocked: true },
+  cityStreet: { color: '#ff6f61', variants: ['#ff8f78', '#ff5c50', '#ff7b66'] },
+  cityPlaza: { color: '#ff8d9a', variants: ['#ff7a88', '#ff9dac', '#ff6f82'] },
+  cityGarden: { color: '#24c7a0', variants: ['#1fb795', '#2edbb1', '#18a685'] },
+  cityCanal: { color: '#0d4c7f', variants: ['#0f5a97', '#0a3f6a', '#1364a6'], blocked: true },
+  cityRoof: { color: '#ffb86c', variants: ['#ff9e54', '#ffce81', '#ffa45f'], blocked: true },
+  cityBridge: { color: '#f472b6', variants: ['#f09ce1', '#ff5fa5', '#ff7bbb'] },
 };
 
 const SCENERY_COLORS = {
-  treeTrunk: '#6b3f22',
-  treeLeaves: ['#2f6846', '#34744f', '#3a7f58'],
-  blossom: '#f6cbd1',
-  lampPost: '#fcd34d',
-  houseWall: '#f8f0e0',
-  houseRoof: '#c084fc',
-  marketStall: '#38bdf8',
-  farmCrop: '#facc15',
-  npcCloak: ['#38bdf8', '#f472b6', '#facc15'],
+  palmTrunk: '#b0723c',
+  palmLeaves: ['#34d399', '#22c55e', '#2dd4bf'],
+  neonBloom: '#fda4af',
+  beaconAura: 'rgba(96, 239, 255, 0.28)',
+  beaconGlow: 'rgba(217, 70, 239, 0.6)',
+  villaWall: '#ffe7d9',
+  villaRoof: '#ff6f61',
+  vendorAwning: '#60a5fa',
+  coralGlow: '#facc15',
+  npcCloak: ['#ff8fab', '#4fd1c5', '#c084fc'],
+  lampPost: '#fde68a',
 };
 
-const ENEMY_PALETTE = ['#f472b6', '#fb7185', '#60a5fa'];
-const BULLET_COLOR = '#facc15';
-const ENEMY_BULLET_COLOR = '#38bdf8';
+const ENEMY_PALETTE = ['#ff6f91', '#4fd1c5', '#a855f7'];
+const BULLET_COLOR = '#fdd663';
+const ENEMY_BULLET_COLOR = '#60a5fa';
 
-const BOSS_PALETTE = ['#f97316', '#a855f7', '#38bdf8'];
+const BOSS_PALETTE = ['#ff6f61', '#d946ef', '#38bdf8'];
 
 const ELEMENT_COLORS = {
-  radiant: '#facc15',
-  ember: '#f97316',
-  frost: '#38bdf8',
-  verdant: '#22c55e',
-  astral: '#a855f7',
+  radiant: '#fdd663',
+  ember: '#ff6f61',
+  frost: '#60efff',
+  verdant: '#34d399',
+  astral: '#d946ef',
   stasis: '#818cf8',
   void: '#6366f1',
 };
@@ -278,11 +280,11 @@ const BLUEPRINT_POOLS = {
 };
 
 const THEME_PREFERRED_BLUEPRINTS = {
-  ember: ['embercleaver', 'emberplate', 'auricband'],
-  catacombs: ['astralspike', 'starwarden', 'veilring'],
-  observatory: ['astralspike', 'sunfocus', 'moondial'],
-  warrens: ['dawnbow', 'starwarden', 'veilring', 'moondial'],
-  vault: ['dawnbow', 'sunfocus', 'auricband', 'astralspike'],
+  volcano: ['embercleaver', 'emberplate', 'auricband'],
+  reef: ['astralspike', 'starwarden', 'veilring'],
+  skyline: ['astralspike', 'sunfocus', 'moondial'],
+  jungle: ['dawnbow', 'starwarden', 'veilring', 'moondial'],
+  mirage: ['dawnbow', 'sunfocus', 'auricband', 'astralspike'],
 };
 
 const GOLD_RANGES = {
@@ -293,30 +295,38 @@ const GOLD_RANGES = {
   chestCapital: [44, 78],
 };
 
-const HOTBAR_SIZE = 8;
+const HOTBAR_SIZE = 6;
 let ITEM_UID = 0;
 
 const ABILITY_LIBRARY = {
-  'solar-burst': {
-    id: 'solar-burst',
-    name: 'Solar Burst',
+  'sonic-crash': {
+    id: 'sonic-crash',
+    name: 'Sonic Crash',
     key: 'q',
     cooldown: 12,
-    description: 'Unleash a ring of solar fire that scorches nearby foes and staggers them.',
+    description: 'Detonate a close-range shockwave that staggers and scorches nearby foes.',
   },
-  'astral-step': {
-    id: 'astral-step',
-    name: 'Astral Step',
+  'flux-step': {
+    id: 'flux-step',
+    name: 'Flux Step',
     key: 'r',
     cooldown: 9,
-    description: 'Blink a short distance in the aim direction, leaving a slowing wake.',
+    description: 'Blink forward in the aim direction, leaving a slowing neon trail.',
   },
   'tempest-field': {
     id: 'tempest-field',
-    name: 'Tempest Field',
+    name: 'Storm Dome',
     key: 'c',
     cooldown: 18,
-    description: 'Summon a storm that damages and weakens enemies within a wide radius.',
+    description: 'Summon a stasis storm that damages and weakens enemies over time.',
+  },
+  'sunset-overdrive': {
+    id: 'sunset-overdrive',
+    name: 'Sunset Overdrive',
+    key: 'v',
+    cooldown: 0,
+    requiresSuper: true,
+    description: 'Consume a full supercharge to fire a cascade of burning bolts.',
   },
 };
 
@@ -342,24 +352,24 @@ const SKILL_TREE_NODES = [
     },
   },
   {
-    id: 'solar-burst',
-    name: 'Solar Burst',
-    description: 'Unlock the Solar Burst ability (press Q).',
+    id: 'sonic-crash',
+    name: 'Sonic Crash',
+    description: 'Unlock the Sonic Crash ability (press Q).',
     cost: 1,
     prerequisites: ['vital-surge'],
-    unlocksAbility: 'solar-burst',
+    unlocksAbility: 'sonic-crash',
   },
   {
-    id: 'astral-step',
-    name: 'Astral Step',
-    description: 'Unlock the Astral Step ability (press R).',
+    id: 'flux-step',
+    name: 'Flux Step',
+    description: 'Unlock the Flux Step ability (press R).',
     cost: 1,
     prerequisites: ['wind-step'],
-    unlocksAbility: 'astral-step',
+    unlocksAbility: 'flux-step',
   },
   {
     id: 'aurora-ward',
-    name: 'Aurora Ward',
+    name: 'Glitter Shield',
     description: 'Gain a permanent barrier that refreshes faster.',
     cost: 1,
     prerequisites: ['vital-surge'],
@@ -374,7 +384,7 @@ const SKILL_TREE_NODES = [
   },
   {
     id: 'luminous-archer',
-    name: 'Luminous Archer',
+    name: 'Neon Gunner',
     description: 'Projectiles travel 15% faster and deal +4 damage.',
     cost: 1,
     prerequisites: ['wind-step'],
@@ -385,7 +395,7 @@ const SKILL_TREE_NODES = [
   },
   {
     id: 'radiant-volley',
-    name: 'Radiant Volley',
+    name: 'Chromatic Volley',
     description: 'Gain an additional split shot and extend projectile lifetime.',
     cost: 2,
     prerequisites: ['luminous-archer'],
@@ -396,7 +406,7 @@ const SKILL_TREE_NODES = [
   },
   {
     id: 'forest-harmony',
-    name: 'Forest Harmony',
+    name: 'Lagoon Harmony',
     description: 'Regenerate 20 health whenever you level up and improve sanctuary healing.',
     cost: 2,
     prerequisites: ['aurora-ward'],
@@ -406,19 +416,38 @@ const SKILL_TREE_NODES = [
     },
   },
   {
-    id: 'tempest-field',
-    name: 'Tempest Field',
-    description: 'Unlock the Tempest Field ability (press C).',
+    id: 'storm-call',
+    name: 'Storm Dome',
+    description: 'Unlock the Storm Dome ability (press C).',
     cost: 2,
     prerequisites: ['radiant-volley', 'forest-harmony'],
     unlocksAbility: 'tempest-field',
   },
   {
+    id: 'ember-heart',
+    name: 'Voltaic Core',
+    description: 'Increase damage by 6 and critical damage by 0.2.',
+    cost: 1,
+    prerequisites: ['luminous-archer'],
+    apply: (game) => {
+      game.player.damage += 6;
+      game.player.critMultiplier += 0.2;
+    },
+  },
+  {
+    id: 'sunset-overdrive',
+    name: 'Sunset Overdrive',
+    description: 'Unlock the Sunset Overdrive super (press V with a full supercharge).',
+    cost: 3,
+    prerequisites: ['storm-call', 'ember-heart'],
+    unlocksAbility: 'sunset-overdrive',
+  },
+  {
     id: 'zenith-mastery',
-    name: 'Zenith Mastery',
+    name: 'Neon Legend',
     description: 'Greatly increase all stats and empower abilities with lingering effects.',
     cost: 3,
-    prerequisites: ['tempest-field'],
+    prerequisites: ['sunset-overdrive'],
     apply: (game) => {
       game.player.damage += 6;
       game.player.maxHealth += 30;
@@ -431,24 +460,24 @@ const SKILL_TREE_NODES = [
 const QUEST_LIBRARY = [
   {
     id: 'rebuild-home',
-    name: 'Radiant Foundations',
+    name: 'Neon Haven Build',
     giver: 'artisan',
-    description: 'Deliver 6 timber and 6 polished stone to complete your hillside home.',
+    description: 'Deliver 6 driftwood crates and 6 coral bricks to finish your oceanside safehouse.',
     requirements: { timber: 6, stone: 6 },
     onComplete: (game) => {
       game.houseProject.completed = true;
-      game.ui.showToast('Your home now overlooks Radiant Hearth.');
+      game.ui.showToast('Your Neon Haven now glows above Paradise Point.');
     },
   },
   {
     id: 'boss-hunt',
-    name: 'Silence the Guardian',
+    name: 'Crush the Guardian',
     giver: 'scout',
-    description: 'Defeat any awakened dungeon guardian to secure the valley routes.',
+    description: 'Defeat any awakened megadungeon guardian to free a district.',
     onComplete: (game) => {
       game.gold += 80;
       game.ui.setGold(game.gold);
-      game.log.push('Scout Emil rewards you for protecting the valley.');
+      game.log.push('Runner Emil rewards you for pushing back the gangs.');
     },
   },
   {
@@ -528,8 +557,8 @@ const DUNGEON_THEMES = {
 const ITEM_LIBRARY = {
   timber: {
     id: 'timber',
-    name: 'Bundle of Timber',
-    description: 'Useful for rebuilding town structures.',
+    name: 'Driftwood Crate',
+    description: 'Recovered boardwalk planks perfect for rebuilding.',
     type: 'material',
     value: 12,
     stackable: true,
@@ -537,8 +566,8 @@ const ITEM_LIBRARY = {
   },
   stone: {
     id: 'stone',
-    name: 'Polished Stone',
-    description: 'Perfect for sturdy foundations.',
+    name: 'Coral Brick',
+    description: 'Hand-cut coral masonry used across Paradise Point.',
     type: 'material',
     value: 10,
     stackable: true,
@@ -546,8 +575,8 @@ const ITEM_LIBRARY = {
   },
   silk: {
     id: 'silk',
-    name: 'Shimmering Silk',
-    description: 'NPCs love receiving this rare cloth.',
+    name: 'Neon Fiber',
+    description: 'Luminous fabric prized by stylists and vendors.',
     type: 'material',
     value: 18,
     stackable: true,
@@ -555,7 +584,7 @@ const ITEM_LIBRARY = {
   },
   'sun-elixir': {
     id: 'sun-elixir',
-    name: 'Sun Elixir',
+    name: 'Beachside Medkit',
     description: 'Instantly restores 40 health when consumed.',
     type: 'consumable',
     heal: 40,
@@ -564,7 +593,7 @@ const ITEM_LIBRARY = {
   },
   'moondrop-elixir': {
     id: 'moondrop-elixir',
-    name: 'Moondrop Elixir',
+    name: 'Starlit Smoothie',
     description: 'Restore 70 health and reduce dash cooldown by 10% temporarily.',
     type: 'consumable',
     heal: 70,
@@ -585,8 +614,8 @@ const ITEM_LIBRARY = {
   },
   'ember-blade': {
     id: 'ember-blade',
-    name: 'Ember Blade',
-    description: 'A blazing weapon that increases damage output.',
+    name: 'Flare Cutlass',
+    description: 'A blazing blade that increases damage output.',
     type: 'weapon',
     slot: 'weapon',
     bonuses: { damage: 8 },
@@ -600,8 +629,8 @@ const ITEM_LIBRARY = {
   },
   'aurora-lance': {
     id: 'aurora-lance',
-    name: 'Aurora Lance',
-    description: 'Arrows pierce one additional foe after striking.',
+    name: 'Pulse Lance',
+    description: 'Shots pierce one additional foe after striking.',
     type: 'weapon',
     slot: 'weapon',
     bonuses: { damage: 4 },
@@ -615,7 +644,7 @@ const ITEM_LIBRARY = {
   },
   dawnshield: {
     id: 'dawnshield',
-    name: 'Dawnshield Bulwark',
+    name: 'Sunshield Bulwark',
     description: 'Reinforces health and refreshes the protective barrier quickly.',
     type: 'shield',
     slot: 'shield',
@@ -630,7 +659,7 @@ const ITEM_LIBRARY = {
   },
   'gale-cloak': {
     id: 'gale-cloak',
-    name: 'Gale Cloak',
+    name: 'Jetstream Jacket',
     description: 'Light armour that boosts movement speed and dash distance.',
     type: 'armor',
     slot: 'armor',
@@ -639,7 +668,7 @@ const ITEM_LIBRARY = {
   },
   'starlight-charm': {
     id: 'starlight-charm',
-    name: 'Starlight Charm',
+    name: 'Glow Charm',
     description: 'A charm that increases experience gain by 12%.',
     type: 'trinket',
     slot: 'trinket',
@@ -653,16 +682,16 @@ const ITEM_LIBRARY = {
   },
   'ember-medal': {
     id: 'ember-medal',
-    name: 'Ember Medal',
-    description: 'Valley traders will buy this medal for 45 gold.',
+    name: 'Gang Insignia',
+    description: 'Vendors will buy this confiscated insignia for 45 creds.',
     type: 'medal',
     goldValue: 45,
     consumedOnPickup: true,
   },
   'star-medal': {
     id: 'star-medal',
-    name: 'Starforged Medal',
-    description: 'A radiant medal worth a hefty 75 gold.',
+    name: 'Paradise Emblem',
+    description: 'A radiant emblem worth a hefty 75 creds.',
     type: 'medal',
     goldValue: 75,
     consumedOnPickup: true,
@@ -704,68 +733,81 @@ const BOSS_LOOT_TABLE = [
 const SHOP_LIBRARY = [
   {
     id: 'weapons',
-    name: 'Gleam & Arrow Forge',
-    description: 'Upgrade weapons forged with starlit alloys.',
+    name: 'Neon Arsenal',
+    description: 'Chromatic firearms, blade cores, and custom rigs.',
     stock: [
-      { id: 'bowstring', label: 'Silver Bowstring', cost: 35, effect: (player) => (player.damage += 6) },
       {
-        id: 'scope',
-        label: 'Aurora Scope',
-        cost: 45,
+        id: 'pulse-core',
+        label: 'Pulse Core Barrel',
+        cost: 55,
         effect: (player) => {
-          player.projectileSpeed *= 1.2;
-          player.projectileLifetime += 0.6;
+          player.damage += 8;
+          player.projectileSpeed *= 1.15;
+        },
+      },
+      {
+        id: 'vector-sight',
+        label: 'Vector Sight',
+        cost: 48,
+        effect: (player) => {
+          player.attackSpeed = (player.attackSpeed ?? 1) + 0.25;
+          const baseInterval = player.shootInterval ?? PLAYER_SHOT_INTERVAL;
+          player.effectiveShootInterval = Math.max(0.1, baseInterval / player.attackSpeed);
         },
       },
     ],
   },
   {
     id: 'armory',
-    name: 'Luminous Warding',
-    description: 'Protective cloaks woven from moonthread.',
+    name: 'Paradise Wardrobe',
+    description: 'Impact vests and kinetic kicks for island agents.',
     stock: [
       {
-        id: 'cloak',
-        label: 'Moonthread Cloak',
-        cost: 40,
+        id: 'impact-vest',
+        label: 'Impact Vest',
+        cost: 46,
         effect: (player) => {
-          player.maxHealth += 20;
-          player.health = Math.min(player.maxHealth, player.health + 20);
+          player.maxHealth += 28;
+          player.health = Math.min(player.maxHealth, player.health + 28);
+          player.damageReduction = (player.damageReduction ?? 0) + 0.08;
         },
       },
       {
-        id: 'boots',
-        label: 'Glider Boots',
-        cost: 32,
+        id: 'drift-sneakers',
+        label: 'Drift Sneakers',
+        cost: 38,
         effect: (player) => {
-          player.speed *= 1.1;
-          player.dashCooldown *= 0.9;
+          player.speed *= 1.12;
+          player.dashCooldown *= 0.85;
+          player.dashDistance += 0.5;
         },
       },
     ],
   },
   {
     id: 'alchemy',
-    name: 'Bramblebrew Cart',
-    description: 'Potions to refresh mind, body, and spirit.',
+    name: 'Synthwave Juice Bar',
+    description: 'Boosters that refill health and supercharge energy.',
     stock: [
       {
-        id: 'tonic',
-        label: 'Soothing Tonic',
-        cost: 22,
-        effect: (player) => {
-          player.health = Math.min(player.maxHealth, player.health + 30);
+        id: 'palma-colada',
+        label: 'Palma Colada',
+        cost: 28,
+        effect: (player, game) => {
+          player.health = Math.min(player.maxHealth, player.health + 45);
+          game?.grantSuperCharge?.(18);
         },
       },
       {
-        id: 'elixir',
-        label: 'Farsight Elixir',
-        cost: 28,
-        effect: (player) => {
-          player.attackSpeed = (player.attackSpeed ?? 1) + 0.2;
-          const baseInterval = player.shootInterval ?? PLAYER_SHOT_INTERVAL;
-          player.effectiveShootInterval = Math.max(0.12, baseInterval / player.attackSpeed);
-          player.damage += 2;
+        id: 'overdrive-shot',
+        label: 'Overdrive Shot',
+        cost: 34,
+        effect: (player, game) => {
+          if (game?.player) {
+            const bonus = game.player.superChargeMax ?? 100;
+            game.grantSuperCharge?.(bonus * 0.35);
+          }
+          player.damage += 3;
         },
       },
     ],
@@ -775,94 +817,94 @@ const SHOP_LIBRARY = [
 const NPC_LIBRARY = [
   {
     id: 'mayor',
-    name: 'Mayor Lyra',
-    line: 'The valley thrives when its lamps are lit. Thank you for rebuilding.',
-    journal: 'Lyra promised to help furnish my home once the frame is finished.',
+    name: 'Producer Kyra',
+    line: 'Keep the boardwalk lights blazing and the gangs lose their grip.',
+    journal: 'Kyra wants the plaza stages rebuilt so the survivors can gather again.',
   },
   {
     id: 'scout',
-    name: 'Scout Emil',
-    line: 'Dungeons only wake when brave souls enter. I can guide you to each door.',
-    journal: 'Emil marked the entrances to Duskwater Catacombs and Emberfen Gate.',
+    name: 'Runner Emil',
+    line: 'I mapped every ruin in these neon tides. Ready when you are.',
+    journal: 'Emil marked synth gang lairs scattered across the paradise ring.',
   },
   {
     id: 'artisan',
-    name: 'Artisan Mila',
-    line: 'Bring timber and stone and we will raise walls that shimmer like dawn.',
-    journal: 'Mila will help finish my house once I supply more materials.',
+    name: 'Architect Mila',
+    line: 'Bring me alloys and wood—we\'ll craft villas that feel like home again.',
+    journal: 'Mila promised to transform the safehouse once I deliver supplies.',
   },
   {
     id: 'sage',
-    name: 'Sage Miren',
-    line: 'Every plaza whispers clues about hidden keeps. Listen closely.',
-    journal: 'Miren urged me to visit each town before braving the deeper vaults.',
+    name: 'Oracle Miren',
+    line: 'The city hums with memories. Listen and the dungeons will reveal themselves.',
+    journal: 'Miren urged me to complete each district beat before storming the megadungeons.',
   },
   {
     id: 'archivist',
     name: 'Archivist Elowen',
-    line: 'The capital archives glow with secrets of the dungeons below.',
-    journal: 'Elowen catalogues relics you recover from each dungeon.',
+    line: 'Every relic you recover tunes the Paradise Atlas. Don\'t stop exploring.',
+    journal: 'Elowen tracks relics to unlock deeper fast travel routes.',
   },
   {
     id: 'river-warden',
-    name: 'River Warden Thace',
-    line: 'Canals carry news as quickly as traders—keep them safe from raiders.',
-    journal: 'Thace requests aid clearing the waterways leading to Auric Quay.',
+    name: 'Lifeguard Thace',
+    line: 'The canals are clogged with rogue drones. Clear them and the ferries run again.',
+    journal: 'Thace asked me to reclaim the canals feeding Sunset Marina.',
   },
   {
     id: 'merchant',
-    name: 'Merchant Sall',
-    line: 'Auric Quay’s markets crave relics from the far dungeons.',
-    journal: 'Sall promises rare reagents if I secure the Glimmerdeep Vault.',
+    name: 'Vendor Sall',
+    line: 'My stalls need legendary loot. Crack those vaults and I\'ll keep you stocked.',
+    journal: 'Sall will trade rare mods once I liberate the Mirage Vault.',
   },
   {
     id: 'captain',
     name: 'Captain Roan',
-    line: 'Return with medals and the outposts will flourish again.',
-    journal: 'Roan promised to trade medals for gold the moment I recover them.',
+    line: 'Bring me medals and I\'ll spin up patrols to guard your progress.',
+    journal: 'Roan will convert recovered medals into creds to fund the rebuild.',
   },
 ];
 
 const STORY_BEATS = [
-  { id: 'arrival', text: 'Visit Radiant Hearth and meet the valley townsfolk.' },
-  { id: 'first-dungeon', text: 'Clear your first dungeon to recover ancient plans.' },
-  { id: 'house-finished', text: 'Finish building your home overlooking Radiant Hearth.' },
-  { id: 'boss-victory', text: 'Defeat a dungeon boss to secure the valley.' },
+  { id: 'arrival', text: 'Touch down at Paradise Point and rally the survivors.' },
+  { id: 'first-dungeon', text: 'Clear a megadungeon to break the gangs\' first foothold.' },
+  { id: 'house-finished', text: 'Rebuild your island safehouse overlooking the boardwalk.' },
+  { id: 'boss-victory', text: 'Defeat a guardian boss to ignite the skyline beacon.' },
 ];
 
 const ACHIEVEMENT_LIBRARY = [
   {
     id: 'first-steps',
-    label: 'First Steps',
+    label: 'Beach Runner',
     check: (stats) => stats.distance > 40,
-    description: 'Travel forty tiles through the valley.',
+    description: 'Sprint forty tiles across the paradise shoreline.',
   },
   {
     id: 'spark-collector',
-    label: 'Spark Collector',
+    label: 'Circuit Breaker',
     check: (stats) => stats.skillsUnlocked >= 3,
-    description: 'Unlock three skills.',
+    description: 'Unlock three neon drive nodes.',
   },
   {
     id: 'calm-guardian',
-    label: 'Calm Guardian',
+    label: 'Low Tide Survivor',
     check: (stats) => stats.damageTaken < 50 && stats.timeAlive > 120,
-    description: 'Survive two minutes while taking minimal damage.',
+    description: 'Survive two minutes of chaos while keeping damage low.',
   },
   {
     id: 'glow-hunter',
-    label: 'Glow Hunter',
+    label: 'Synth Cleaver',
     check: (stats) => stats.enemiesDefeated >= 12,
-    description: 'Defeat twelve luminous foes.',
+    description: 'Defeat twelve synth raiders in a single run.',
   },
 ];
 
 const GOALS = [
-  'Support Radiant Hearth by finishing your cozy home',
-  'Chart a course through all four towns of the valley',
-  'Defeat a guardian deep within one of the five dungeons',
-  'Collect timber and stone to help the townsfolk rebuild',
-  'Calm the sanctuary fireflies to restore the valley glow',
+  'Finish rebuilding your Neon Haven safehouse',
+  'Complete contracts in every paradise district',
+  'Break a megadungeon guardian to push the gangs back',
+  'Deliver materials so residents can reopen their boardwalk stalls',
+  'Restore the sanctuary lagoon to calm the island spirit',
 ];
 
 function clamp(value, min, max) {
@@ -1315,6 +1357,19 @@ class UIController {
     const ratio = max === 0 ? 0 : (clamped / max) * 100;
     this.ui.healthFill.style.width = `${ratio}%`;
     this.ui.healthFill.parentElement?.setAttribute('aria-valuenow', `${Math.round(ratio)}`);
+  }
+
+  setPower(current, max = 1, label) {
+    if (!this.ui.powerFill || !this.ui.powerValue) return;
+    const clamped = clamp(current, 0, max);
+    const ratio = max === 0 ? 0 : (clamped / max) * 100;
+    this.ui.powerFill.style.width = `${ratio}%`;
+    this.ui.powerFill.parentElement?.setAttribute('aria-valuenow', `${Math.round(ratio)}`);
+    if (label) {
+      this.ui.powerValue.textContent = label;
+    } else {
+      this.ui.powerValue.textContent = ratio >= 99 ? 'Ready' : `${Math.round(ratio)}%`;
+    }
   }
 
   setExperience(level, current, required) {
@@ -1948,8 +2003,8 @@ class World {
     if (dungeon) return `${dungeon.name}`;
     const town = this.getTownAt(x, y);
     if (town) return town.name;
-    if (this.isSanctuary(x, y)) return 'Glittering Sanctuary';
-    return 'Sunset Wilds';
+    if (this.isSanctuary(x, y)) return 'Neon Sanctuary';
+    return 'Paradise Wilds';
   }
 
   getDungeonAt(x, y) {
@@ -1980,48 +2035,70 @@ class World {
   }
 
   #generateTerrain() {
-    const midY = this.height / 2;
+    const centerX = this.width / 2;
+    const centerY = this.height / 2;
+    const radiusX = Math.min(this.width, this.height) / 2 - 12;
+    const radiusY = Math.min(this.width, this.height) / 2 - 16;
+
     for (let y = 0; y < this.height; y += 1) {
       for (let x = 0; x < this.width; x += 1) {
-        const vertical = Math.abs(y - midY) / midY;
-        const blend = clamp(vertical, 0, 1);
-        const type = blend < 0.35 ? 'meadow' : blend < 0.6 ? 'grass' : 'grove';
-        this.#setTile(x, y, type, 'wilds');
+        const nx = (x - centerX) / radiusX;
+        const ny = (y - centerY) / radiusY;
+        const distance = Math.sqrt(nx * nx + ny * ny);
+        if (distance > 1.02) {
+          this.#setTile(x, y, 'water', 'wilds');
+        } else if (distance > 0.9) {
+          this.#setTile(x, y, 'sand', 'shore');
+        } else if (distance > 0.72) {
+          this.#setTile(x, y, 'meadow', 'wilds');
+        } else if (distance > 0.58) {
+          this.#setTile(x, y, 'path', 'harbor');
+        } else if (distance > 0.46) {
+          this.#setTile(x, y, 'cityStreet', 'town');
+        } else {
+          this.#setTile(x, y, 'cityPlaza', 'town');
+        }
+      }
+    }
+
+    const plazaRadius = Math.floor(Math.min(radiusX, radiusY) * 0.32);
+    for (let y = -plazaRadius; y <= plazaRadius; y += 1) {
+      for (let x = -plazaRadius; x <= plazaRadius; x += 1) {
+        if (Math.hypot(x, y) <= plazaRadius) {
+          this.#setTile(Math.floor(centerX + x), Math.floor(centerY + y), 'plaza', 'town');
+        }
       }
     }
 
     this.spawnPoint = {
-      x: Math.floor(this.width / 2) + randInt(-4, 4),
-      y: Math.floor(this.height / 2) + randInt(-4, 4),
+      x: Math.floor(centerX + randInt(-3, 3)),
+      y: Math.floor(centerY + radiusY * 0.35 + randInt(-2, 2)),
     };
 
-    this.#carveRiver();
+    this.#carveLagoon({ x: centerX - radiusX * 0.25, y: centerY - radiusY * 0.15 }, 6, 3.5);
+    this.#carveLagoon({ x: centerX + radiusX * 0.28, y: centerY + radiusY * 0.12 }, 5, 2.5);
+
     this.#carvePath(
       this.spawnPoint.x,
       this.spawnPoint.y,
       clamp(this.spawnPoint.x + randInt(-10, 10), 6, this.width - 6),
-      clamp(this.spawnPoint.y - randInt(10, 16), 6, this.height - 6),
+      clamp(this.spawnPoint.y - randInt(12, 18), 6, this.height - 6),
       2
     );
   }
 
-  #carveRiver() {
-    let rx = randInt(Math.floor(this.width * 0.25), Math.floor(this.width * 0.4));
-    for (let y = 0; y < this.height; y += 1) {
-      const width = 2 + Math.floor(Math.sin(y / 5) * 1.8 + Math.random() * 1.8);
-      for (let x = -width; x <= width; x += 1) {
-        const worldX = clamp(rx + x, 1, this.width - 2);
-        this.#setTile(worldX, y, 'water', 'wilds');
-        for (const dir of Object.values(DIRECTIONS)) {
-          const nx = worldX + dir.x;
-          const ny = y + dir.y;
-          const tile = this.getTile(nx, ny);
-          if (tile.type !== 'water') {
-            this.#setTile(nx, ny, 'sand', 'wilds');
-          }
+  #carveLagoon(center, radius, inner) {
+    const cx = Math.floor(center.x);
+    const cy = Math.floor(center.y);
+    for (let y = -Math.ceil(radius); y <= Math.ceil(radius); y += 1) {
+      for (let x = -Math.ceil(radius); x <= Math.ceil(radius); x += 1) {
+        const dist = Math.hypot(x, y);
+        if (dist <= radius) {
+          const tileType = dist <= inner ? 'water' : 'sand';
+          const zone = dist <= inner ? 'wilds' : 'shore';
+          this.#setTile(cx + x, cy + y, tileType, zone);
         }
       }
-      rx = clamp(rx + randInt(-1, 1), 2, this.width - 3);
     }
   }
 
@@ -2045,7 +2122,7 @@ class World {
 
   #buildSettlements() {
     this.#buildTown({
-      name: 'Radiant Hearth Metropolis',
+      name: 'Paradise Point Plaza',
       center: this.spawnPoint,
       size: 12,
       housePlots: 6,
@@ -2058,8 +2135,8 @@ class World {
 
     const additionalTowns = [
       {
-        name: 'Glimmergrove Market',
-        offset: { x: -36, y: -14 },
+        name: 'Mirage Bazaar',
+        offset: { x: -36, y: -12 },
         size: 7,
         housePlots: 3,
         shops: ['alchemy'],
@@ -2067,29 +2144,29 @@ class World {
         chests: 2,
       },
       {
-        name: 'Sunspire Outpost',
-        offset: { x: 36, y: -12 },
-        size: 6,
-        housePlots: 2,
-        shops: ['weapons'],
-        npcs: ['captain'],
-        chests: 1,
-      },
-      {
-        name: 'Duskridge Hollow',
-        offset: { x: -26, y: 32 },
+        name: 'Sunset Marina',
+        offset: { x: 32, y: 18 },
         size: 7,
         housePlots: 3,
-        shops: ['armory'],
-        npcs: ['artisan', 'river-warden'],
+        shops: ['armory', 'alchemy'],
+        npcs: ['river-warden', 'merchant'],
         chests: 2,
       },
       {
-        name: 'Auric Quay',
-        offset: { x: 28, y: 34 },
+        name: 'Coral Promenade',
+        offset: { x: -28, y: 28 },
         size: 6,
         housePlots: 2,
-        shops: ['armory', 'alchemy'],
+        shops: ['weapons'],
+        npcs: ['artisan', 'captain'],
+        chests: 2,
+      },
+      {
+        name: 'Skyline Outlook',
+        offset: { x: 30, y: -28 },
+        size: 6,
+        housePlots: 2,
+        shops: ['weapons', 'armory'],
         npcs: ['merchant'],
         chests: 2,
       },
@@ -2130,7 +2207,7 @@ class World {
         }
       }
     }
-    this.decorations.push({ x: sanctuaryCenter.x, y: sanctuaryCenter.y, type: 'campfire' });
+    this.decorations.push({ x: sanctuaryCenter.x, y: sanctuaryCenter.y, type: 'beacon' });
     this.lamps.push({ x: sanctuaryCenter.x + 0.5, y: sanctuaryCenter.y + 0.4 });
   }
 
@@ -2238,9 +2315,9 @@ class World {
     const farmlandRows = tier === 'capital' ? 4 : 3;
     for (let x = bounds.x1 - 2; x <= bounds.x2 + 2; x += 1) {
       for (let y = bounds.y2 + 1; y <= bounds.y2 + farmlandRows; y += 1) {
-        this.#setTile(x, y, 'farmland', 'town');
-        if (Math.random() < 0.35) {
-          this.decorations.push({ x, y, type: 'crop' });
+        this.#setTile(x, y, 'cityGarden', 'town');
+        if (Math.random() < 0.45) {
+          this.decorations.push({ x, y, type: 'blossom' });
         }
       }
     }
@@ -2355,54 +2432,54 @@ class World {
   #carveDungeons() {
     const dungeonConfigs = [
       {
-        name: 'Duskwater Catacombs',
+        name: 'Coral Depths',
         center: {
-          x: clamp(this.spawnPoint.x + randInt(-28, -18), 6, this.width - 6),
-          y: clamp(this.spawnPoint.y + randInt(18, 26), 6, this.height - 6),
+          x: clamp(this.spawnPoint.x - randInt(26, 20), 6, this.width - 6),
+          y: clamp(this.spawnPoint.y + randInt(22, 30), 6, this.height - 6),
         },
         size: randInt(7, 9),
         chests: 2,
-        themeKey: 'catacombs',
+        themeKey: 'reef',
       },
       {
-        name: 'Emberfen Gate',
+        name: 'Inferno Crater',
         center: {
-          x: clamp(this.spawnPoint.x + randInt(22, 32), 6, this.width - 6),
+          x: clamp(this.spawnPoint.x + randInt(24, 34), 6, this.width - 6),
           y: clamp(this.spawnPoint.y - randInt(18, 26), 6, this.height - 6),
         },
         size: randInt(7, 9),
         chests: 2,
-        themeKey: 'ember',
+        themeKey: 'volcano',
       },
       {
-        name: 'Starfall Observatory',
+        name: 'Skyline Spire',
         center: {
-          x: clamp(this.spawnPoint.x + randInt(-6, 14), 6, this.width - 6),
+          x: clamp(this.spawnPoint.x + randInt(-6, 16), 6, this.width - 6),
           y: clamp(this.spawnPoint.y + randInt(30, 40), 6, this.height - 6),
         },
         size: randInt(8, 10),
         chests: 2,
-        themeKey: 'observatory',
+        themeKey: 'skyline',
       },
       {
-        name: 'Thornhollow Warrens',
+        name: 'Verdant Warrens',
         center: {
-          x: clamp(this.spawnPoint.x - randInt(32, 42), 6, this.width - 6),
+          x: clamp(this.spawnPoint.x - randInt(32, 40), 6, this.width - 6),
           y: clamp(this.spawnPoint.y + randInt(6, 18), 6, this.height - 6),
         },
         size: randInt(7, 9),
         chests: 2,
-        themeKey: 'warrens',
+        themeKey: 'jungle',
       },
       {
-        name: 'Glimmerdeep Vault',
+        name: 'Mirage Vault',
         center: {
-          x: clamp(this.spawnPoint.x + randInt(24, 36), 6, this.width - 6),
-          y: clamp(this.spawnPoint.y + randInt(-32, -22), 6, this.height - 6),
+          x: clamp(this.spawnPoint.x + randInt(26, 38), 6, this.width - 6),
+          y: clamp(this.spawnPoint.y - randInt(30, 24), 6, this.height - 6),
         },
         size: randInt(9, 10),
         chests: 3,
-        themeKey: 'vault',
+        themeKey: 'mirage',
       },
     ];
 
@@ -2466,10 +2543,10 @@ class World {
       const x = randInt(2, this.width - 3);
       const y = randInt(2, this.height - 3);
       const tile = this.getTile(x, y);
-      if (tile.zone === 'wilds' && (tile.type === 'grass' || tile.type === 'meadow')) {
-        this.decorations.push({ x, y, type: 'tree', color: pick(SCENERY_COLORS.treeLeaves) });
-        if (Math.random() < 0.1) {
-          this.decorations.push({ x, y, type: 'blossom', color: SCENERY_COLORS.blossom });
+      if (tile.zone === 'wilds' && (tile.type === 'grass' || tile.type === 'meadow' || tile.type === 'sand')) {
+        this.decorations.push({ x, y, type: 'tree', color: pick(SCENERY_COLORS.palmLeaves) });
+        if (Math.random() < 0.16) {
+          this.decorations.push({ x, y, type: 'blossom', color: SCENERY_COLORS.neonBloom });
         }
       }
     }
@@ -2479,7 +2556,7 @@ class World {
       const y = randInt(3, this.height - 4);
       const tile = this.getTile(x, y);
       if (tile.zone === 'wilds' && tile.type !== 'water') {
-        this.decorations.push({ x, y, type: 'rock', color: '#94a3b8' });
+        this.decorations.push({ x, y, type: 'rock', color: SCENERY_COLORS.coralGlow });
       }
     }
 
@@ -2499,8 +2576,8 @@ class World {
           if (Math.hypot(fx, fy) < span * 0.6) continue;
           const tx = clamp(town.center.x + fx, 3, this.width - 4);
           const ty = clamp(town.center.y + fy, 3, this.height - 4);
-          this.#setTile(tx, ty, 'farmland', 'town');
-          this.decorations.push({ x: tx, y: ty, type: 'crop' });
+          this.#setTile(tx, ty, 'cityGarden', 'town');
+          this.decorations.push({ x: tx, y: ty, type: 'blossom' });
         }
       }
     }
@@ -2511,8 +2588,8 @@ class World {
     for (const town of this.towns) {
       const description =
         town.tier === 'capital'
-          ? 'The bustling heart of the valley and the site of your home.'
-          : 'A peaceful haven where you can trade, rest, and continue building.';
+          ? 'The neon heart of Paradise Point and the hub of your rebuild.'
+          : 'A district hub where survivors trade, rest, and share intel.';
       clues.push({
         title: town.name,
         description,
@@ -2522,18 +2599,18 @@ class World {
     for (const dungeon of this.dungeons) {
       clues.push({
         title: dungeon.name,
-        description: 'Dangerous depths hide relics and bosses. Enemies only awaken inside.',
+        description: 'Themed megadungeons hide relics and bosses. Enemies only awaken inside.',
       });
     }
 
     clues.push({
-      title: 'Glittering Sanctuary',
-      description: 'A safe grove where glowing fireflies gather. Stand here to recover.',
+      title: 'Neon Sanctuary',
+      description: 'A tranquil lagoon where the island spirit restores your strength.',
     });
 
     clues.push({
       title: 'Radiant Hearth Home',
-      description: 'Bring timber and stone from dungeons to finish building your valley home.',
+      description: 'Bring driftwood crates and coral bricks from dungeons to finish your safehouse.',
     });
 
     this.mapClues = clues;
@@ -2696,7 +2773,7 @@ export class RoguelikeGame {
     this.completedStoryBeats = new Set();
     this.currentStory = STORY_BEATS[0];
     this.houseProject = {
-      label: 'Build Cozy Home',
+      label: 'Raise Neon Haven',
       progress: 0,
       target: PLAYER_HOUSE_PROGRESS_TARGET,
       completed: false,
@@ -2762,6 +2839,10 @@ export class RoguelikeGame {
       weaponProfile: { ...DEFAULT_WEAPON_PROFILE },
       aim: { x: 0, y: -1 },
       upgrades: [],
+      superCharge: 0,
+      superChargeMax: 100,
+      superReady: false,
+      superAnnouncement: false,
       equipment: {
         weapon: null,
         armor: null,
@@ -2797,6 +2878,7 @@ export class RoguelikeGame {
       this.player.experience,
       this.player.experienceToLevel
     );
+    this.ui.setPower(this.player.superCharge, this.player.superChargeMax, '0%');
     this.ui.setSkillPoints(this.availableSkillPoints);
     this.ui.setUpgrades([]);
     this.ui.setAchievements([]);
@@ -2815,8 +2897,8 @@ export class RoguelikeGame {
     this.ui.setHotbar(this.hotbar);
     this.#refreshSkillTreeUI();
 
-    this.log.push('Radiant Hearth hums with possibility. Press F to chat, trade, and build.');
-    this.log.push('Press I for inventory, K for the skill tree, and J for quests.');
+    this.log.push('Neon Tides buzzes with potential. Press F to chat, trade, and rebuild.');
+    this.log.push('Press I for gear, K for the neon drive, and J for contracts.');
 
     this.lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
   }
@@ -3162,6 +3244,10 @@ export class RoguelikeGame {
     }
     const ability = ABILITY_LIBRARY[abilityId];
     if (!ability) return;
+    if (ability.requiresSuper && !this.player.superReady) {
+      this.ui.showToast('Supercharge not ready yet. Fight to fill the meter.');
+      return;
+    }
     this.#activateAbility(abilityId, ability);
     state.timer = ability.cooldown;
     this.ui.setAbilities(this.#describeAbilities());
@@ -3169,7 +3255,7 @@ export class RoguelikeGame {
   }
 
   #activateAbility(abilityId, ability) {
-    if (abilityId === 'solar-burst') {
+    if (abilityId === 'sonic-crash') {
       const radius = 4.5;
       for (const enemy of [...this.enemies]) {
         const distance = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
@@ -3182,9 +3268,10 @@ export class RoguelikeGame {
           }
         }
       }
-      this.particles.spawn({ x: this.player.x, y: this.player.y }, { color: '#f97316', radius: 0.6, life: 0.8 });
-      this.ui.showToast('Solar Burst unleashed');
-    } else if (abilityId === 'astral-step') {
+      this.particles.spawn({ x: this.player.x, y: this.player.y }, { color: '#ff6f61', radius: 0.6, life: 0.8 });
+      this.ui.showToast('Sonic Crash unleashed');
+      this.grantSuperCharge(10);
+    } else if (abilityId === 'flux-step') {
       const direction = normalize(this.player.aim);
       const distance = 3.5;
       const targetX = this.player.x + direction.x * distance;
@@ -3196,14 +3283,78 @@ export class RoguelikeGame {
         this.player.vy = 0;
         this.slowFields = this.slowFields || [];
         this.slowFields.push({ x: targetX, y: targetY, radius: 2, slow: 0.45, age: 0, duration: 3 });
-        this.ui.showToast('Astral Step used');
+        this.ui.showToast('Flux Step executed');
       }
     } else if (abilityId === 'tempest-field') {
       const center = { x: this.player.x, y: this.player.y };
       this.slowFields = this.slowFields || [];
       this.slowFields.push({ x: center.x, y: center.y, radius: 5, slow: 0.35, damage: 12, age: 0, duration: 6 });
       this.ui.showToast('Tempest Field conjured');
+    } else if (abilityId === 'sunset-overdrive') {
+      const spent = this.#spendSuperCharge(this.player.superChargeMax ?? 100);
+      if (!spent) {
+        this.ui.showToast('Need a full supercharge to unleash Overdrive.');
+        return;
+      }
+      const direction = normalize(this.player.aim);
+      const volley = 6;
+      for (let i = 0; i < volley; i += 1) {
+        const angleOffset = (i / Math.max(1, volley - 1) - 0.5) * Math.PI / 6;
+        const angle = Math.atan2(direction.y, direction.x) + angleOffset;
+        const projectile = createProjectile({
+          x: this.player.x,
+          y: this.player.y,
+          direction: { x: Math.cos(angle), y: Math.sin(angle) },
+          speed: this.player.projectileSpeed * 1.6,
+          damage: this.player.damage * 2.2,
+          lifetime: this.player.projectileLifetime + 0.6,
+          friendly: true,
+          spread: 0,
+          slowField: false,
+          penetration: 2,
+          element: 'radiant',
+          statusEffect: { type: 'burn', damage: 6, duration: 4 },
+          size: 0.2,
+        });
+        this.projectiles.push(projectile);
+      }
+      this.particles.spawn({ x: this.player.x, y: this.player.y }, { color: '#d946ef', radius: 0.8, life: 1 });
+      this.ui.showToast('Sunset Overdrive unleashed!');
     }
+  }
+
+  grantSuperCharge(amount) {
+    this.#gainSuperCharge(amount);
+  }
+
+  #gainSuperCharge(amount) {
+    if (!this.player || amount <= 0) return;
+    const max = this.player.superChargeMax ?? 100;
+    const next = clamp((this.player.superCharge ?? 0) + amount, 0, max);
+    this.player.superCharge = next;
+    this.player.superReady = next >= max - 0.01;
+    if (this.player.superReady && !this.player.superAnnouncement) {
+      this.ui.showToast('Supercharge ready! Press V to unleash.');
+      this.player.superAnnouncement = true;
+    }
+    const label = this.player.superReady ? 'Ready' : `${Math.round((next / max) * 100)}%`;
+    this.ui.setPower(next, max, label);
+  }
+
+  #spendSuperCharge(cost) {
+    if (!this.player) return false;
+    const max = this.player.superChargeMax ?? 100;
+    const current = this.player.superCharge ?? 0;
+    const required = cost ?? max;
+    if (current + 0.01 < required) {
+      return false;
+    }
+    this.player.superCharge = clamp(current - required, 0, max);
+    this.player.superReady = false;
+    this.player.superAnnouncement = false;
+    const label = `${Math.round((this.player.superCharge / max) * 100)}%`;
+    this.ui.setPower(this.player.superCharge, max, label);
+    return true;
   }
 
   addTimedModifier(modifier) {
@@ -3305,7 +3456,7 @@ export class RoguelikeGame {
     }
     this.gold -= item.cost;
     this.ui.setGold(this.gold);
-    item.effect(this.player);
+    item.effect(this.player, this);
     this.#refreshCombatStats();
     this.ui.setHealth(this.player.health, this.player.maxHealth);
     this.ui.showToast(`Purchased ${item.label}!`);
@@ -3364,7 +3515,7 @@ export class RoguelikeGame {
       item.id === 'timber' || item.id === 'stone'
     );
     if (materialIndex === -1) {
-      this.ui.showToast('Bring timber or stone from a dungeon to keep building.');
+      this.ui.showToast('Bring driftwood or coral bricks from a dungeon to keep building.');
       return;
     }
     const item = this.inventory.splice(materialIndex, 1)[0];
@@ -3446,7 +3597,10 @@ export class RoguelikeGame {
       this.currentStory = next;
       this.ui.setStory(next.text);
     } else {
-      this.currentStory = { id: 'free', text: 'Enjoy the valley. Help townsfolk and explore freely.' };
+      this.currentStory = {
+        id: 'free',
+        text: 'Enjoy the paradise. Help survivors, rebuild districts, and chase high scores.',
+      };
       this.ui.setStory(this.currentStory.text);
     }
   }
@@ -3614,8 +3768,8 @@ export class RoguelikeGame {
         (item) => item.id === 'timber' || item.id === 'stone'
       );
       prompt = hasMaterials
-        ? 'Press F to deliver building materials'
-        : 'Find timber or stone to keep building your home';
+        ? 'Press F to deliver rebuild materials'
+        : 'Find driftwood or coral bricks to keep building your haven';
     } else if (npc) {
       prompt = `Press F to speak with ${npc.name}`;
     }
@@ -3649,7 +3803,7 @@ export class RoguelikeGame {
         this.ui.showToast(`${dungeon.name} awakens!`);
         this.#advanceStory('first-dungeon');
       } else if (this.currentDungeon) {
-        this.log.push('You step back into the fresh valley air.');
+        this.log.push('You surface into the salt-sweet Paradise breeze.');
         this.currentDungeon = null;
         this.enemies = [];
         this.enemyProjectiles = [];
@@ -3814,6 +3968,7 @@ export class RoguelikeGame {
             vx: randRange(-0.6, 0.6),
             vy: randRange(-0.6, 0.6),
           });
+          this.grantSuperCharge(projectile.damage * 0.35);
           if (projectile.slowField) {
             this.#spawnSlowField(enemy.x, enemy.y);
           }
@@ -4284,8 +4439,9 @@ export class RoguelikeGame {
 
   #onEnemyDefeated(enemy) {
     this.stats.enemiesDefeated += 1;
+    this.grantSuperCharge(enemy.boss ? 40 : 12);
     if (enemy.boss) {
-      this.log.push('The guardian shatters into drifting light.');
+      this.log.push('The guardian shatters into chromatic embers.');
       this.ui.showToast('Boss defeated!');
       this.#advanceStory('boss-victory');
       if (enemy.dungeon?.boss) {
@@ -4293,7 +4449,7 @@ export class RoguelikeGame {
         enemy.dungeon.boss.defeated = true;
       }
     } else {
-      this.log.push('A hostile shade dissolves into sparks.');
+      this.log.push('A synth raider dissolves into sparks.');
     }
     const xpValue = (enemy.boss ? 40 : 12) + Math.round(Math.random() * (enemy.boss ? 20 : 6));
     this.pickups.push({
@@ -4367,7 +4523,7 @@ export class RoguelikeGame {
       life: 0.6,
     });
     if (this.player.health <= 0) {
-      this.log.push('You rest as the valley reknits itself. Press Restart to try again.');
+      this.log.push('You drift as Paradise rewinds itself. Press Restart to dive back in.');
       this.state = 'menu';
       this.ui.showMenu(true);
     }
@@ -4655,40 +4811,61 @@ export class RoguelikeGame {
       const screenX = deco.x * TILE_SIZE;
       const screenY = deco.y * TILE_SIZE;
       if (deco.type === 'tree') {
-        ctx.fillStyle = SCENERY_COLORS.treeTrunk;
-        ctx.fillRect(screenX + TILE_SIZE * 0.45, screenY + TILE_SIZE * 0.52, TILE_SIZE * 0.1, TILE_SIZE * 0.48);
-        const leafGradient = ctx.createRadialGradient(
-          screenX + TILE_SIZE / 2,
-          screenY + TILE_SIZE * 0.36,
-          TILE_SIZE * 0.05,
-          screenX + TILE_SIZE / 2,
-          screenY + TILE_SIZE * 0.36,
-          TILE_SIZE * 0.48
+        ctx.fillStyle = SCENERY_COLORS.palmTrunk;
+        ctx.fillRect(screenX + TILE_SIZE * 0.48, screenY + TILE_SIZE * 0.42, TILE_SIZE * 0.06, TILE_SIZE * 0.58);
+        ctx.beginPath();
+        ctx.moveTo(screenX + TILE_SIZE * 0.51, screenY + TILE_SIZE * 0.42);
+        ctx.lineTo(screenX + TILE_SIZE * 0.65, screenY + TILE_SIZE * 0.18);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = SCENERY_COLORS.palmTrunk;
+        ctx.stroke();
+        const leafGradient = ctx.createLinearGradient(
+          screenX + TILE_SIZE * 0.3,
+          screenY + TILE_SIZE * 0.12,
+          screenX + TILE_SIZE * 0.8,
+          screenY + TILE_SIZE * 0.36
         );
-        const leafColor = deco.color ?? SCENERY_COLORS.treeLeaves[0];
-        leafGradient.addColorStop(0, 'rgba(248, 250, 252, 0.16)');
-        leafGradient.addColorStop(1, leafColor);
+        const leafColor = deco.color ?? SCENERY_COLORS.palmLeaves[0];
+        leafGradient.addColorStop(0, `${leafColor}cc`);
+        leafGradient.addColorStop(1, `${leafColor}55`);
         ctx.fillStyle = leafGradient;
         ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE / 2, screenY + TILE_SIZE * 0.36, TILE_SIZE * 0.48, 0, Math.PI * 2);
+        ctx.ellipse(
+          screenX + TILE_SIZE * 0.58,
+          screenY + TILE_SIZE * 0.2,
+          TILE_SIZE * 0.34,
+          TILE_SIZE * 0.22,
+          Math.PI / 6,
+          0,
+          Math.PI * 2
+        );
         ctx.fill();
       } else if (deco.type === 'blossom') {
-        ctx.fillStyle = deco.color ?? SCENERY_COLORS.blossom;
+        const glow = deco.color ?? SCENERY_COLORS.neonBloom;
+        ctx.fillStyle = `${glow}55`;
         ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE / 2, screenY + TILE_SIZE * 0.3, TILE_SIZE * 0.22, 0, Math.PI * 2);
+        ctx.arc(screenX + TILE_SIZE / 2, screenY + TILE_SIZE * 0.32, TILE_SIZE * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(screenX + TILE_SIZE / 2, screenY + TILE_SIZE * 0.32, TILE_SIZE * 0.18, 0, Math.PI * 2);
         ctx.fill();
       } else if (deco.type === 'rock') {
-        ctx.fillStyle = deco.color ?? '#94a3b8';
+        ctx.fillStyle = (deco.color ?? SCENERY_COLORS.coralGlow) + 'aa';
         ctx.beginPath();
         ctx.ellipse(
           screenX + TILE_SIZE / 2,
-          screenY + TILE_SIZE * 0.7,
-          TILE_SIZE * 0.36,
-          TILE_SIZE * 0.26,
+          screenY + TILE_SIZE * 0.68,
+          TILE_SIZE * 0.38,
+          TILE_SIZE * 0.24,
           0,
           0,
           Math.PI * 2
         );
+        ctx.fill();
+        ctx.fillStyle = SCENERY_COLORS.coralGlow;
+        ctx.beginPath();
+        ctx.arc(screenX + TILE_SIZE * 0.42, screenY + TILE_SIZE * 0.58, TILE_SIZE * 0.12, 0, Math.PI * 2);
         ctx.fill();
       } else if (deco.type === 'house-frame') {
         ctx.strokeStyle = 'rgba(248, 250, 252, 0.45)';
@@ -4701,32 +4878,32 @@ export class RoguelikeGame {
         ctx.lineTo(screenX + TILE_SIZE * 0.85, screenY + TILE_SIZE * 0.35);
         ctx.stroke();
       } else if (deco.type === 'market') {
-        ctx.fillStyle = SCENERY_COLORS.marketStall;
-        ctx.fillRect(screenX + TILE_SIZE * 0.15, screenY + TILE_SIZE * 0.42, TILE_SIZE * 0.7, TILE_SIZE * 0.38);
+        ctx.fillStyle = SCENERY_COLORS.vendorAwning;
+        ctx.fillRect(screenX + TILE_SIZE * 0.12, screenY + TILE_SIZE * 0.42, TILE_SIZE * 0.76, TILE_SIZE * 0.4);
         const stripes = [0, 0.33, 0.66];
-        ctx.fillStyle = 'rgba(15, 118, 110, 0.65)';
+        ctx.fillStyle = 'rgba(249, 112, 167, 0.6)';
         for (const stripe of stripes) {
           ctx.fillRect(
-            screenX + TILE_SIZE * (0.15 + stripe * 0.7),
-            screenY + TILE_SIZE * 0.3,
-            TILE_SIZE * 0.23,
-            TILE_SIZE * 0.14
+            screenX + TILE_SIZE * (0.12 + stripe * 0.76),
+            screenY + TILE_SIZE * 0.28,
+            TILE_SIZE * 0.25,
+            TILE_SIZE * 0.15
           );
         }
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(screenX + TILE_SIZE * 0.2, screenY + TILE_SIZE * 0.57, TILE_SIZE * 0.12, TILE_SIZE * 0.28);
-        ctx.fillRect(screenX + TILE_SIZE * 0.68, screenY + TILE_SIZE * 0.57, TILE_SIZE * 0.12, TILE_SIZE * 0.28);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(screenX + TILE_SIZE * 0.22, screenY + TILE_SIZE * 0.58, TILE_SIZE * 0.12, TILE_SIZE * 0.28);
+        ctx.fillRect(screenX + TILE_SIZE * 0.68, screenY + TILE_SIZE * 0.58, TILE_SIZE * 0.12, TILE_SIZE * 0.28);
       } else if (deco.type === 'house') {
-        ctx.fillStyle = SCENERY_COLORS.houseWall;
-        ctx.fillRect(screenX + TILE_SIZE * 0.1, screenY + TILE_SIZE * 0.3, TILE_SIZE * 0.8, TILE_SIZE * 0.62);
+        ctx.fillStyle = SCENERY_COLORS.villaWall;
+        ctx.fillRect(screenX + TILE_SIZE * 0.1, screenY + TILE_SIZE * 0.32, TILE_SIZE * 0.8, TILE_SIZE * 0.58);
         const roofGradient = ctx.createLinearGradient(
           screenX + TILE_SIZE * 0.05,
           screenY + TILE_SIZE * 0.1,
           screenX + TILE_SIZE * 0.95,
           screenY + TILE_SIZE * 0.35
         );
-        roofGradient.addColorStop(0, '#d8b4fe');
-        roofGradient.addColorStop(1, SCENERY_COLORS.houseRoof);
+        roofGradient.addColorStop(0, '#ffd1a4');
+        roofGradient.addColorStop(1, SCENERY_COLORS.villaRoof);
         ctx.fillStyle = roofGradient;
         ctx.beginPath();
         ctx.moveTo(screenX + TILE_SIZE * 0.05, screenY + TILE_SIZE * 0.35);
@@ -4734,32 +4911,23 @@ export class RoguelikeGame {
         ctx.lineTo(screenX + TILE_SIZE * 0.95, screenY + TILE_SIZE * 0.35);
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
         ctx.fillRect(screenX + TILE_SIZE * 0.4, screenY + TILE_SIZE * 0.55, TILE_SIZE * 0.2, TILE_SIZE * 0.35);
-        ctx.fillStyle = 'rgba(252, 211, 77, 0.88)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
         ctx.fillRect(screenX + TILE_SIZE * 0.22, screenY + TILE_SIZE * 0.5, TILE_SIZE * 0.16, TILE_SIZE * 0.16);
         ctx.fillRect(screenX + TILE_SIZE * 0.62, screenY + TILE_SIZE * 0.5, TILE_SIZE * 0.16, TILE_SIZE * 0.16);
-      } else if (deco.type === 'crop') {
-        ctx.fillStyle = SCENERY_COLORS.farmCrop;
+      } else if (deco.type === 'beacon') {
+        ctx.fillStyle = SCENERY_COLORS.beaconAura;
         ctx.beginPath();
-        ctx.ellipse(
-          screenX + TILE_SIZE * 0.5,
-          screenY + TILE_SIZE * 0.7,
-          TILE_SIZE * 0.25,
-          TILE_SIZE * 0.18,
-          0,
-          0,
-          Math.PI * 2
-        );
+        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.5, TILE_SIZE * 0.42, 0, Math.PI * 2);
         ctx.fill();
-      } else if (deco.type === 'campfire') {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.5)';
+        ctx.fillStyle = SCENERY_COLORS.beaconGlow;
         ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.5, TILE_SIZE * 0.35, 0, Math.PI * 2);
+        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.45, TILE_SIZE * 0.2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#f97316';
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.55, TILE_SIZE * 0.15, 0, Math.PI * 2);
+        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.35, TILE_SIZE * 0.08, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -4835,13 +5003,15 @@ export class RoguelikeGame {
       }
       const screenX = npc.x * TILE_SIZE;
       const screenY = npc.y * TILE_SIZE;
-      ctx.fillStyle = npc.color ?? '#38bdf8';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
       ctx.beginPath();
-      ctx.ellipse(screenX, screenY, TILE_SIZE * 0.24, TILE_SIZE * 0.32, 0, 0, Math.PI * 2);
+      ctx.ellipse(screenX, screenY + TILE_SIZE * 0.28, TILE_SIZE * 0.18, TILE_SIZE * 0.12, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#f8fafc';
+      ctx.fillStyle = npc.color ?? pick(SCENERY_COLORS.npcCloak);
+      ctx.fillRect(screenX - TILE_SIZE * 0.14, screenY - TILE_SIZE * 0.3, TILE_SIZE * 0.28, TILE_SIZE * 0.42);
+      ctx.fillStyle = '#fef9c3';
       ctx.beginPath();
-      ctx.arc(screenX, screenY - TILE_SIZE * 0.18, TILE_SIZE * 0.12, 0, Math.PI * 2);
+      ctx.arc(screenX, screenY - TILE_SIZE * 0.38, TILE_SIZE * 0.12, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -4885,45 +5055,49 @@ export class RoguelikeGame {
   #drawPlayer(ctx, view) {
     const screenX = this.player.x * TILE_SIZE;
     const screenY = this.player.y * TILE_SIZE;
-    const light = this.#getLightLevel();
+    const ready = this.player.superReady;
 
     ctx.save();
     ctx.translate(screenX, screenY);
-    const gradient = ctx.createRadialGradient(0, 0, TILE_SIZE * 0.08, 0, 0, TILE_SIZE * 0.46);
-    gradient.addColorStop(0, '#fefce8');
-    gradient.addColorStop(0.55, '#fde68a');
-    gradient.addColorStop(1, mixColor('#f59e0b', '#fbbf24', light));
-    ctx.fillStyle = gradient;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
     ctx.beginPath();
-    ctx.arc(0, 0, TILE_SIZE * 0.38, 0, Math.PI * 2);
+    ctx.ellipse(0, TILE_SIZE * 0.32, TILE_SIZE * 0.32, TILE_SIZE * 0.18, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    const velocityGlow = clamp(Math.hypot(this.player.vx, this.player.vy) / (PLAYER_SPRINT_SPEED * 1.2), 0, 1);
-    if (velocityGlow > 0) {
-      ctx.fillStyle = `rgba(252, 211, 77, ${0.18 + 0.25 * velocityGlow})`;
-      ctx.beginPath();
-      ctx.ellipse(
-        -this.player.vx * TILE_SIZE * 0.08,
-        -this.player.vy * TILE_SIZE * 0.08,
-        TILE_SIZE * 0.48,
-        TILE_SIZE * 0.3,
-        Math.atan2(this.player.vy, this.player.vx),
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-    }
+    const torso = ctx.createLinearGradient(-TILE_SIZE * 0.2, -TILE_SIZE * 0.38, TILE_SIZE * 0.2, TILE_SIZE * 0.34);
+    torso.addColorStop(0, '#ff6f61');
+    torso.addColorStop(1, '#d946ef');
+    ctx.fillStyle = torso;
+    ctx.fillRect(-TILE_SIZE * 0.18, -TILE_SIZE * 0.34, TILE_SIZE * 0.36, TILE_SIZE * 0.54);
 
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = '#ffe7d9';
     ctx.beginPath();
-    ctx.arc(0, -TILE_SIZE * 0.14, TILE_SIZE * 0.08, 0, Math.PI * 2);
+    ctx.arc(0, -TILE_SIZE * 0.44, TILE_SIZE * 0.18, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(-TILE_SIZE * 0.18, -TILE_SIZE * 0.02, TILE_SIZE * 0.36, TILE_SIZE * 0.18);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-TILE_SIZE * 0.16, -TILE_SIZE * 0.02, TILE_SIZE * 0.12, TILE_SIZE * 0.34);
+    ctx.fillRect(TILE_SIZE * 0.04, -TILE_SIZE * 0.02, TILE_SIZE * 0.12, TILE_SIZE * 0.34);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-TILE_SIZE * 0.12, -TILE_SIZE * 0.26, TILE_SIZE * 0.24, TILE_SIZE * 0.08);
 
     if (this.player.shield?.active) {
-      ctx.strokeStyle = 'rgba(190, 242, 100, 0.75)';
+      ctx.strokeStyle = 'rgba(96, 239, 255, 0.65)';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(0, 0, TILE_SIZE * 0.48, 0, Math.PI * 2);
+      ctx.arc(0, -TILE_SIZE * 0.05, TILE_SIZE * 0.42, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    if (ready) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -TILE_SIZE * 0.05, TILE_SIZE * 0.5, 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -4944,25 +5118,34 @@ export class RoguelikeGame {
       const screenX = enemy.x * TILE_SIZE;
       const screenY = enemy.y * TILE_SIZE;
       const isBoss = enemy.boss === true;
-      const radius = TILE_SIZE * (isBoss ? 0.45 : 0.32);
       if (isBoss) {
-        const aura = ctx.createRadialGradient(screenX, screenY, TILE_SIZE * 0.2, screenX, screenY, TILE_SIZE * 0.75);
-        aura.addColorStop(0, 'rgba(88, 28, 135, 0.35)');
+        const aura = ctx.createRadialGradient(screenX, screenY, TILE_SIZE * 0.25, screenX, screenY, TILE_SIZE * 0.78);
+        aura.addColorStop(0, `${enemy.color ?? '#f472b6'}44`);
         aura.addColorStop(1, 'rgba(15, 23, 42, 0)');
         ctx.fillStyle = aura;
         ctx.beginPath();
-        ctx.arc(screenX, screenY, TILE_SIZE * 0.72, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, TILE_SIZE * 0.78, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.fillStyle = enemy.color;
+      ctx.fillStyle = enemy.color ?? '#f472b6';
+      ctx.fillRect(
+        screenX - TILE_SIZE * 0.2,
+        screenY - TILE_SIZE * 0.28,
+        TILE_SIZE * 0.4,
+        TILE_SIZE * (isBoss ? 0.7 : 0.55)
+      );
+      ctx.fillStyle = '#1e293b';
       ctx.beginPath();
-      ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
+      ctx.arc(screenX, screenY - TILE_SIZE * (isBoss ? 0.45 : 0.38), TILE_SIZE * (isBoss ? 0.18 : 0.14), 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = isBoss ? 'rgba(250, 204, 21, 0.55)' : 'rgba(248, 250, 252, 0.35)';
-      ctx.lineWidth = isBoss ? 3 : 2;
-      ctx.beginPath();
-      ctx.arc(screenX, screenY, radius + TILE_SIZE * 0.04, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.strokeStyle = isBoss ? 'rgba(255, 255, 255, 0.6)' : 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = isBoss ? 3 : 1.5;
+      ctx.strokeRect(
+        screenX - TILE_SIZE * 0.2,
+        screenY - TILE_SIZE * 0.28,
+        TILE_SIZE * 0.4,
+        TILE_SIZE * (isBoss ? 0.7 : 0.55)
+      );
 
       const maxHealth = enemy.maxHealth ?? (isBoss ? BOSS_HEALTH : ENEMY_BASE_HEALTH);
       const ratio = clamp(enemy.health / maxHealth, 0, 1);
@@ -5024,24 +5207,56 @@ export class RoguelikeGame {
       const screenX = pickup.x * TILE_SIZE;
       const screenY = pickup.y * TILE_SIZE;
       if (pickup.kind === 'gold') {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.9)';
+        const gradient = ctx.createRadialGradient(
+          screenX,
+          screenY,
+          TILE_SIZE * 0.05,
+          screenX,
+          screenY,
+          TILE_SIZE * 0.24
+        );
+        gradient.addColorStop(0, '#fff7cc');
+        gradient.addColorStop(1, '#facc15');
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(screenX, screenY - TILE_SIZE * 0.2);
-        ctx.lineTo(screenX + TILE_SIZE * 0.2, screenY);
-        ctx.lineTo(screenX, screenY + TILE_SIZE * 0.2);
-        ctx.lineTo(screenX - TILE_SIZE * 0.2, screenY);
-        ctx.closePath();
+        ctx.arc(screenX, screenY, TILE_SIZE * 0.22, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         continue;
       }
-      ctx.beginPath();
       if (pickup.kind === 'loot') {
-        ctx.fillStyle = 'rgba(129, 140, 248, 0.85)';
+        const rarityColor = pickup.item?.rarity
+          ? ITEM_RARITIES[pickup.item.rarity]?.color ?? '#94a3f5'
+          : '#94a3f5';
+        ctx.fillStyle = `${rarityColor}cc`;
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        const width = TILE_SIZE * 0.36;
+        const height = TILE_SIZE * 0.44;
+        const radius = TILE_SIZE * 0.08;
+        const left = screenX - width / 2;
+        const top = screenY - height / 2;
+        ctx.beginPath();
+        ctx.moveTo(left + radius, top);
+        ctx.lineTo(left + width - radius, top);
+        ctx.quadraticCurveTo(left + width, top, left + width, top + radius);
+        ctx.lineTo(left + width, top + height - radius);
+        ctx.quadraticCurveTo(left + width, top + height, left + width - radius, top + height);
+        ctx.lineTo(left + radius, top + height);
+        ctx.quadraticCurveTo(left, top + height, left, top + height - radius);
+        ctx.lineTo(left, top + radius);
+        ctx.quadraticCurveTo(left, top, left + radius, top);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
       } else {
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.fillStyle = pickup.kind === 'xp' ? 'rgba(99, 102, 241, 0.85)' : 'rgba(56, 189, 248, 0.85)';
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, TILE_SIZE * 0.18, 0, Math.PI * 2);
+        ctx.fill();
       }
-      ctx.arc(screenX, screenY, TILE_SIZE * 0.18, 0, Math.PI * 2);
-      ctx.fill();
     }
   }
 

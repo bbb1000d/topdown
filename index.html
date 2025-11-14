@@ -3,16 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Wanderlight - Cozy Action Roguelike</title>
+    <title>Neon Tides – Paradise Run</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="game-root">
+    <main class="game-root neon-paradise">
       <canvas
         id="game"
         width="1280"
         height="720"
-        aria-label="Top-down adventure canvas"
+        aria-label="Neon Tides game canvas"
       ></canvas>
 
       <canvas
@@ -20,61 +20,97 @@
         class="minimap"
         width="256"
         height="256"
-        aria-label="World minimap"
+        aria-label="Paradise minimap"
       ></canvas>
 
-      <section class="hud hud--hotbar" aria-live="polite">
-        <div class="status-cluster" role="presentation">
-          <div class="status-meter" data-type="health">
-            <span class="status-label">Health</span>
-            <span id="health-value" class="status-value">120 / 120</span>
-            <div class="status-track" role="progressbar" aria-label="Player health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+      <section class="hud hud--neon" aria-live="polite">
+        <div class="hud-column">
+          <article class="status-meter" data-type="health">
+            <header>
+              <span class="status-label">Vitals</span>
+              <span id="health-value" class="status-value">140 / 140</span>
+            </header>
+            <div
+              class="status-track"
+              role="progressbar"
+              aria-label="Player health"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="100"
+            >
               <div class="status-fill status-fill--health" data-health-fill></div>
             </div>
-          </div>
-          <div class="status-meter" data-type="xp">
-            <span class="status-label">Experience</span>
-            <span id="xp-value" class="status-value">Level 1</span>
-            <div class="status-track" role="progressbar" aria-label="Experience toward next level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          </article>
+
+          <article class="status-meter" data-type="power">
+            <header>
+              <span class="status-label">Supercharge</span>
+              <span id="power-value" class="status-value">Ready</span>
+            </header>
+            <div
+              class="status-track"
+              role="progressbar"
+              aria-label="Supercharge meter"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <div class="status-fill status-fill--power" data-power-fill></div>
+            </div>
+          </article>
+
+          <article class="status-meter" data-type="xp">
+            <header>
+              <span class="status-label">Momentum</span>
+              <span id="xp-value" class="status-value">Level 1</span>
+            </header>
+            <div
+              class="status-track"
+              role="progressbar"
+              aria-label="Momentum toward next rank"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
               <div class="status-fill status-fill--xp" data-progress-fill></div>
             </div>
-          </div>
+          </article>
         </div>
-        <div class="hud-hotbar" role="list" aria-label="Quick item bar">
+
+        <div class="hud-hotbar" role="list" aria-label="Gear belt">
           <div class="hotbar-slot" data-slot="0"><span class="slot-key">1</span></div>
           <div class="hotbar-slot" data-slot="1"><span class="slot-key">2</span></div>
           <div class="hotbar-slot" data-slot="2"><span class="slot-key">3</span></div>
           <div class="hotbar-slot" data-slot="3"><span class="slot-key">4</span></div>
           <div class="hotbar-slot" data-slot="4"><span class="slot-key">5</span></div>
           <div class="hotbar-slot" data-slot="5"><span class="slot-key">6</span></div>
-          <div class="hotbar-slot" data-slot="6"><span class="slot-key">7</span></div>
-          <div class="hotbar-slot" data-slot="7"><span class="slot-key">8</span></div>
         </div>
+
         <dl class="hud-badges">
           <div>
-            <dt>Skill Sparks</dt>
+            <dt>Sparks</dt>
             <dd id="skill-points">0</dd>
           </div>
           <div>
-            <dt>Gold</dt>
+            <dt>Creds</dt>
             <dd id="currency">0</dd>
           </div>
           <div>
-            <dt>Current Goal</dt>
-            <dd id="current-goal">Kindle the valley</dd>
+            <dt>Mission</dt>
+            <dd id="current-goal">Reclaim Paradise Point</dd>
           </div>
           <div>
             <dt>Region</dt>
-            <dd id="zone-label">Radiant Hearth</dd>
+            <dd id="zone-label">Sunrise Boardwalk</dd>
           </div>
           <div>
-            <dt>Time</dt>
-            <dd id="time-of-day">Dawnlight</dd>
+            <dt>Cycle</dt>
+            <dd id="time-of-day">Dawnshift</dd>
           </div>
           <div>
-            <dt>Town Project</dt>
+            <dt>City Rebuild</dt>
             <dd>
-              <span id="town-progress-label">Home Foundation</span>
+              <span id="town-progress-label">Neon Haven</span>
               <span class="town-progress">
                 <span class="town-progress-fill" data-town-fill></span>
               </span>
@@ -84,29 +120,32 @@
       </section>
 
       <div class="ui-hints" role="presentation">
-        <p>Press <kbd>I</kbd> for inventory, <kbd>K</kbd> for skill tree, <kbd>J</kbd> for quests, <kbd>M</kbd> for full map.</p>
+        <p>
+          Move with <kbd>WASD</kbd>, aim with <kbd>Arrows</kbd>, fire guns with <kbd>Space</kbd>, dash with
+          <kbd>E</kbd>, trigger powers with <kbd>Q</kbd>, <kbd>R</kbd>, <kbd>C</kbd>, and overload with <kbd>V</kbd>.
+        </p>
       </div>
 
       <div id="toast" role="status" aria-live="assertive" class="toast hidden"></div>
       <div id="prompt" class="prompt" aria-live="polite"></div>
 
       <div id="inventory-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Inventory">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Gear locker">
           <header class="overlay-header">
-            <h2>Satchel &amp; Gear</h2>
+            <h2>Gear Locker</h2>
             <button type="button" class="overlay-close" data-close-overlay>×</button>
           </header>
           <div class="inventory-grid">
             <section>
-              <h3>Items</h3>
+              <h3>Backpack</h3>
               <ul id="inventory" class="list list--inventory" aria-live="polite"></ul>
             </section>
             <section>
-              <h3>Equipment</h3>
+              <h3>Equipped</h3>
               <ul id="equipment" class="list list--equipment" aria-live="polite"></ul>
             </section>
             <section>
-              <h3>Abilities</h3>
+              <h3>Superpowers</h3>
               <ul id="abilities" class="list list--abilities" aria-live="polite"></ul>
             </section>
           </div>
@@ -114,33 +153,33 @@
       </div>
 
       <div id="quests-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Quests and lore">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Mission log">
           <header class="overlay-header">
-            <h2>Quest Journal</h2>
+            <h2>Mission Log</h2>
             <button type="button" class="overlay-close" data-close-overlay>×</button>
           </header>
           <div class="journal-grid">
             <section>
-              <h3>Active Quests</h3>
+              <h3>Active Contracts</h3>
               <ul id="quests" class="list list--quests" aria-live="polite"></ul>
             </section>
             <section>
-              <h3>World Notes</h3>
+              <h3>Paradise Intel</h3>
               <ul id="map-info" class="list"></ul>
             </section>
             <section>
-              <h3>Story</h3>
+              <h3>Story Beat</h3>
               <p id="storyline" class="storyline" aria-live="polite">
-                Arrive in the valley and kindle hope in the towns.
+                Touch down on Neon Tides and rally the survivors of Paradise Point.
               </p>
               <ul id="npc-journal" class="list list--journal" aria-live="polite"></ul>
             </section>
             <section>
-              <h3>Moments</h3>
+              <h3>Action Feed</h3>
               <ul id="log" class="list list--log" aria-live="polite"></ul>
             </section>
             <section>
-              <h3>Achievements</h3>
+              <h3>Accolades</h3>
               <ul id="achievements" class="list" aria-live="polite"></ul>
             </section>
           </div>
@@ -148,10 +187,10 @@
       </div>
 
       <div id="skilltree-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Skill tree">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Neon drive">
           <header class="overlay-header">
-            <h2>Luminous Skill Tree</h2>
-            <p id="skilltree-summary">Spend sparks to unlock new techniques.</p>
+            <h2>Neon Drive</h2>
+            <p id="skilltree-summary">Spend sparks to unlock combat tricks and superpowers.</p>
             <button type="button" class="overlay-close" data-close-overlay>×</button>
           </header>
           <div id="skill-tree" class="skill-tree" role="presentation"></div>
@@ -160,48 +199,49 @@
             <ul id="skills" class="list list--abilities" aria-live="polite"></ul>
           </section>
           <footer class="overlay-footer">
-            <p>Skill Sparks available: <span id="skill-sparks-available">0</span></p>
+            <p>Skill sparks available: <span id="skill-sparks-available">0</span></p>
           </footer>
         </div>
       </div>
 
       <div id="start-menu" class="overlay overlay--start" aria-hidden="false">
         <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Start menu">
-          <h2>Welcome back, wanderer</h2>
+          <h2>Welcome to Neon Tides</h2>
           <p>
-            Radiant Hearth now anchors a sprawling valley filled with four bustling towns,
-            hidden dungeons, and treasure-filled chests. Gather your courage and set out.
+            Paradise Point fell to rogue synth gangs and warped creatures. The survivors lit the boardwalk with
+            neon flares and called for you. Explore the paradise expanse, dive into themed megadungeons, and rebuild
+            the city block by block.
           </p>
           <div class="overlay-actions">
-            <button id="play-button" class="button">Play</button>
+            <button id="play-button" class="button">Enter the Run</button>
           </div>
           <div class="overlay-footer">
             <p>Highlights</p>
             <ul>
-              <li>Open chests with <strong>F</strong> to claim powerful gear.</li>
-              <li>Defeat foes for gold and restorative elixirs.</li>
-              <li>Visit your home plot in Radiant Hearth to continue building.</li>
+              <li>Loot blazing firearms and chromatic melee weapons with unique mods.</li>
+              <li>Charge superpowers as you fight to unleash city-shaking finishers.</li>
+              <li>Restore districts, befriend residents, and uncover the paradise storyline.</li>
             </ul>
           </div>
         </div>
       </div>
 
       <div id="pause-menu" class="overlay overlay--menu" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Game menu">
-          <h2>Paused</h2>
-          <p>Take a breather, wanderer.</p>
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Pause menu">
+          <h2>Run Paused</h2>
+          <p>Take a moment to breathe in the neon breeze.</p>
           <div class="overlay-actions">
-            <button id="resume-button" class="button">Resume</button>
-            <button id="restart-button" class="button button--ghost">Start Over</button>
+            <button id="resume-button" class="button">Resume Run</button>
+            <button id="restart-button" class="button button--ghost">Restart Campaign</button>
           </div>
           <div class="overlay-footer">
             <p>Controls</p>
             <ul>
               <li>Move: WASD</li>
               <li>Aim: Arrow Keys</li>
-              <li>Shoot: Space</li>
+              <li>Fire: Space</li>
               <li>Dash: E</li>
-              <li>Interact &amp; Open Chests: F</li>
+              <li>Interact &amp; Loot: F</li>
               <li>Menu: Escape</li>
             </ul>
           </div>
@@ -209,21 +249,21 @@
       </div>
 
       <div id="shop-overlay" class="overlay overlay--choices" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Town shop">
-          <h2 id="shop-name">Aurora Market</h2>
-          <p id="shop-description">Trade glow shards for helpful gear.</p>
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Boardwalk shop">
+          <h2 id="shop-name">Boardwalk Vendor</h2>
+          <p id="shop-description">Trade neon creds for paradise-grade gear.</p>
           <div id="shop-options" class="upgrade-grid"></div>
           <button id="leave-shop" class="button button--ghost">Leave Shop</button>
         </div>
       </div>
 
       <div id="map-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="World atlas">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Paradise atlas">
           <header class="overlay-header">
-            <h2>Atlas of the Valley</h2>
+            <h2>Paradise Atlas</h2>
             <button type="button" class="overlay-close" data-close-overlay>×</button>
           </header>
-          <canvas id="atlas" width="640" height="640" aria-label="World atlas canvas"></canvas>
+          <canvas id="atlas" width="640" height="640" aria-label="Paradise world atlas"></canvas>
         </div>
       </div>
     </main>

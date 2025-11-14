@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ui = {
     healthFill: document.querySelector('[data-health-fill]'),
     healthValue: document.getElementById('health-value'),
+    powerFill: document.querySelector('[data-power-fill]'),
+    powerValue: document.getElementById('power-value'),
     progressFill: document.querySelector('[data-progress-fill]'),
     progressValue: document.getElementById('xp-value'),
     skillPointsValue: document.getElementById('skill-points'),
