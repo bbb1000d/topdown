@@ -14,9 +14,9 @@ const DIRECTIONS = {
 const AIM_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 const MOVE_KEYS = new Set(['w', 'a', 's', 'd']);
 
-const WORLD_PADDING_TILES = 24;
-const MIN_WORLD_WIDTH_TILES = 260;
-const MIN_WORLD_HEIGHT_TILES = 240;
+const WORLD_PADDING_TILES = 36;
+const MIN_WORLD_WIDTH_TILES = 420;
+const MIN_WORLD_HEIGHT_TILES = 360;
 const PLAYER_BASE_SPEED = 3.8; // tiles per second
 const PLAYER_SPRINT_SPEED = 6.6;
 const PLAYER_ACCELERATION = 16;
@@ -70,6 +70,12 @@ const TILE_TYPES = {
   sanctuary: { color: '#284b76', variants: ['#2e5686', '#335f93', '#3a6aa3'] },
   dungeonFloor: { color: '#2d323f', variants: ['#343a48', '#3a4151', '#41495a'] },
   dungeonWall: { color: '#1b1f28', variants: ['#202531', '#242a38', '#293041'], blocked: true },
+  cityStreet: { color: '#3c4a6d', variants: ['#44527a', '#4c5a86', '#526293'] },
+  cityPlaza: { color: '#5b5f93', variants: ['#676aa3', '#7275b2', '#7d80c0'] },
+  cityGarden: { color: '#245f5a', variants: ['#266963', '#2b746d', '#2f7f76'] },
+  cityCanal: { color: '#1b3f66', variants: ['#1e466f', '#214d79', '#245382'], blocked: true },
+  cityRoof: { color: '#8b4fd9', variants: ['#9b5bea', '#7d3fcc', '#6f35b8'], blocked: true },
+  cityBridge: { color: '#6b7280', variants: ['#747c8a', '#7d8694', '#868f9e'] },
 };
 
 const SCENERY_COLORS = {
@@ -89,6 +95,195 @@ const BULLET_COLOR = '#facc15';
 const ENEMY_BULLET_COLOR = '#38bdf8';
 
 const BOSS_PALETTE = ['#f97316', '#a855f7', '#38bdf8'];
+
+const ELEMENT_COLORS = {
+  radiant: '#facc15',
+  ember: '#f97316',
+  frost: '#38bdf8',
+  verdant: '#22c55e',
+  astral: '#a855f7',
+  stasis: '#818cf8',
+  void: '#6366f1',
+};
+
+const DEFAULT_WEAPON_PROFILE = {
+  id: 'radiant-bolt',
+  name: 'Radiant Bolt',
+  description: 'Standard radiant bolts fired from your focus.',
+  attackSpeedBonus: 0,
+  projectileCount: 1,
+  spread: 0,
+  pierce: 0,
+  element: 'radiant',
+  status: null,
+  travel: {
+    speedMultiplier: 1,
+    lifetimeBonus: 0,
+  },
+};
+
+const ITEM_RARITIES = {
+  common: { id: 'common', label: 'Common', color: '#cbd5f5', affixes: 1, power: 1 },
+  rare: { id: 'rare', label: 'Rare', color: '#60a5fa', affixes: 2, power: 1.35 },
+  epic: { id: 'epic', label: 'Epic', color: '#a855f7', affixes: 3, power: 1.7 },
+  legendary: { id: 'legendary', label: 'Legendary', color: '#fbbf24', affixes: 4, power: 2.1 },
+};
+
+const ITEM_RARITY_WEIGHTS = [
+  { rarity: 'common', weight: 36 },
+  { rarity: 'rare', weight: 26 },
+  { rarity: 'epic', weight: 10 },
+  { rarity: 'legendary', weight: 3 },
+];
+
+const EQUIPMENT_BLUEPRINTS = {
+  dawnbow: {
+    slot: 'weapon',
+    baseName: 'Dawnbow',
+    style: 'volley',
+    baseDamage: [16, 22],
+    description: 'A starlit bow that fires arcing volleys of light.',
+    profile: {
+      projectileCount: 2,
+      spread: 0.18,
+      travel: { speedMultiplier: 1.05, lifetimeBonus: 0.4 },
+    },
+  },
+  embercleaver: {
+    slot: 'weapon',
+    baseName: 'Embercleaver',
+    style: 'cleave',
+    baseDamage: [22, 30],
+    description: 'A heavy cleaver that launches crescent waves of flame.',
+    profile: {
+      projectileCount: 1,
+      spread: 0,
+      pierce: 1,
+      element: 'ember',
+      status: { type: 'burn', damage: 4, duration: 4 },
+      travel: { speedMultiplier: 0.85, lifetimeBonus: 0.6 },
+    },
+  },
+  astralspike: {
+    slot: 'weapon',
+    baseName: 'Astral Spike',
+    style: 'pierce',
+    baseDamage: [18, 26],
+    description: 'A precision focus that punctures foes with astral lances.',
+    profile: {
+      projectileCount: 1,
+      spread: 0,
+      pierce: 2,
+      element: 'stasis',
+      status: { type: 'slow', slow: 0.35, duration: 2.5 },
+      travel: { speedMultiplier: 1.25, lifetimeBonus: 0.2 },
+    },
+  },
+  starwarden: {
+    slot: 'armor',
+    baseName: 'Starwarden Cloak',
+    description: 'A cloak of woven starlight that bolsters vitality.',
+    baseDefense: [18, 28],
+  },
+  emberplate: {
+    slot: 'armor',
+    baseName: 'Emberplate Mail',
+    description: 'Molten-forged armor that channels ember fury.',
+    baseDefense: [24, 36],
+  },
+  veilring: {
+    slot: 'trinket',
+    baseName: 'Veilring',
+    description: 'A sigil ring that amplifies critical strikes.',
+  },
+  sunfocus: {
+    slot: 'weapon',
+    baseName: 'Sunfocus Prism',
+    style: 'beam',
+    baseDamage: [14, 20],
+    description: 'A radiant prism that accelerates spellcasting.',
+    profile: {
+      projectileCount: 1,
+      spread: 0,
+      element: 'radiant',
+      status: { type: 'burn', damage: 3, duration: 3 },
+      travel: { speedMultiplier: 1.4, lifetimeBonus: 0.3 },
+    },
+  },
+  moondial: {
+    slot: 'weapon',
+    baseName: 'Moondial Lens',
+    style: 'pulse',
+    baseDamage: [12, 18],
+    description: 'A prismatic lens that bends time for spellcasters.',
+    profile: {
+      projectileCount: 3,
+      spread: 0.22,
+      element: 'stasis',
+      status: { type: 'slow', slow: 0.28, duration: 3.5 },
+      travel: { speedMultiplier: 1, lifetimeBonus: 0.8 },
+    },
+  },
+  auricband: {
+    slot: 'trinket',
+    baseName: 'Auric Band',
+    description: 'A golden band that attracts wealth and fortune.',
+  },
+};
+
+const EQUIPMENT_AFFIXES = {
+  weapon: [
+    { key: 'damage', label: 'Damage', range: [4, 10], type: 'add' },
+    { key: 'attackSpeed', label: 'Attack Speed', range: [0.08, 0.22], type: 'scale' },
+    { key: 'critChance', label: 'Critical Chance', range: [0.03, 0.08], type: 'add' },
+    { key: 'critMultiplier', label: 'Critical Damage', range: [0.1, 0.35], type: 'add' },
+    { key: 'projectileSpeed', label: 'Projectile Speed', range: [0.08, 0.24], type: 'scale' },
+  ],
+  armor: [
+    { key: 'maxHealth', label: 'Max Health', range: [20, 45], type: 'add' },
+    { key: 'damageReduction', label: 'Damage Reduction', range: [0.04, 0.12], type: 'add' },
+    { key: 'regen', label: 'Regeneration', range: [2, 6], type: 'add' },
+  ],
+  focus: [
+    { key: 'attackSpeed', label: 'Attack Speed', range: [0.12, 0.28], type: 'scale' },
+    { key: 'projectileLifetime', label: 'Projectile Lifetime', range: [0.2, 0.6], type: 'add' },
+    { key: 'abilityPower', label: 'Ability Power', range: [0.08, 0.22], type: 'add' },
+  ],
+  trinket: [
+    { key: 'critChance', label: 'Critical Chance', range: [0.04, 0.1], type: 'add' },
+    { key: 'goldFind', label: 'Gold Find', range: [0.1, 0.25], type: 'add' },
+    { key: 'xpGain', label: 'Experience Gain', range: [0.08, 0.18], type: 'add' },
+  ],
+};
+
+const NAME_PREFIXES = {
+  radiant: ['Luminous', 'Sunlit', 'Auric', 'Dawnforged'],
+  ember: ['Emberborn', 'Blazewrought', 'Cinderbrand', 'Pyrestone'],
+  frost: ['Glacier', 'Frostveiled', 'Winterbound', 'Iceglass'],
+  astral: ['Starwoven', 'Astral', 'Voidlaced', 'Skyforged'],
+  verdant: ['Thornbound', 'Sylvan', 'Groveguard', 'Wildroot'],
+};
+
+const NAME_SUFFIXES = {
+  weapon: ['of Radiance', 'of the Phoenix', 'of Silent Stars', 'of Roaring Winds'],
+  armor: ['Aegis', 'Bulwark', 'Guard', 'Mantle'],
+  focus: ['Prism', 'Conduit', 'Catalyst', 'Spire'],
+  trinket: ['Charm', 'Band', 'Sigil', 'Emblem'],
+};
+
+const BLUEPRINT_POOLS = {
+  weapon: ['dawnbow', 'embercleaver', 'astralspike', 'sunfocus', 'moondial'],
+  armor: ['starwarden', 'emberplate'],
+  trinket: ['veilring', 'auricband'],
+};
+
+const THEME_PREFERRED_BLUEPRINTS = {
+  ember: ['embercleaver', 'emberplate', 'auricband'],
+  catacombs: ['astralspike', 'starwarden', 'veilring'],
+  observatory: ['astralspike', 'sunfocus', 'moondial'],
+  warrens: ['dawnbow', 'starwarden', 'veilring', 'moondial'],
+  vault: ['dawnbow', 'sunfocus', 'auricband', 'astralspike'],
+};
 
 const GOLD_RANGES = {
   mob: [8, 18],
@@ -265,11 +460,61 @@ const QUEST_LIBRARY = [
 ];
 
 const ENEMY_TYPES = {
-  emberkin: { id: 'emberkin', health: 42, speed: 1.55, color: '#fb923c', attack: 'firebolt', damage: 12 },
-  gloomstalker: { id: 'gloomstalker', health: 48, speed: 1.35, color: '#6366f1', attack: 'dash', damage: 14 },
-  frostwisp: { id: 'frostwisp', health: 32, speed: 1.5, color: '#38bdf8', attack: 'slow', damage: 11 },
-  thornbeast: { id: 'thornbeast', health: 56, speed: 1.25, color: '#22c55e', attack: 'spread', damage: 13 },
-  astralSentinel: { id: 'astralSentinel', health: 60, speed: 1.2, color: '#a855f7', attack: 'beam', damage: 15 },
+  emberkin: {
+    id: 'emberkin',
+    health: 58,
+    speed: 1.6,
+    color: '#fb923c',
+    attack: 'firebolt',
+    damage: 14,
+    range: 13,
+    projectileColor: '#f97316',
+    element: 'ember',
+  },
+  gloomstalker: {
+    id: 'gloomstalker',
+    health: 64,
+    speed: 1.45,
+    color: '#6366f1',
+    attack: 'dash',
+    damage: 16,
+    range: 10,
+    projectileColor: '#818cf8',
+    element: 'void',
+  },
+  frostwisp: {
+    id: 'frostwisp',
+    health: 44,
+    speed: 1.5,
+    color: '#38bdf8',
+    attack: 'slow',
+    damage: 12,
+    range: 12,
+    projectileColor: '#38bdf8',
+    element: 'frost',
+  },
+  thornbeast: {
+    id: 'thornbeast',
+    health: 72,
+    speed: 1.3,
+    color: '#22c55e',
+    attack: 'spread',
+    damage: 15,
+    range: 11,
+    projectileColor: '#22c55e',
+    element: 'verdant',
+  },
+  astralSentinel: {
+    id: 'astralSentinel',
+    health: 78,
+    speed: 1.25,
+    color: '#a855f7',
+    attack: 'beam',
+    damage: 18,
+    range: 14,
+    projectileColor: '#c084fc',
+    element: 'astral',
+  },
 };
 
 const DUNGEON_THEMES = {
@@ -427,35 +672,33 @@ const ITEM_LIBRARY = {
 const RESOURCE_DROPS = ['timber', 'stone', 'silk'];
 
 const CHEST_LOOT_TABLES = {
-  town: ['timber', 'stone', 'sun-elixir', 'gale-cloak', 'ember-medal'],
+  town: [
+    { type: 'item', id: 'timber', weight: 6 },
+    { type: 'item', id: 'stone', weight: 6 },
+    { type: 'item', id: 'sun-elixir', weight: 3 },
+    { type: 'equipment', category: 'trinket', bias: 0.1, weight: 2 },
+    { type: 'gold', amount: 35, weight: 1 },
+  ],
   dungeon: [
-    'ember-blade',
-    'gale-cloak',
-    'dawnshield',
-    'aurora-lance',
-    'sun-elixir',
-    'moondrop-elixir',
-    'starlight-charm',
-    'star-medal',
+    { type: 'equipment', category: 'weapon', bias: 0.55, weight: 4 },
+    { type: 'equipment', category: 'armor', bias: 0.5, weight: 3 },
+    { type: 'equipment', category: 'trinket', bias: 0.45, weight: 2 },
+    { type: 'item', id: 'sun-elixir', weight: 1 },
+    { type: 'item', id: 'moondrop-elixir', weight: 1 },
   ],
   capital: [
-    'ember-blade',
-    'dawnshield',
-    'aurora-lance',
-    'gale-cloak',
-    'moondrop-elixir',
-    'starlight-charm',
-    'star-medal',
+    { type: 'equipment', category: 'weapon', bias: 0.75, weight: 4 },
+    { type: 'equipment', category: 'armor', bias: 0.7, weight: 3 },
+    { type: 'equipment', category: 'trinket', bias: 0.65, weight: 2 },
+    { type: 'item', id: 'moondrop-elixir', weight: 1 },
   ],
 };
 
 const BOSS_LOOT_TABLE = [
-  'ember-blade',
-  'dawnshield',
-  'aurora-lance',
-  'gale-cloak',
-  'starlight-charm',
-  'star-medal',
+  { type: 'equipment', category: 'weapon', bias: 0.9, weight: 3 },
+  { type: 'equipment', category: 'armor', bias: 0.8, weight: 2 },
+  { type: 'equipment', category: 'trinket', bias: 0.75, weight: 2 },
+  { type: 'item', id: 'star-medal', weight: 1 },
 ];
 
 const SHOP_LIBRARY = [
@@ -519,7 +762,9 @@ const SHOP_LIBRARY = [
         label: 'Farsight Elixir',
         cost: 28,
         effect: (player) => {
-          player.shootInterval *= 0.85;
+          player.attackSpeed = (player.attackSpeed ?? 1) + 0.2;
+          const baseInterval = player.shootInterval ?? PLAYER_SHOT_INTERVAL;
+          player.effectiveShootInterval = Math.max(0.12, baseInterval / player.attackSpeed);
           player.damage += 2;
         },
       },
@@ -551,6 +796,24 @@ const NPC_LIBRARY = [
     name: 'Sage Miren',
     line: 'Every plaza whispers clues about hidden keeps. Listen closely.',
     journal: 'Miren urged me to visit each town before braving the deeper vaults.',
+  },
+  {
+    id: 'archivist',
+    name: 'Archivist Elowen',
+    line: 'The capital archives glow with secrets of the dungeons below.',
+    journal: 'Elowen catalogues relics you recover from each dungeon.',
+  },
+  {
+    id: 'river-warden',
+    name: 'River Warden Thace',
+    line: 'Canals carry news as quickly as traders—keep them safe from raiders.',
+    journal: 'Thace requests aid clearing the waterways leading to Auric Quay.',
+  },
+  {
+    id: 'merchant',
+    name: 'Merchant Sall',
+    line: 'Auric Quay’s markets crave relics from the far dungeons.',
+    journal: 'Sall promises rare reagents if I secure the Glimmerdeep Vault.',
   },
   {
     id: 'captain',
@@ -637,6 +900,161 @@ function cloneItem(id) {
     quantity: template.stackable ? 1 : 1,
     instanceId: `${id}-${ITEM_UID++}`,
   };
+}
+
+function weightedPick(entries) {
+  if (!entries || entries.length === 0) return null;
+  const total = entries.reduce((sum, entry) => sum + (entry.weight ?? 0), 0);
+  if (total <= 0) {
+    return entries[entries.length - 1];
+  }
+  let threshold = Math.random() * total;
+  for (const entry of entries) {
+    threshold -= entry.weight ?? 0;
+    if (threshold <= 0) {
+      return entry;
+    }
+  }
+  return entries[entries.length - 1];
+}
+
+function rollRarity(bias = 0) {
+  const adjusted = ITEM_RARITY_WEIGHTS.map((entry) => {
+    const info = ITEM_RARITIES[entry.rarity];
+    const modifier = 1 + bias * (info.power - 1);
+    return { rarity: entry.rarity, weight: entry.weight * Math.max(0.2, modifier) };
+  });
+  const result = weightedPick(adjusted);
+  return result?.rarity ?? 'common';
+}
+
+function rollFromRange(range, multiplier = 1) {
+  const [min, max] = range;
+  return randRange(min, max) * multiplier;
+}
+
+function buildItemName(blueprint, rarity, theme) {
+  const themeKey =
+    theme && NAME_PREFIXES[theme]
+      ? theme
+      : blueprint.style === 'cleave'
+      ? 'ember'
+      : blueprint.style === 'pierce' || blueprint.style === 'beam'
+      ? 'astral'
+      : blueprint.style === 'pulse'
+      ? 'verdant'
+      : 'radiant';
+  const prefixPool = NAME_PREFIXES[themeKey] ?? NAME_PREFIXES.radiant;
+  const suffixPool = NAME_SUFFIXES[blueprint.slot] ?? NAME_SUFFIXES.weapon;
+  const prefix = pick(prefixPool);
+  const suffix = pick(suffixPool);
+  return `${prefix} ${blueprint.baseName} ${suffix}`;
+}
+
+function rollAffixes(slot, rarityInfo, powerBonus = 0) {
+  const pool = EQUIPMENT_AFFIXES[slot];
+  if (!pool || pool.length === 0) return [];
+  const count = Math.min(rarityInfo.affixes, pool.length);
+  const candidates = [...pool];
+  const affixes = [];
+  for (let i = 0; i < count; i += 1) {
+    const index = randInt(0, candidates.length - 1);
+    const picked = candidates.splice(index, 1)[0];
+    affixes.push({ ...picked, value: rollFromRange(picked.range, rarityInfo.power + powerBonus) });
+  }
+  return affixes;
+}
+
+function generateEquipment({ category = 'weapon', theme, bias = 0, blueprintId, powerBonus = 0 } = {}) {
+  const pool = [];
+  if (theme && THEME_PREFERRED_BLUEPRINTS[theme]) {
+    pool.push(...THEME_PREFERRED_BLUEPRINTS[theme]);
+  }
+  if (BLUEPRINT_POOLS[category]) {
+    pool.push(...BLUEPRINT_POOLS[category]);
+  }
+  const chosenId = blueprintId ?? pick(pool);
+  const blueprint = EQUIPMENT_BLUEPRINTS[chosenId];
+  if (!blueprint) return null;
+  const rarityKey = rollRarity(bias);
+  const rarityInfo = ITEM_RARITIES[rarityKey];
+  const bonuses = {};
+  if (blueprint.slot === 'weapon' && blueprint.baseDamage) {
+    bonuses.damage = Math.round(rollFromRange(blueprint.baseDamage, rarityInfo.power + powerBonus));
+  } else if (blueprint.slot === 'armor' && blueprint.baseDefense) {
+    bonuses.maxHealth = Math.round(rollFromRange(blueprint.baseDefense, rarityInfo.power + powerBonus));
+    bonuses.damageReduction = (bonuses.damageReduction ?? 0) + 0.04 * rarityInfo.power;
+  }
+
+  const affixes = rollAffixes(blueprint.slot, rarityInfo, powerBonus * 0.5);
+  for (const affix of affixes) {
+    if (affix.type === 'add') {
+      bonuses[affix.key] = (bonuses[affix.key] ?? 0) + affix.value;
+    } else if (affix.type === 'scale') {
+      bonuses[affix.key] = (bonuses[affix.key] ?? 0) + affix.value;
+    }
+  }
+
+  const weaponProfile =
+    blueprint.slot === 'weapon'
+      ? {
+          ...DEFAULT_WEAPON_PROFILE,
+          ...(blueprint.profile ?? {}),
+        }
+      : undefined;
+
+  return {
+    id: `${blueprint.slot}-${chosenId}-${rarityKey}`,
+    instanceId: `loot-${ITEM_UID++}`,
+    name: buildItemName(blueprint, rarityKey, theme),
+    description: blueprint.description,
+    type: 'equipment',
+    slot: blueprint.slot === 'trinket' ? 'trinket' : blueprint.slot,
+    rarity: rarityKey,
+    rarityLabel: rarityInfo.label,
+    rarityColor: rarityInfo.color,
+    actions: ['equip', ...(blueprint.slot === 'weapon' ? ['assign'] : [])],
+    bonuses,
+    weaponProfile,
+    style: blueprint.style,
+  };
+}
+
+function resolveLootEntry(entry, context = {}) {
+  if (!entry) return null;
+  if (typeof entry === 'string') {
+    return cloneItem(entry);
+  }
+  if (entry.type === 'equipment') {
+    return generateEquipment({
+      category: entry.category ?? 'weapon',
+      theme: entry.theme ?? context.theme,
+      bias: entry.bias ?? context.bias ?? 0,
+      blueprintId: entry.blueprint,
+      powerBonus: context.powerBonus ?? 0,
+    });
+  }
+  if (entry.type === 'gold') {
+    return {
+      id: 'gold-pouch',
+      name: 'Gold Pouch',
+      type: 'medal',
+      goldValue: entry.amount ?? 20,
+      consumedOnPickup: true,
+      instanceId: `gold-${ITEM_UID++}`,
+    };
+  }
+  if (entry.type === 'item') {
+    return cloneItem(entry.id);
+  }
+  return null;
+}
+
+function drawFromLootTable(table, context) {
+  if (!Array.isArray(table) || table.length === 0) return null;
+  const weighted = table.map((entry) => ({ entry, weight: entry.weight ?? 1 }));
+  const picked = weightedPick(weighted);
+  return resolveLootEntry(picked?.entry, context);
 }
 
 function vectorLength(v) {
@@ -948,6 +1366,11 @@ class UIController {
       if (slot) {
         slotElement.dataset.empty = 'false';
         slotElement.dataset.name = slot.label ?? slot.name ?? '';
+        if (slot.rarity) {
+          slotElement.dataset.rarity = slot.rarity;
+        } else {
+          delete slotElement.dataset.rarity;
+        }
         if (typeof slot.cooldownLabel === 'string' && slot.cooldownLabel.length > 0) {
           slotElement.dataset.cooldown = slot.cooldownLabel;
         } else {
@@ -961,6 +1384,7 @@ class UIController {
       } else {
         slotElement.dataset.empty = 'true';
         slotElement.dataset.name = '';
+        delete slotElement.dataset.rarity;
         delete slotElement.dataset.cooldown;
         slotElement.classList.remove('active');
       }
@@ -1017,6 +1441,12 @@ class UIController {
     }
     for (const item of items) {
       const li = document.createElement('li');
+      li.className = 'inventory-item';
+      if (item.rarity) {
+        li.dataset.rarity = item.rarity;
+      } else {
+        delete li.dataset.rarity;
+      }
       const meta = [];
       if (item.type) {
         meta.push(item.type.charAt(0).toUpperCase() + item.type.slice(1));
@@ -1031,12 +1461,28 @@ class UIController {
       }
       if (item.bonuses) {
         const bonusText = Object.entries(item.bonuses)
-          .map(([key, value]) => `${key.replace(/([A-Z])/g, ' $1')} ${value > 0 ? '+' : ''}${value}`)
+          .map(([key, value]) => {
+            const label = key.replace(/([A-Z])/g, ' $1');
+            let display = value;
+            if (typeof value === 'number') {
+              display = Math.abs(value) < 1 ? value.toFixed(2) : Math.round(value);
+            }
+            return `${label} ${value > 0 ? '+' : ''}${display}`;
+          })
           .join(' · ');
         if (bonusText) meta.push(bonusText);
       }
-      const header = document.createElement('strong');
-      header.textContent = item.name;
+      const header = document.createElement('div');
+      header.className = 'item-header';
+      const title = document.createElement('strong');
+      title.textContent = item.name;
+      header.appendChild(title);
+      if (item.rarityLabel) {
+        const rarity = document.createElement('span');
+        rarity.className = 'item-rarity';
+        rarity.textContent = item.rarityLabel;
+        header.appendChild(rarity);
+      }
       li.appendChild(header);
       const description = document.createElement('p');
       description.textContent = item.description;
@@ -1090,6 +1536,10 @@ class UIController {
     for (const [slot, item] of Object.entries(equipment)) {
       const li = document.createElement('li');
       if (item) {
+        li.className = 'equipment-item';
+        if (item.rarity) {
+          li.dataset.rarity = item.rarity;
+        }
         li.innerHTML = `<strong>${item.name}</strong><p>${item.description}</p><div class="item-meta">${slot}</div>`;
       } else {
         li.innerHTML = `<strong>${slot}</strong><p>Empty slot</p>`;
@@ -1595,13 +2045,13 @@ class World {
 
   #buildSettlements() {
     this.#buildTown({
-      name: 'Radiant Hearth',
+      name: 'Radiant Hearth Metropolis',
       center: this.spawnPoint,
-      size: 8,
-      housePlots: 4,
+      size: 12,
+      housePlots: 6,
       shops: ['weapons', 'armory', 'alchemy'],
-      npcs: ['mayor', 'artisan', 'sage'],
-      chests: 2,
+      npcs: ['mayor', 'artisan', 'sage', 'archivist'],
+      chests: 4,
       hasHome: true,
       tier: 'capital',
     });
@@ -1609,30 +2059,39 @@ class World {
     const additionalTowns = [
       {
         name: 'Glimmergrove Market',
-        offset: { x: -28, y: -12 },
-        size: 6,
-        housePlots: 2,
+        offset: { x: -36, y: -14 },
+        size: 7,
+        housePlots: 3,
         shops: ['alchemy'],
         npcs: ['scout', 'sage'],
-        chests: 1,
+        chests: 2,
       },
       {
         name: 'Sunspire Outpost',
-        offset: { x: 28, y: -10 },
-        size: 5,
-        housePlots: 1,
+        offset: { x: 36, y: -12 },
+        size: 6,
+        housePlots: 2,
         shops: ['weapons'],
         npcs: ['captain'],
         chests: 1,
       },
       {
         name: 'Duskridge Hollow',
-        offset: { x: -20, y: 26 },
+        offset: { x: -26, y: 32 },
+        size: 7,
+        housePlots: 3,
+        shops: ['armory'],
+        npcs: ['artisan', 'river-warden'],
+        chests: 2,
+      },
+      {
+        name: 'Auric Quay',
+        offset: { x: 28, y: 34 },
         size: 6,
         housePlots: 2,
-        shops: ['armory'],
-        npcs: ['artisan'],
-        chests: 1,
+        shops: ['armory', 'alchemy'],
+        npcs: ['merchant'],
+        chests: 2,
       },
     ];
 
@@ -1696,14 +2155,51 @@ class World {
     const occupied = new Set();
     const mark = (x, y) => occupied.add(`${x},${y}`);
 
-    for (let y = bounds.y1; y <= bounds.y2; y += 1) {
+    if (tier === 'capital') {
+      for (let y = bounds.y1; y <= bounds.y2; y += 1) {
+        for (let x = bounds.x1; x <= bounds.x2; x += 1) {
+          this.#setTile(x, y, 'cityStreet', 'town');
+        }
+      }
+      const plazaRadius = Math.max(2, Math.floor(size * 0.35));
+      for (let y = -plazaRadius; y <= plazaRadius; y += 1) {
+        for (let x = -plazaRadius; x <= plazaRadius; x += 1) {
+          const px = center.x + x;
+          const py = center.y + y;
+          if (px < bounds.x1 || px > bounds.x2 || py < bounds.y1 || py > bounds.y2) continue;
+          const distance = Math.hypot(x, y);
+          if (distance <= plazaRadius * 0.6) {
+            this.#setTile(px, py, 'cityPlaza', 'town');
+          } else if (distance <= plazaRadius * 1.15) {
+            this.#setTile(px, py, 'cityGarden', 'town');
+          }
+        }
+      }
+      const canalOffset = Math.floor(size * 0.55);
+      for (let y = bounds.y1; y <= bounds.y2; y += 1) {
+        for (const offset of [-canalOffset, canalOffset]) {
+          const cx = clamp(center.x + offset, bounds.x1, bounds.x2);
+          this.#setTile(cx, y, 'cityCanal', 'town');
+          this.#setTile(cx + Math.sign(-offset || 1), y, 'cityBridge', 'town');
+        }
+      }
       for (let x = bounds.x1; x <= bounds.x2; x += 1) {
-        const dx = Math.abs(x - center.x);
-        const dy = Math.abs(y - center.y);
-        if (dx <= 1 && dy <= 1) {
-          this.#setTile(x, y, 'plaza', 'town');
-        } else {
-          this.#setTile(x, y, 'townTile', 'town');
+        for (const offset of [-canalOffset, canalOffset]) {
+          const cy = clamp(center.y + offset, bounds.y1, bounds.y2);
+          this.#setTile(x, cy, 'cityCanal', 'town');
+          this.#setTile(x, cy + Math.sign(-offset || 1), 'cityBridge', 'town');
+        }
+      }
+    } else {
+      for (let y = bounds.y1; y <= bounds.y2; y += 1) {
+        for (let x = bounds.x1; x <= bounds.x2; x += 1) {
+          const dx = Math.abs(x - center.x);
+          const dy = Math.abs(y - center.y);
+          if (dx <= 1 && dy <= 1) {
+            this.#setTile(x, y, 'plaza', 'town');
+          } else {
+            this.#setTile(x, y, 'townTile', 'town');
+          }
         }
       }
     }
@@ -1823,17 +2319,37 @@ class World {
         );
         const key = `${cx},${cy}`;
         if (occupied.has(key)) continue;
-        this.#placeChestAt(cx, cy, tier === 'capital' ? 'capital' : 'town');
+        const chestTheme = tier === 'capital' ? 'capital' : undefined;
+        this.#placeChestAt(cx, cy, tier === 'capital' ? 'capital' : 'town', chestTheme);
         mark(cx, cy);
         break;
+      }
+    }
+
+    if (tier === 'capital') {
+      for (let i = 0; i < 6; i += 1) {
+        const angle = (i / 6) * Math.PI * 2;
+        const rx = Math.round(center.x + Math.cos(angle) * Math.max(4, size - 3));
+        const ry = Math.round(center.y + Math.sin(angle) * Math.max(4, size - 3));
+        this.decorations.push({ x: rx, y: ry, type: 'house' });
+      }
+      for (let i = 0; i < 4; i += 1) {
+        const px = center.x + (i % 2 === 0 ? -2 : 2);
+        const py = center.y + (i < 2 ? -2 : 2);
+        this.decorations.push({ x: px, y: py, type: 'market' });
+      }
+      for (let i = 0; i < 10; i += 1) {
+        const gx = clamp(center.x + randInt(-size + 2, size - 2), bounds.x1 + 1, bounds.x2 - 1);
+        const gy = clamp(center.y + randInt(-size + 2, size - 2), bounds.y1 + 1, bounds.y2 - 1);
+        this.decorations.push({ x: gx, y: gy, type: 'blossom' });
       }
     }
 
     this.towns.push({ name, bounds, center, tier });
   }
 
-  #placeChestAt(x, y, tier = 'town') {
-    this.chests.push({ x: x + 0.5, y: y + 0.5, opened: false, tier });
+  #placeChestAt(x, y, tier = 'town', theme) {
+    this.chests.push({ x: x + 0.5, y: y + 0.5, opened: false, tier, theme });
   }
 
   #carveDungeons() {
@@ -1846,6 +2362,7 @@ class World {
         },
         size: randInt(7, 9),
         chests: 2,
+        themeKey: 'catacombs',
       },
       {
         name: 'Emberfen Gate',
@@ -1855,6 +2372,7 @@ class World {
         },
         size: randInt(7, 9),
         chests: 2,
+        themeKey: 'ember',
       },
       {
         name: 'Starfall Observatory',
@@ -1864,6 +2382,7 @@ class World {
         },
         size: randInt(8, 10),
         chests: 2,
+        themeKey: 'observatory',
       },
       {
         name: 'Thornhollow Warrens',
@@ -1873,6 +2392,7 @@ class World {
         },
         size: randInt(7, 9),
         chests: 2,
+        themeKey: 'warrens',
       },
       {
         name: 'Glimmerdeep Vault',
@@ -1882,10 +2402,12 @@ class World {
         },
         size: randInt(9, 10),
         chests: 3,
+        themeKey: 'vault',
       },
     ];
 
     for (const config of dungeonConfigs) {
+      const theme = DUNGEON_THEMES[config.themeKey];
       const size = config.size ?? randInt(6, 8);
       const bounds = {
         x1: clamp(config.center.x - size, 3, this.width - 4),
@@ -1920,6 +2442,7 @@ class World {
         spawnPoints,
         boss: { spawned: false, defeated: false },
         entrance: { x: entranceX + 0.5, y: entranceY + 0.5 },
+        theme: theme ? { ...theme, id: config.themeKey } : null,
       });
 
       for (let i = 0; i < (config.chests ?? 1); i += 1) {
@@ -1928,7 +2451,7 @@ class World {
           const cy = randInt(bounds.y1 + 1, bounds.y2 - 1);
           const tile = this.getTile(cx, cy);
           if (tile.type !== 'dungeonFloor') continue;
-          this.#placeChestAt(cx, cy, 'dungeon');
+          this.#placeChestAt(cx, cy, 'dungeon', config.theme?.id ?? config.themeKey);
           break;
         }
       }
@@ -1967,6 +2490,18 @@ class World {
         const lx = Math.round(town.center.x + Math.cos(angle) * radius);
         const ly = Math.round(town.center.y + Math.sin(angle) * radius);
         this.lamps.push({ x: lx + 0.5, y: ly + 0.5 });
+      }
+      if (town.tier !== 'capital') {
+        const span = Math.max(town.bounds.x2 - town.bounds.x1, town.bounds.y2 - town.bounds.y1);
+        for (let i = 0; i < 6; i += 1) {
+          const fx = randInt(-span - 3, span + 3);
+          const fy = randInt(-span - 3, span + 3);
+          if (Math.hypot(fx, fy) < span * 0.6) continue;
+          const tx = clamp(town.center.x + fx, 3, this.width - 4);
+          const ty = clamp(town.center.y + fy, 3, this.height - 4);
+          this.#setTile(tx, ty, 'farmland', 'town');
+          this.decorations.push({ x: tx, y: ty, type: 'crop' });
+        }
       }
     }
   }
@@ -2017,6 +2552,9 @@ function createProjectile({
   spread = 0,
   slowField = false,
   penetration = 0,
+  element = 'radiant',
+  statusEffect = null,
+  size = 0.15,
 }) {
   const angle = Math.atan2(direction.y, direction.x) + spread;
   return {
@@ -2030,6 +2568,10 @@ function createProjectile({
     friendly,
     slowField,
     penetration,
+    element,
+    statusEffect,
+    size,
+    color: ELEMENT_COLORS[element] ?? BULLET_COLOR,
   };
 }
 
@@ -2192,6 +2734,8 @@ export class RoguelikeGame {
       experience: 0,
       experienceToLevel: XP_PER_LEVEL,
       shootInterval: PLAYER_SHOT_INTERVAL,
+      baseShootInterval: PLAYER_SHOT_INTERVAL,
+      effectiveShootInterval: PLAYER_SHOT_INTERVAL,
       shootTimer: 0,
       dashCooldown: PLAYER_DASH_COOLDOWN,
       dashTimer: 0,
@@ -2207,6 +2751,15 @@ export class RoguelikeGame {
       shield: null,
       onLevelUpRegen: 0,
       speed: PLAYER_BASE_SPEED,
+      attackSpeed: 1,
+      critChance: 0.05,
+      critMultiplier: 1.6,
+      damageReduction: 0,
+      regen: 0,
+      goldFind: 0,
+      activeSlow: 1,
+      statusEffects: [],
+      weaponProfile: { ...DEFAULT_WEAPON_PROFILE },
       aim: { x: 0, y: -1 },
       upgrades: [],
       equipment: {
@@ -2433,6 +2986,64 @@ export class RoguelikeGame {
         ? this.player.speed * multiplier
         : this.player.speed / multiplier;
     }
+    if (bonuses.attackSpeed) {
+      this.player.attackSpeed += bonuses.attackSpeed * direction;
+    }
+    if (bonuses.critChance) {
+      this.player.critChance = Math.max(0, this.player.critChance + bonuses.critChance * direction);
+    }
+    if (bonuses.critMultiplier) {
+      this.player.critMultiplier = Math.max(
+        1.2,
+        this.player.critMultiplier + bonuses.critMultiplier * direction
+      );
+    }
+    if (bonuses.projectileSpeed) {
+      const factor = 1 + bonuses.projectileSpeed;
+      this.player.projectileSpeed = apply
+        ? this.player.projectileSpeed * factor
+        : this.player.projectileSpeed / factor;
+    }
+    if (bonuses.projectileLifetime) {
+      this.player.projectileLifetime += bonuses.projectileLifetime * direction;
+    }
+    if (bonuses.damageReduction) {
+      this.player.damageReduction = clamp(
+        this.player.damageReduction + bonuses.damageReduction * direction,
+        0,
+        0.7
+      );
+    }
+    if (bonuses.regen) {
+      this.player.regen = Math.max(0, this.player.regen + bonuses.regen * direction);
+    }
+    if (bonuses.goldFind) {
+      this.player.goldFind = Math.max(0, this.player.goldFind + bonuses.goldFind * direction);
+    }
+    if (bonuses.xpGain) {
+      this.player.xpBonus = Math.max(0, this.player.xpBonus + bonuses.xpGain * direction);
+    }
+    if (bonuses.abilityPower) {
+      this.player.abilityEmpowered = apply ? true : this.player.abilityEmpowered && false;
+    }
+    if (item.weaponProfile) {
+      if (apply) {
+        this.player.weaponProfile = { ...DEFAULT_WEAPON_PROFILE, ...item.weaponProfile };
+      } else {
+        const equipped = this.player.equipment.weapon;
+        this.player.weaponProfile = equipped?.weaponProfile
+          ? { ...DEFAULT_WEAPON_PROFILE, ...equipped.weaponProfile }
+          : { ...DEFAULT_WEAPON_PROFILE };
+      }
+    }
+    this.#refreshCombatStats();
+  }
+
+  #refreshCombatStats() {
+    if (!this.player) return;
+    const attackSpeed = Math.max(0.5, this.player.attackSpeed ?? 1);
+    const baseInterval = this.player.shootInterval ?? PLAYER_SHOT_INTERVAL;
+    this.player.effectiveShootInterval = Math.max(0.12, baseInterval / attackSpeed);
   }
 
   #useItem(instanceId) {
@@ -2477,7 +3088,12 @@ export class RoguelikeGame {
     }
     const item = this.inventory.find((entry) => entry.instanceId === instanceId);
     if (!item) return;
-    this.hotbar[slotIndex] = { type: 'item', instanceId, label: item.name };
+    this.hotbar[slotIndex] = {
+      type: 'item',
+      instanceId,
+      label: item.name,
+      rarity: item.rarity,
+    };
     this.#syncHotbar();
     this.ui.showToast(`${item.name} added to hotbar slot ${slotIndex + 1}`);
   }
@@ -2502,6 +3118,7 @@ export class RoguelikeGame {
           label: item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name,
           cooldownLabel: '',
           active: false,
+          rarity: item.rarity,
         };
       }
       return null;
@@ -2612,19 +3229,27 @@ export class RoguelikeGame {
 
   #updateModifiers(dt) {
     const survivors = [];
+    let statsChanged = false;
     for (const mod of this.activeModifiers) {
       if (!mod.applied) {
         mod.apply?.(this.player);
         mod.applied = true;
+        statsChanged = true;
       }
       mod.remaining -= dt;
       if (mod.remaining > 0) {
         survivors.push(mod);
       } else {
-        mod.remove?.(this.player);
+        if (mod.remove) {
+          mod.remove(this.player);
+          statsChanged = true;
+        }
       }
     }
     this.activeModifiers = survivors;
+    if (statsChanged) {
+      this.#refreshCombatStats();
+    }
   }
   showStartMenu(show) {
     this.ui.showStartMenu(show);
@@ -2681,6 +3306,7 @@ export class RoguelikeGame {
     this.gold -= item.cost;
     this.ui.setGold(this.gold);
     item.effect(this.player);
+    this.#refreshCombatStats();
     this.ui.setHealth(this.player.health, this.player.maxHealth);
     this.ui.showToast(`Purchased ${item.label}!`);
     this.log.push(`You purchase ${item.label} from ${shop.name}.`);
@@ -2790,7 +3416,14 @@ export class RoguelikeGame {
     const table = CHEST_LOOT_TABLES[tier] ?? CHEST_LOOT_TABLES.town;
     const dropCount = tier === 'capital' ? 3 : tier === 'dungeon' ? 3 : 2;
     for (let i = 0; i < dropCount; i += 1) {
-      this.#spawnLootItem(pick(table), chest.x, chest.y, 0.55, 24);
+      const loot = drawFromLootTable(table, {
+        theme: chest.theme ?? this.world.getDungeonAt(chest.x, chest.y)?.theme?.id,
+        bias: tier === 'capital' ? 0.8 : tier === 'dungeon' ? 0.6 : 0.2,
+        powerBonus: tier === 'capital' ? 0.4 : tier === 'dungeon' ? 0.25 : 0.05,
+      });
+      if (loot) {
+        this.#spawnLootItem(loot, chest.x, chest.y, 0.55, 24);
+      }
     }
     const goldRange =
       tier === 'capital'
@@ -2844,12 +3477,25 @@ export class RoguelikeGame {
     this.timeOfDay = (this.timeOfDay + dt * 0.45) % DAY_NIGHT_DURATION;
     this.#updateCamera(dt);
     this.ui.setTimeOfDay(this.#describeTimeOfDay());
+    this.#tickPlayerEffects(dt);
+    if (this.player.regen > 0 && this.player.health < this.player.maxHealth) {
+      const before = this.player.health;
+      this.player.health = clamp(
+        this.player.health + this.player.regen * dt,
+        0,
+        this.player.maxHealth
+      );
+      if (this.player.health !== before) {
+        this.ui.setHealth(this.player.health, this.player.maxHealth);
+      }
+    }
     const movement = this.input.getMovementVector();
     const aim = this.input.getAimVector(this.player.aim);
     this.player.aim = aim;
 
-    const desiredVx = movement.x * this.player.speed;
-    const desiredVy = movement.y * this.player.speed;
+    const slowFactor = this.player.activeSlow ?? 1;
+    const desiredVx = movement.x * this.player.speed * slowFactor;
+    const desiredVy = movement.y * this.player.speed * slowFactor;
     const acceleration = PLAYER_ACCELERATION * (this.player.spiritWalk ? 1.25 : 1);
     const friction = PLAYER_FRICTION;
 
@@ -3042,47 +3688,63 @@ export class RoguelikeGame {
     const direction = this.player.aim;
     if (vectorLength(direction) === 0) return;
 
-    this.player.shootTimer = this.player.shootInterval;
-    const baseProjectile = createProjectile({
-      x: this.player.x,
-      y: this.player.y,
-      direction,
-      speed: this.player.projectileSpeed,
-      damage: this.player.damage,
-      lifetime: this.player.projectileLifetime,
-      friendly: true,
-      slowField: this.player.glowShots,
-      penetration: this.player.piercingShots ? 1 : 0,
-    });
+    const interval = this.player.effectiveShootInterval ?? this.player.shootInterval;
+    this.player.shootTimer = interval;
+    const profile = this.player.weaponProfile ?? DEFAULT_WEAPON_PROFILE;
+    const baseCount = profile.projectileCount ?? 1;
+    const extraShots = this.player.doubleShot ? 1 : 0;
+    const totalProjectiles = baseCount + extraShots;
+    const spread = profile.spread ?? 0;
+    const pierce = (profile.pierce ?? 0) + (this.player.piercingShots ? 1 : 0);
+    const travel = profile.travel ?? {};
+    const speed = this.player.projectileSpeed * (travel.speedMultiplier ?? 1);
+    const lifetime = this.player.projectileLifetime + (travel.lifetimeBonus ?? 0);
+    const element = profile.element ?? 'radiant';
+    const slowField = this.player.glowShots || element === 'frost';
 
-    this.projectiles.push(baseProjectile);
-
-    if (this.player.doubleShot) {
-      const spreadAngle = randRange(-0.25, 0.25);
-      this.projectiles.push(
-        createProjectile({
-          x: this.player.x,
-          y: this.player.y,
-          direction,
-          speed: this.player.projectileSpeed * 0.92,
-          damage: Math.round(this.player.damage * 0.8),
-          lifetime: this.player.projectileLifetime,
-          friendly: true,
-          spread: spreadAngle,
-          slowField: this.player.glowShots,
-          penetration: this.player.piercingShots ? 1 : 0,
-        })
-      );
+    for (let i = 0; i < totalProjectiles; i += 1) {
+      const distribution = totalProjectiles > 1 ? i / (totalProjectiles - 1) - 0.5 : 0;
+      const spreadAngle = spread ? distribution * spread * 2 : 0;
+      const baseDamage = this.player.damage * (baseCount > 1 ? 0.85 : 1);
+      let damage = baseDamage;
+      if (Math.random() < this.player.critChance) {
+        damage *= this.player.critMultiplier;
+      }
+      const projectile = createProjectile({
+        x: this.player.x,
+        y: this.player.y,
+        direction,
+        speed,
+        damage,
+        lifetime,
+        friendly: true,
+        spread: spreadAngle,
+        slowField,
+        penetration: pierce,
+        element,
+        statusEffect: profile.status,
+        size: profile.style === 'beam' ? 0.22 : profile.style === 'pulse' ? 0.18 : 0.15,
+      });
+      this.projectiles.push(projectile);
+      if (profile.style === 'beam') {
+        const baseAngle = Math.atan2(direction.y, direction.x) + spreadAngle;
+        for (let t = 1; t <= 2; t += 1) {
+          const follow = { ...projectile, lifetime: projectile.lifetime * 0.6, size: 0.18 };
+          follow.x += Math.cos(baseAngle) * 0.2 * t;
+          follow.y += Math.sin(baseAngle) * 0.2 * t;
+          this.projectiles.push(follow);
+        }
+      }
     }
 
     this.particles.spawn({ x: this.player.x, y: this.player.y }, {
-      color: BULLET_COLOR,
-      radius: 0.2,
-      life: 0.4,
-      vx: -direction.x * 0.5,
-      vy: -direction.y * 0.5,
+      color: ELEMENT_COLORS[element] ?? BULLET_COLOR,
+      radius: 0.22,
+      life: 0.45,
+      vx: -direction.x * 0.45,
+      vy: -direction.y * 0.45,
     });
-    this.log.push('You release a burst of luminous light.');
+    this.log.push('You unleash a crafted technique.');
   }
 
   #handleDash() {
@@ -3155,6 +3817,9 @@ export class RoguelikeGame {
           if (projectile.slowField) {
             this.#spawnSlowField(enemy.x, enemy.y);
           }
+          if (projectile.statusEffect) {
+            this.#applyStatusToEnemy(enemy, projectile.statusEffect);
+          }
           if (projectile.penetration && projectile.penetration > 0) {
             projectile.penetration -= 1;
             continue;
@@ -3189,21 +3854,124 @@ export class RoguelikeGame {
     this.slowFields.push(field);
   }
 
+  #applyStatusToEnemy(enemy, status) {
+    if (!status) return;
+    if (!enemy.effects) enemy.effects = [];
+    const existing = enemy.effects.find((effect) => effect.type === status.type);
+    if (existing) {
+      existing.remaining = Math.max(existing.remaining, status.duration ?? existing.remaining);
+      if (status.damage) existing.damage = Math.max(existing.damage ?? 0, status.damage);
+      if (status.slow) existing.slow = Math.max(existing.slow ?? 0, status.slow);
+      return;
+    }
+    enemy.effects.push({
+      type: status.type,
+      remaining: status.duration ?? 2.5,
+      damage: status.damage,
+      slow: status.slow,
+    });
+  }
+
+  #tickEnemyEffects(enemy, dt) {
+    if (!enemy.effects || enemy.effects.length === 0) {
+      enemy.effects = [];
+      enemy.slowMultiplier = 1;
+      return;
+    }
+    let slowMultiplier = 1;
+    const survivors = [];
+    for (const effect of enemy.effects) {
+      effect.remaining -= dt;
+      if (effect.type === 'burn' && effect.damage) {
+        enemy.health -= effect.damage * dt;
+      }
+      if (effect.type === 'slow' && effect.slow) {
+        slowMultiplier = Math.min(slowMultiplier, Math.max(0.35, 1 - effect.slow));
+      }
+      if (effect.remaining > 0) {
+        survivors.push(effect);
+      }
+    }
+    enemy.effects = survivors;
+    enemy.slowMultiplier = slowMultiplier;
+  }
+
+  #applyStatusToPlayer(status) {
+    if (!status) return;
+    this.player.statusEffects = this.player.statusEffects ?? [];
+    const existing = this.player.statusEffects.find((effect) => effect.type === status.type);
+    if (existing) {
+      existing.remaining = Math.max(existing.remaining, status.duration ?? existing.remaining);
+      if (status.damage) existing.damage = Math.max(existing.damage ?? 0, status.damage);
+      if (status.slow) existing.slow = Math.max(existing.slow ?? 0, status.slow);
+      return;
+    }
+    this.player.statusEffects.push({
+      type: status.type,
+      remaining: status.duration ?? 2.5,
+      damage: status.damage,
+      slow: status.slow,
+    });
+  }
+
+  #tickPlayerEffects(dt) {
+    if (!this.player.statusEffects || this.player.statusEffects.length === 0) {
+      this.player.statusEffects = [];
+      this.player.activeSlow = 1;
+      return;
+    }
+    let slowMultiplier = 1;
+    const survivors = [];
+    for (const effect of this.player.statusEffects) {
+      effect.remaining -= dt;
+      if (effect.type === 'burn' && effect.damage) {
+        const before = this.player.health;
+        this.player.health = clamp(
+          this.player.health - effect.damage * dt,
+          0,
+          this.player.maxHealth
+        );
+        if (this.player.health !== before) {
+          this.ui.setHealth(this.player.health, this.player.maxHealth);
+        }
+      }
+      if (effect.type === 'slow' && effect.slow) {
+        slowMultiplier = Math.min(slowMultiplier, Math.max(0.4, 1 - effect.slow));
+      }
+      if (effect.remaining > 0) {
+        survivors.push(effect);
+      }
+    }
+    this.player.statusEffects = survivors;
+    this.player.activeSlow = slowMultiplier;
+  }
+
   #dropGold(x, y, amount, scatter = 0.45) {
     if (amount <= 0) return;
+    const bonus = 1 + (this.player?.goldFind ?? 0);
     this.pickups.push({
       kind: 'gold',
       x: x + randRange(-scatter, scatter),
       y: y + randRange(-scatter, scatter),
       vx: randRange(-0.25, 0.25),
       vy: randRange(-0.25, 0.25),
-      amount: Math.round(amount),
+      amount: Math.round(amount * bonus),
       life: 18,
     });
   }
 
   #spawnLootItem(itemOrId, x, y, scatter = 0.4, life = 18) {
-    const item = typeof itemOrId === 'string' ? cloneItem(itemOrId) : { ...itemOrId };
+    const item = itemOrId?.instanceId
+      ? { ...itemOrId }
+      : resolveLootEntry(itemOrId, {
+          theme: this.currentDungeon?.theme?.id,
+          bias: this.currentDungeon ? 0.6 : 0.2,
+          powerBonus: this.currentDungeon ? 0.3 : 0,
+        });
+    if (!item) return;
+    if (!item.instanceId) {
+      item.instanceId = `loot-${ITEM_UID++}`;
+    }
     this.pickups.push({
       kind: 'loot',
       x: x + randRange(-scatter, scatter),
@@ -3227,7 +3995,10 @@ export class RoguelikeGame {
         projectile.y - this.player.y
       );
       if (distance < 0.6) {
-        this.#damagePlayer(ENEMY_PROJECTILE_DAMAGE);
+        this.#damagePlayer(projectile.damage ?? ENEMY_PROJECTILE_DAMAGE);
+        if (projectile.statusEffect) {
+          this.#applyStatusToPlayer(projectile.statusEffect);
+        }
         continue;
       }
 
@@ -3244,83 +4015,129 @@ export class RoguelikeGame {
 
   #updateEnemies(dt) {
     for (const enemy of this.enemies) {
-      enemy.fireTimer -= dt;
+      enemy.fireTimer = (enemy.fireTimer ?? 0) - dt;
+      this.#tickEnemyEffects(enemy, dt);
       const dx = this.player.x - enemy.x;
       const dy = this.player.y - enemy.y;
       const distance = Math.hypot(dx, dy);
+      const dir = distance === 0 ? { x: 0, y: 0 } : { x: dx / distance, y: dy / distance };
       const slowed = this.#isInSlowField(enemy.x, enemy.y);
-      const speedMultiplier = slowed ? 0.5 : 1;
-      const isBoss = enemy.boss === true;
+      const slowFactor = (enemy.slowMultiplier ?? 1) * (slowed ? 0.6 : 1);
+      const baseSpeed = (enemy.baseSpeed ?? ENEMY_BASE_SPEED) * slowFactor;
+      const desiredRange = enemy.range ?? ENEMY_RANGE;
 
-      if (distance > 0.1) {
-        const dir = normalize({ x: dx, y: dy });
-        const baseSpeed = (isBoss ? ENEMY_BASE_SPEED * 0.75 : ENEMY_BASE_SPEED) * speedMultiplier;
-        if (isBoss) {
-          enemy.patternTimer = (enemy.patternTimer || 0) + dt;
-          const sweepX = Math.cos(enemy.patternTimer * 1.4) * 0.5;
-          const sweepY = Math.sin(enemy.patternTimer * 1.2) * 0.35;
-          const swayX = enemy.x + sweepX * dt;
-          const swayY = enemy.y + sweepY * dt;
-          if (this.world.isWalkable(swayX, enemy.y)) enemy.x = swayX;
-          if (this.world.isWalkable(enemy.x, swayY)) enemy.y = swayY;
-        }
-        const nextX = enemy.x + dir.x * baseSpeed * dt;
-        const nextY = enemy.y + dir.y * baseSpeed * dt;
-        if (this.world.isWalkable(nextX, enemy.y)) {
-          enemy.x = nextX;
-        }
-        if (this.world.isWalkable(enemy.x, nextY)) {
-          enemy.y = nextY;
+      const moveEnemy = (toward = true, extra = 1) => {
+        const stepX = enemy.x + dir.x * baseSpeed * extra * dt * (toward ? 1 : -1);
+        const stepY = enemy.y + dir.y * baseSpeed * extra * dt * (toward ? 1 : -1);
+        if (this.world.isWalkable(stepX, enemy.y)) enemy.x = stepX;
+        if (this.world.isWalkable(enemy.x, stepY)) enemy.y = stepY;
+      };
+
+      const fireProjectile = (options = {}) => {
+        const projectile = createProjectile({
+          x: enemy.x,
+          y: enemy.y,
+          direction: dir,
+          speed: options.speed ?? ENEMY_PROJECTILE_SPEED,
+          damage: options.damage ?? enemy.damage,
+          lifetime: options.lifetime ?? ENEMY_PROJECTILE_LIFETIME,
+          friendly: false,
+          spread: options.spread ?? 0,
+          element: enemy.element ?? 'void',
+          statusEffect: options.statusEffect ?? null,
+          size: options.size ?? 0.12,
+        });
+        projectile.color = options.color ?? enemy.projectileColor ?? ENEMY_BULLET_COLOR;
+        this.enemyProjectiles.push(projectile);
+        this.particles.spawn({ x: enemy.x, y: enemy.y }, {
+          color: projectile.color,
+          radius: 0.2,
+          life: 0.45,
+        });
+      };
+
+      if (enemy.boss) {
+        moveEnemy(true, 0.8);
+      } else if (enemy.attack === 'firebolt') {
+        if (distance > desiredRange * 0.85) moveEnemy(true);
+        else if (distance < desiredRange * 0.55) moveEnemy(false, 0.6);
+      } else if (enemy.attack === 'slow' || enemy.attack === 'beam') {
+        if (distance > desiredRange * 0.9) moveEnemy(true);
+        else if (distance < desiredRange * 0.5) moveEnemy(false, 0.7);
+      } else if (enemy.attack === 'spread') {
+        if (distance > desiredRange * 0.75) moveEnemy(true, 1.1);
+        else if (distance < desiredRange * 0.6) moveEnemy(false, 0.6);
+      } else if (enemy.attack === 'dash') {
+        enemy.chargeTimer = (enemy.chargeTimer ?? 0) + dt;
+        if (enemy.chargeTimer > 1.4 && distance > 1.5) {
+          moveEnemy(true, 3.5);
+          enemy.chargeTimer = 0;
+        } else if (distance > 2.2) {
+          moveEnemy(true, 1.2);
         }
       }
 
-      if (distance < (isBoss ? 1.5 : 1.2)) {
-        const damage = isBoss ? BOSS_CONTACT_DAMAGE : ENEMY_CONTACT_DAMAGE;
-        this.#damagePlayer(damage * dt);
+      const contactRange = enemy.boss ? 1.6 : 1.2;
+      if (distance < contactRange) {
+        this.#damagePlayer(enemy.damage * dt);
       }
 
-      if (distance < (isBoss ? ENEMY_RANGE + 2 : ENEMY_RANGE) && enemy.fireTimer <= 0) {
-        if (isBoss) {
-          enemy.fireTimer = BOSS_FIRE_INTERVAL + randRange(-0.3, 0.3);
-          const baseAngle = Math.atan2(dy, dx);
-          const spreads = [-0.35, -0.1, 0.1, 0.35];
-          for (const offset of spreads) {
-            const angle = baseAngle + offset;
-            const projectile = {
-              x: enemy.x,
-              y: enemy.y,
-              vx: Math.cos(angle) * BOSS_PROJECTILE_SPEED,
-              vy: Math.sin(angle) * BOSS_PROJECTILE_SPEED,
-              damage: BOSS_PROJECTILE_DAMAGE,
-              lifetime: ENEMY_PROJECTILE_LIFETIME + 1,
-              age: 0,
-              friendly: false,
-            };
-            this.enemyProjectiles.push(projectile);
-          }
-          this.particles.spawn({ x: enemy.x, y: enemy.y }, {
-            color: ENEMY_BULLET_COLOR,
-            radius: 0.28,
-            life: 0.55,
-          });
-        } else {
-          enemy.fireTimer = ENEMY_FIRE_INTERVAL + randRange(-0.6, 0.6);
+      const canFire = distance < desiredRange + (enemy.boss ? 2 : 0.5) && enemy.fireTimer <= 0;
+      if (!canFire) continue;
+
+      if (enemy.boss) {
+        enemy.fireTimer = BOSS_FIRE_INTERVAL + randRange(-0.3, 0.3);
+        const baseAngle = Math.atan2(dy, dx);
+        const spreads = [-0.35, -0.1, 0.1, 0.35];
+        for (const offset of spreads) {
+          const projectile = {
+            x: enemy.x,
+            y: enemy.y,
+            vx: Math.cos(baseAngle + offset) * BOSS_PROJECTILE_SPEED,
+            vy: Math.sin(baseAngle + offset) * BOSS_PROJECTILE_SPEED,
+            damage: BOSS_PROJECTILE_DAMAGE,
+            lifetime: ENEMY_PROJECTILE_LIFETIME + 1,
+            age: 0,
+            friendly: false,
+            color: enemy.projectileColor ?? ENEMY_BULLET_COLOR,
+          };
+          this.enemyProjectiles.push(projectile);
+        }
+        this.particles.spawn({ x: enemy.x, y: enemy.y }, {
+          color: enemy.projectileColor ?? ENEMY_BULLET_COLOR,
+          radius: 0.3,
+          life: 0.55,
+        });
+        continue;
+      }
+
+      enemy.fireTimer = ENEMY_FIRE_INTERVAL + randRange(-0.5, 0.5);
+      if (enemy.attack === 'spread') {
+        const baseAngle = Math.atan2(dy, dx);
+        const offsets = [-0.2, 0, 0.2];
+        for (const offset of offsets) {
           const projectile = createProjectile({
             x: enemy.x,
             y: enemy.y,
-            direction: normalize({ x: dx, y: dy }),
-            speed: ENEMY_PROJECTILE_SPEED,
-            damage: ENEMY_PROJECTILE_DAMAGE,
+            direction: { x: Math.cos(baseAngle + offset), y: Math.sin(baseAngle + offset) },
+            speed: ENEMY_PROJECTILE_SPEED * 0.9,
+            damage: enemy.damage,
             lifetime: ENEMY_PROJECTILE_LIFETIME,
             friendly: false,
+            element: enemy.element ?? 'verdant',
+            size: 0.14,
           });
+          projectile.color = enemy.projectileColor ?? ENEMY_BULLET_COLOR;
           this.enemyProjectiles.push(projectile);
-          this.particles.spawn({ x: enemy.x, y: enemy.y }, {
-            color: ENEMY_BULLET_COLOR,
-            radius: 0.18,
-            life: 0.45,
-          });
         }
+      } else if (enemy.attack === 'dash') {
+        fireProjectile({ speed: ENEMY_PROJECTILE_SPEED * 1.2, damage: enemy.damage, size: 0.16 });
+      } else if (enemy.attack === 'slow') {
+        fireProjectile({ statusEffect: { type: 'slow', slow: 0.35, duration: 2 }, size: 0.16 });
+      } else if (enemy.attack === 'beam') {
+        fireProjectile({ speed: ENEMY_PROJECTILE_SPEED * 1.4, damage: enemy.damage + 4, size: 0.2 });
+      } else {
+        fireProjectile();
       }
     }
 
@@ -3339,9 +4156,10 @@ export class RoguelikeGame {
       const distance = Math.hypot(dx, dy);
       if (distance < 0.6) {
         if (pickup.kind === 'xp') {
-          this.player.experience += pickup.value;
+          const xpMultiplier = 1 + (this.player.xpBonus ?? 0);
+          this.player.experience += pickup.value * xpMultiplier;
           this.log.push('You collect a glowing memory shard.');
-          this.ui.showToast(`+${pickup.value} experience`);
+          this.ui.showToast(`+${Math.round(pickup.value * xpMultiplier)} experience`);
           this.#checkLevelUp();
         } else if (pickup.kind === 'loot' && pickup.item) {
           this.#collectLoot(pickup.item);
@@ -3407,7 +4225,7 @@ export class RoguelikeGame {
         this.#syncHotbar();
         return;
       }
-    } else {
+    } else if (item.type !== 'equipment') {
       const duplicate = this.inventory.some((entry) => entry.id === item.id);
       if (duplicate) {
         const stipend = item.goldValue ?? randInt(18, 32);
@@ -3420,7 +4238,11 @@ export class RoguelikeGame {
     }
 
     this.inventory.push(item);
-    this.ui.showToast(`${item.name} added to your satchel.`);
+    if (item.rarityLabel) {
+      this.ui.showToast(`${item.rarityLabel} ${item.name} added to your satchel.`);
+    } else {
+      this.ui.showToast(`${item.name} added to your satchel.`);
+    }
     this.log.push(`You collect ${item.name.toLowerCase()}.`);
     this.#refreshInventoryUI();
     this.#syncHotbar();
@@ -3501,7 +4323,14 @@ export class RoguelikeGame {
     if (enemy.boss) {
       this.#spawnLootItem('moondrop-elixir', enemy.x, enemy.y, 0.45, 24);
       for (let i = 0; i < 2; i += 1) {
-        this.#spawnLootItem(pick(BOSS_LOOT_TABLE), enemy.x, enemy.y, 0.55, 26);
+        const loot = drawFromLootTable(BOSS_LOOT_TABLE, {
+          theme: enemy.dungeon?.theme?.id,
+          bias: 0.9,
+          powerBonus: 0.45,
+        });
+        if (loot) {
+          this.#spawnLootItem(loot, enemy.x, enemy.y, 0.55, 26);
+        }
       }
     } else {
       if (Math.random() < 0.45) {
@@ -3527,7 +4356,9 @@ export class RoguelikeGame {
       this.ui.showToast('Shield absorbed a hit');
       return;
     }
-    this.player.health = clamp(this.player.health - amount, 0, this.player.maxHealth);
+    const mitigation = clamp(this.player.damageReduction ?? 0, 0, 0.8);
+    const finalAmount = amount * (1 - mitigation);
+    this.player.health = clamp(this.player.health - finalAmount, 0, this.player.maxHealth);
     this.stats.damageTaken += amount;
     this.ui.setHealth(this.player.health, this.player.maxHealth);
     this.particles.spawn({ x: this.player.x, y: this.player.y }, {
@@ -3545,17 +4376,31 @@ export class RoguelikeGame {
   #spawnEnemyWave() {
     if (!this.currentDungeon) return;
     if (this.enemies.length > 18) return;
-    const spawnCount = (this.currentDungeon.boss.spawned ? 2 : 3) + randInt(0, 1);
+    const spawnCount = (this.currentDungeon.boss.spawned ? 2 : 4) + randInt(0, 1);
+    const theme = this.currentDungeon.theme;
+    const pool = theme?.enemyPool ?? Object.keys(ENEMY_TYPES);
     for (let i = 0; i < spawnCount; i += 1) {
       const source = pick(this.currentDungeon.spawnPoints);
+      const typeKey = pick(pool);
+      const archetype = ENEMY_TYPES[typeKey] ?? ENEMY_TYPES.emberkin;
       const enemy = {
         x: source.x + randRange(-1.5, 1.5),
         y: source.y + randRange(-1.5, 1.5),
-        health: ENEMY_BASE_HEALTH * randRange(0.9, 1.3),
-        color: pick(ENEMY_PALETTE),
+        health: archetype.health * randRange(0.95, 1.2),
+        maxHealth: archetype.health,
+        color: archetype.color,
         fireTimer: randRange(0.4, ENEMY_FIRE_INTERVAL),
         boss: false,
         dungeon: this.currentDungeon,
+        baseSpeed: archetype.speed,
+        attack: archetype.attack,
+        damage: archetype.damage,
+        range: archetype.range ?? ENEMY_RANGE,
+        projectileColor: archetype.projectileColor ?? ENEMY_BULLET_COLOR,
+        element: archetype.element ?? 'void',
+        effects: [],
+        slowMultiplier: 1,
+        typeId: typeKey,
       };
       if (this.world.isWalkable(enemy.x, enemy.y)) {
         this.enemies.push(enemy);
@@ -3712,8 +4557,44 @@ export class RoguelikeGame {
         const color = info?.variants?.[tile.variant] ?? info?.color ?? '#000';
         const screenX = x * TILE_SIZE;
         const screenY = y * TILE_SIZE;
-        ctx.fillStyle = color;
-        ctx.fillRect(screenX, screenY, TILE_SIZE + 1, TILE_SIZE + 1);
+        const gradient = ctx.createLinearGradient(
+          screenX,
+          screenY,
+          screenX,
+          screenY + TILE_SIZE
+        );
+        gradient.addColorStop(0, mixColor(color, '#f8fafc', 0.15));
+        gradient.addColorStop(1, mixColor(color, '#0f172a', 0.18));
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(screenX + 4, screenY);
+        ctx.quadraticCurveTo(screenX, screenY, screenX, screenY + 4);
+        ctx.lineTo(screenX, screenY + TILE_SIZE - 4);
+        ctx.quadraticCurveTo(
+          screenX,
+          screenY + TILE_SIZE,
+          screenX + 4,
+          screenY + TILE_SIZE
+        );
+        ctx.lineTo(screenX + TILE_SIZE - 4, screenY + TILE_SIZE);
+        ctx.quadraticCurveTo(
+          screenX + TILE_SIZE,
+          screenY + TILE_SIZE,
+          screenX + TILE_SIZE,
+          screenY + TILE_SIZE - 4
+        );
+        ctx.lineTo(screenX + TILE_SIZE, screenY + 4);
+        ctx.quadraticCurveTo(
+          screenX + TILE_SIZE,
+          screenY,
+          screenX + TILE_SIZE - 4,
+          screenY
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = mixColor(color, '#020617', 0.4);
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
         if (tile.type === 'water') {
           const wave = Math.sin(shimmer * 1.4 + x * 0.7 + y * 0.4);
@@ -4083,7 +4964,7 @@ export class RoguelikeGame {
       ctx.arc(screenX, screenY, radius + TILE_SIZE * 0.04, 0, Math.PI * 2);
       ctx.stroke();
 
-      const maxHealth = isBoss ? BOSS_HEALTH : ENEMY_BASE_HEALTH;
+      const maxHealth = enemy.maxHealth ?? (isBoss ? BOSS_HEALTH : ENEMY_BASE_HEALTH);
       const ratio = clamp(enemy.health / maxHealth, 0, 1);
       const barWidth = TILE_SIZE * (isBoss ? 0.9 : 0.6);
       const barHeight = TILE_SIZE * 0.12;
@@ -4106,9 +4987,9 @@ export class RoguelikeGame {
       }
       const screenX = projectile.x * TILE_SIZE;
       const screenY = projectile.y * TILE_SIZE;
-      ctx.fillStyle = BULLET_COLOR;
+      ctx.fillStyle = projectile.color ?? BULLET_COLOR;
       ctx.beginPath();
-      ctx.arc(screenX, screenY, TILE_SIZE * 0.15, 0, Math.PI * 2);
+      ctx.arc(screenX, screenY, TILE_SIZE * (projectile.size ?? 0.15), 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -4123,9 +5004,9 @@ export class RoguelikeGame {
       }
       const screenX = projectile.x * TILE_SIZE;
       const screenY = projectile.y * TILE_SIZE;
-      ctx.fillStyle = ENEMY_BULLET_COLOR;
+      ctx.fillStyle = projectile.color ?? ENEMY_BULLET_COLOR;
       ctx.beginPath();
-      ctx.arc(screenX, screenY, TILE_SIZE * 0.12, 0, Math.PI * 2);
+      ctx.arc(screenX, screenY, TILE_SIZE * (projectile.size ?? 0.12), 0, Math.PI * 2);
       ctx.fill();
     }
   }
