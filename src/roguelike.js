@@ -14,44 +14,44 @@ const DIRECTIONS = {
 const AIM_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 const MOVE_KEYS = new Set(['w', 'a', 's', 'd']);
 
-const WORLD_PADDING_TILES = 12;
-const MIN_WORLD_WIDTH_TILES = 120;
-const MIN_WORLD_HEIGHT_TILES = 120;
-const PLAYER_BASE_SPEED = 3.4; // tiles per second
-const PLAYER_SPRINT_SPEED = 6.2;
-const PLAYER_ACCELERATION = 14;
+const WORLD_PADDING_TILES = 24;
+const MIN_WORLD_WIDTH_TILES = 260;
+const MIN_WORLD_HEIGHT_TILES = 240;
+const PLAYER_BASE_SPEED = 3.8; // tiles per second
+const PLAYER_SPRINT_SPEED = 6.6;
+const PLAYER_ACCELERATION = 16;
 const PLAYER_FRICTION = 11;
-const PLAYER_BASE_HEALTH = 120;
-const PLAYER_DASH_DISTANCE = 4;
-const PLAYER_DASH_COOLDOWN = 1.8;
-const PLAYER_SHOT_INTERVAL = 0.4;
-const PLAYER_BASE_DAMAGE = 12;
-const PLAYER_PROJECTILE_SPEED = 12;
-const PLAYER_PROJECTILE_LIFETIME = 2.4;
+const PLAYER_BASE_HEALTH = 140;
+const PLAYER_DASH_DISTANCE = 4.4;
+const PLAYER_DASH_COOLDOWN = 1.7;
+const PLAYER_SHOT_INTERVAL = 0.38;
+const PLAYER_BASE_DAMAGE = 14;
+const PLAYER_PROJECTILE_SPEED = 12.5;
+const PLAYER_PROJECTILE_LIFETIME = 2.6;
 
-const PLAYER_HOUSE_PROGRESS_TARGET = 120;
+const PLAYER_HOUSE_PROGRESS_TARGET = 160;
 
-const ENEMY_BASE_HEALTH = 28;
-const ENEMY_BASE_SPEED = 1.3;
-const ENEMY_SPAWN_INTERVAL = 9;
-const ENEMY_CONTACT_DAMAGE = 8;
+const ENEMY_BASE_HEALTH = 34;
+const ENEMY_BASE_SPEED = 1.45;
+const ENEMY_SPAWN_INTERVAL = 8.2;
+const ENEMY_CONTACT_DAMAGE = 9;
 const ENEMY_RANGE = 11;
-const ENEMY_FIRE_INTERVAL = 3.4;
-const ENEMY_PROJECTILE_SPEED = 8;
-const ENEMY_PROJECTILE_DAMAGE = 9;
-const ENEMY_PROJECTILE_LIFETIME = 4;
+const ENEMY_FIRE_INTERVAL = 3.1;
+const ENEMY_PROJECTILE_SPEED = 8.5;
+const ENEMY_PROJECTILE_DAMAGE = 10;
+const ENEMY_PROJECTILE_LIFETIME = 4.2;
 
-const BOSS_HEALTH = 220;
-const BOSS_FIRE_INTERVAL = 1.6;
-const BOSS_PROJECTILE_SPEED = 13;
-const BOSS_CONTACT_DAMAGE = 18;
-const BOSS_PROJECTILE_DAMAGE = 14;
+const BOSS_HEALTH = 280;
+const BOSS_FIRE_INTERVAL = 1.45;
+const BOSS_PROJECTILE_SPEED = 14;
+const BOSS_CONTACT_DAMAGE = 20;
+const BOSS_PROJECTILE_DAMAGE = 16;
 
-const PICKUP_ATTRACTION_RANGE = 3;
-const PICKUP_ATTRACTION_SPEED = 2.4;
+const PICKUP_ATTRACTION_RANGE = 3.2;
+const PICKUP_ATTRACTION_SPEED = 2.7;
 
-const XP_PER_LEVEL = 60;
-const LEVEL_XP_GROWTH = 25;
+const XP_PER_LEVEL = 64;
+const LEVEL_XP_GROWTH = 28;
 
 const DAY_NIGHT_DURATION = 180;
 const SKY_STARS = 45;
@@ -91,11 +91,193 @@ const ENEMY_BULLET_COLOR = '#38bdf8';
 const BOSS_PALETTE = ['#f97316', '#a855f7', '#38bdf8'];
 
 const GOLD_RANGES = {
-  mob: [6, 14],
-  boss: [55, 90],
-  chestTown: [14, 26],
-  chestDungeon: [24, 46],
-  chestCapital: [36, 64],
+  mob: [8, 18],
+  boss: [70, 110],
+  chestTown: [18, 30],
+  chestDungeon: [30, 54],
+  chestCapital: [44, 78],
+};
+
+const HOTBAR_SIZE = 8;
+let ITEM_UID = 0;
+
+const ABILITY_LIBRARY = {
+  'solar-burst': {
+    id: 'solar-burst',
+    name: 'Solar Burst',
+    key: 'q',
+    cooldown: 12,
+    description: 'Unleash a ring of solar fire that scorches nearby foes and staggers them.',
+  },
+  'astral-step': {
+    id: 'astral-step',
+    name: 'Astral Step',
+    key: 'r',
+    cooldown: 9,
+    description: 'Blink a short distance in the aim direction, leaving a slowing wake.',
+  },
+  'tempest-field': {
+    id: 'tempest-field',
+    name: 'Tempest Field',
+    key: 'c',
+    cooldown: 18,
+    description: 'Summon a storm that damages and weakens enemies within a wide radius.',
+  },
+};
+
+const SKILL_TREE_NODES = [
+  {
+    id: 'vital-surge',
+    name: 'Vital Surge',
+    description: 'Increase maximum health by 25 and restore 25 health.',
+    cost: 1,
+    apply: (game) => {
+      game.player.maxHealth += 25;
+      game.player.health = clamp(game.player.health + 25, 0, game.player.maxHealth);
+    },
+  },
+  {
+    id: 'wind-step',
+    name: 'Wind Step',
+    description: 'Increase movement speed by 12% and dash distance by 1 tile.',
+    cost: 1,
+    apply: (game) => {
+      game.player.speed *= 1.12;
+      game.player.dashDistance += 1;
+    },
+  },
+  {
+    id: 'solar-burst',
+    name: 'Solar Burst',
+    description: 'Unlock the Solar Burst ability (press Q).',
+    cost: 1,
+    prerequisites: ['vital-surge'],
+    unlocksAbility: 'solar-burst',
+  },
+  {
+    id: 'astral-step',
+    name: 'Astral Step',
+    description: 'Unlock the Astral Step ability (press R).',
+    cost: 1,
+    prerequisites: ['wind-step'],
+    unlocksAbility: 'astral-step',
+  },
+  {
+    id: 'aurora-ward',
+    name: 'Aurora Ward',
+    description: 'Gain a permanent barrier that refreshes faster.',
+    cost: 1,
+    prerequisites: ['vital-surge'],
+    apply: (game) => {
+      if (!game.player.shield) {
+        game.player.shield = { cooldown: 16, timer: 16, active: true };
+      } else {
+        game.player.shield.cooldown = Math.max(10, game.player.shield.cooldown - 2);
+      }
+      game.player.maxHealth += 10;
+    },
+  },
+  {
+    id: 'luminous-archer',
+    name: 'Luminous Archer',
+    description: 'Projectiles travel 15% faster and deal +4 damage.',
+    cost: 1,
+    prerequisites: ['wind-step'],
+    apply: (game) => {
+      game.player.projectileSpeed *= 1.15;
+      game.player.damage += 4;
+    },
+  },
+  {
+    id: 'radiant-volley',
+    name: 'Radiant Volley',
+    description: 'Gain an additional split shot and extend projectile lifetime.',
+    cost: 2,
+    prerequisites: ['luminous-archer'],
+    apply: (game) => {
+      game.player.doubleShot = true;
+      game.player.projectileLifetime += 0.4;
+    },
+  },
+  {
+    id: 'forest-harmony',
+    name: 'Forest Harmony',
+    description: 'Regenerate 20 health whenever you level up and improve sanctuary healing.',
+    cost: 2,
+    prerequisites: ['aurora-ward'],
+    apply: (game) => {
+      game.player.onLevelUpRegen = (game.player.onLevelUpRegen || 0) + 20;
+      game.player.sanctuaryRegen = (game.player.sanctuaryRegen || 0) + 6;
+    },
+  },
+  {
+    id: 'tempest-field',
+    name: 'Tempest Field',
+    description: 'Unlock the Tempest Field ability (press C).',
+    cost: 2,
+    prerequisites: ['radiant-volley', 'forest-harmony'],
+    unlocksAbility: 'tempest-field',
+  },
+  {
+    id: 'zenith-mastery',
+    name: 'Zenith Mastery',
+    description: 'Greatly increase all stats and empower abilities with lingering effects.',
+    cost: 3,
+    prerequisites: ['tempest-field'],
+    apply: (game) => {
+      game.player.damage += 6;
+      game.player.maxHealth += 30;
+      game.player.speed *= 1.08;
+      game.player.abilityEmpowered = true;
+    },
+  },
+];
+
+const QUEST_LIBRARY = [
+  {
+    id: 'rebuild-home',
+    name: 'Radiant Foundations',
+    giver: 'artisan',
+    description: 'Deliver 6 timber and 6 polished stone to complete your hillside home.',
+    requirements: { timber: 6, stone: 6 },
+    onComplete: (game) => {
+      game.houseProject.completed = true;
+      game.ui.showToast('Your home now overlooks Radiant Hearth.');
+    },
+  },
+  {
+    id: 'boss-hunt',
+    name: 'Silence the Guardian',
+    giver: 'scout',
+    description: 'Defeat any awakened dungeon guardian to secure the valley routes.',
+    onComplete: (game) => {
+      game.gold += 80;
+      game.ui.setGold(game.gold);
+      game.log.push('Scout Emil rewards you for protecting the valley.');
+    },
+  },
+  {
+    id: 'city-of-light',
+    name: 'City of Light',
+    giver: 'mayor',
+    description: 'Visit each of the four towns and rekindle their plaza braziers.',
+  },
+];
+
+const ENEMY_TYPES = {
+  emberkin: { id: 'emberkin', health: 42, speed: 1.55, color: '#fb923c', attack: 'firebolt', damage: 12 },
+  gloomstalker: { id: 'gloomstalker', health: 48, speed: 1.35, color: '#6366f1', attack: 'dash', damage: 14 },
+  frostwisp: { id: 'frostwisp', health: 32, speed: 1.5, color: '#38bdf8', attack: 'slow', damage: 11 },
+  thornbeast: { id: 'thornbeast', health: 56, speed: 1.25, color: '#22c55e', attack: 'spread', damage: 13 },
+  astralSentinel: { id: 'astralSentinel', health: 60, speed: 1.2, color: '#a855f7', attack: 'beam', damage: 15 },
+};
+
+const DUNGEON_THEMES = {
+  catacombs: { tint: '#64748b', enemyPool: ['gloomstalker', 'frostwisp'], boss: 'umbra-titan' },
+  ember: { tint: '#ea580c', enemyPool: ['emberkin', 'thornbeast'], boss: 'ember-colossus' },
+  observatory: { tint: '#818cf8', enemyPool: ['astralSentinel', 'frostwisp'], boss: 'star-custodian' },
+  warrens: { tint: '#22c55e', enemyPool: ['thornbeast', 'gloomstalker'], boss: 'briar-queen' },
+  vault: { tint: '#c084fc', enemyPool: ['astralSentinel', 'emberkin'], boss: 'auric-warden' },
 };
 
 const ITEM_LIBRARY = {
@@ -105,6 +287,8 @@ const ITEM_LIBRARY = {
     description: 'Useful for rebuilding town structures.',
     type: 'material',
     value: 12,
+    stackable: true,
+    actions: [],
   },
   stone: {
     id: 'stone',
@@ -112,6 +296,8 @@ const ITEM_LIBRARY = {
     description: 'Perfect for sturdy foundations.',
     type: 'material',
     value: 10,
+    stackable: true,
+    actions: [],
   },
   silk: {
     id: 'silk',
@@ -119,33 +305,52 @@ const ITEM_LIBRARY = {
     description: 'NPCs love receiving this rare cloth.',
     type: 'material',
     value: 18,
+    stackable: true,
+    actions: [],
   },
   'sun-elixir': {
     id: 'sun-elixir',
     name: 'Sun Elixir',
-    description: 'Instantly restores 40 health when collected.',
+    description: 'Instantly restores 40 health when consumed.',
     type: 'consumable',
     heal: 40,
-    consumedOnPickup: true,
+    stackable: true,
+    actions: ['use', 'assign'],
   },
   'moondrop-elixir': {
     id: 'moondrop-elixir',
     name: 'Moondrop Elixir',
-    description: 'A rare tonic that restores 70 health and sharpens your focus.',
+    description: 'Restore 70 health and reduce dash cooldown by 10% temporarily.',
     type: 'consumable',
     heal: 70,
-    onAcquire: (player) => {
-      player.dashCooldown *= 0.9;
+    stackable: true,
+    actions: ['use', 'assign'],
+    onUse: (game) => {
+      game.addTimedModifier({
+        id: 'moondrop-dash',
+        duration: 45,
+        apply: (player) => {
+          player.dashCooldown *= 0.9;
+        },
+        remove: (player) => {
+          player.dashCooldown /= 0.9;
+        },
+      });
     },
-    consumedOnPickup: true,
   },
   'ember-blade': {
     id: 'ember-blade',
     name: 'Ember Blade',
-    description: 'A blazing weapon that increases your damage output.',
+    description: 'A blazing weapon that increases damage output.',
     type: 'weapon',
-    onAcquire: (player) => {
-      player.damage += 6;
+    slot: 'weapon',
+    bonuses: { damage: 8 },
+    actions: ['equip'],
+    onEquip: (player) => {
+      player.infernoTrails = true;
+    },
+    onUnequip: (player) => {
+      player.infernoTrails = false;
     },
   },
   'aurora-lance': {
@@ -153,25 +358,29 @@ const ITEM_LIBRARY = {
     name: 'Aurora Lance',
     description: 'Arrows pierce one additional foe after striking.',
     type: 'weapon',
-    onAcquire: (player) => {
+    slot: 'weapon',
+    bonuses: { damage: 4 },
+    actions: ['equip'],
+    onEquip: (player) => {
       player.piercingShots = true;
+    },
+    onUnequip: (player) => {
+      player.piercingShots = false;
     },
   },
   dawnshield: {
     id: 'dawnshield',
     name: 'Dawnshield Bulwark',
-    description: 'Reinforces your health and quickens your protective barrier.',
+    description: 'Reinforces health and refreshes the protective barrier quickly.',
     type: 'shield',
-    onAcquire: (player) => {
-      if (!player.shield) {
-        player.shield = { cooldown: 18, timer: 18, active: true };
-      } else {
-        player.shield.cooldown = Math.max(12, player.shield.cooldown * 0.8);
-        player.shield.timer = player.shield.cooldown;
-        player.shield.active = true;
-      }
-      player.maxHealth += 25;
-      player.health = Math.min(player.maxHealth, player.health + 25);
+    slot: 'shield',
+    bonuses: { maxHealth: 35 },
+    actions: ['equip'],
+    onEquip: (player) => {
+      player.shield = player.shield ?? { cooldown: 18, timer: 18, active: true };
+      player.shield.cooldown = Math.max(10, player.shield.cooldown * 0.75);
+      player.shield.timer = player.shield.cooldown;
+      player.shield.active = true;
     },
   },
   'gale-cloak': {
@@ -179,9 +388,22 @@ const ITEM_LIBRARY = {
     name: 'Gale Cloak',
     description: 'Light armour that boosts movement speed and dash distance.',
     type: 'armor',
-    onAcquire: (player) => {
-      player.speed *= 1.1;
-      player.dashDistance += 1;
+    slot: 'armor',
+    bonuses: { speedMultiplier: 1.1, dashDistance: 1 },
+    actions: ['equip'],
+  },
+  'starlight-charm': {
+    id: 'starlight-charm',
+    name: 'Starlight Charm',
+    description: 'A charm that increases experience gain by 12%.',
+    type: 'trinket',
+    slot: 'trinket',
+    actions: ['equip'],
+    onEquip: (player) => {
+      player.xpBonus = (player.xpBonus || 0) + 0.12;
+    },
+    onUnequip: (player) => {
+      player.xpBonus = Math.max(0, (player.xpBonus || 0) - 0.12);
     },
   },
   'ember-medal': {
@@ -213,12 +435,28 @@ const CHEST_LOOT_TABLES = {
     'aurora-lance',
     'sun-elixir',
     'moondrop-elixir',
+    'starlight-charm',
     'star-medal',
   ],
-  capital: ['ember-blade', 'dawnshield', 'aurora-lance', 'gale-cloak', 'moondrop-elixir', 'star-medal'],
+  capital: [
+    'ember-blade',
+    'dawnshield',
+    'aurora-lance',
+    'gale-cloak',
+    'moondrop-elixir',
+    'starlight-charm',
+    'star-medal',
+  ],
 };
 
-const BOSS_LOOT_TABLE = ['ember-blade', 'dawnshield', 'aurora-lance', 'gale-cloak', 'star-medal'];
+const BOSS_LOOT_TABLE = [
+  'ember-blade',
+  'dawnshield',
+  'aurora-lance',
+  'gale-cloak',
+  'starlight-charm',
+  'star-medal',
+];
 
 const SHOP_LIBRARY = [
   {
@@ -329,74 +567,6 @@ const STORY_BEATS = [
   { id: 'boss-victory', text: 'Defeat a dungeon boss to secure the valley.' },
 ];
 
-const UPGRADE_LIBRARY = [
-  {
-    id: 'rapid-fire',
-    name: 'Rapid Fire',
-    description: 'Reduce shoot cooldown by 30% and slightly boost projectile speed.',
-    apply(player) {
-      player.shootInterval *= 0.7;
-      player.projectileSpeed *= 1.15;
-    },
-  },
-  {
-    id: 'double-shot',
-    name: 'Twin Arrows',
-    description: 'Fire a second shot that fans outward for more coverage.',
-    apply(player) {
-      player.doubleShot = true;
-    },
-  },
-  {
-    id: 'dash-charge',
-    name: 'Comet Dash',
-    description: 'Dash travels farther and leaves a comet trail that damages foes.',
-    apply(player) {
-      player.dashDistance += 2;
-      player.dashTrail = true;
-    },
-  },
-  {
-    id: 'forest-blessing',
-    name: 'Forest Blessing',
-    description: 'Heal for 20 every time you level up and gain +20 max health.',
-    apply(player) {
-      player.maxHealth += 20;
-      player.health = Math.min(player.maxHealth, player.health + 20);
-      player.onLevelUpRegen = (player.onLevelUpRegen || 0) + 20;
-    },
-  },
-  {
-    id: 'aurora-shell',
-    name: 'Aurora Shell',
-    description: 'Gain a shimmering shield that blocks one hit every 20 seconds.',
-    apply(player) {
-      player.shield = {
-        cooldown: 20,
-        timer: 0,
-        active: true,
-      };
-    },
-  },
-  {
-    id: 'luminous-shot',
-    name: 'Luminous Shot',
-    description: 'Projectiles leave light orbs that slow enemies caught inside.',
-    apply(player) {
-      player.glowShots = true;
-    },
-  },
-  {
-    id: 'spirit-walk',
-    name: 'Spirit Walk',
-    description: 'Move 25% faster and glide smoothly around obstacles.',
-    apply(player) {
-      player.speed *= 1.25;
-      player.spiritWalk = true;
-    },
-  },
-];
-
 const ACHIEVEMENT_LIBRARY = [
   {
     id: 'first-steps',
@@ -407,8 +577,8 @@ const ACHIEVEMENT_LIBRARY = [
   {
     id: 'spark-collector',
     label: 'Spark Collector',
-    check: (stats) => stats.upgrades >= 3,
-    description: 'Unlock three upgrades.',
+    check: (stats) => stats.skillsUnlocked >= 3,
+    description: 'Unlock three skills.',
   },
   {
     id: 'calm-guardian',
@@ -461,7 +631,12 @@ function cloneItem(id) {
   if (!template) {
     throw new Error(`Unknown item id: ${id}`);
   }
-  return { ...template };
+  return {
+    ...template,
+    actions: template.actions ? [...template.actions] : [],
+    quantity: template.stackable ? 1 : 1,
+    instanceId: `${id}-${ITEM_UID++}`,
+  };
 }
 
 function vectorLength(v) {
@@ -502,6 +677,13 @@ class InputHandler {
   #dashListeners = new Set();
   #pauseListeners = new Set();
   #interactListeners = new Set();
+  #inventoryListeners = new Set();
+  #questListeners = new Set();
+  #skillTreeListeners = new Set();
+  #mapListeners = new Set();
+  #hotbarListeners = new Map();
+  #abilityListeners = new Map();
+  #abilityActiveKeys = new Set();
 
   constructor() {
     window.addEventListener('keydown', (event) => this.#handleKeyDown(event));
@@ -539,6 +721,43 @@ class InputHandler {
       event.preventDefault();
       this.#pauseListeners.forEach((cb) => cb());
     }
+
+    if (key === 'i' || key === 'I') {
+      event.preventDefault();
+      this.#inventoryListeners.forEach((cb) => cb());
+    }
+
+    if (key === 'j' || key === 'J') {
+      event.preventDefault();
+      this.#questListeners.forEach((cb) => cb());
+    }
+
+    if (key === 'k' || key === 'K') {
+      event.preventDefault();
+      this.#skillTreeListeners.forEach((cb) => cb());
+    }
+
+    if (key === 'm' || key === 'M') {
+      event.preventDefault();
+      this.#mapListeners.forEach((cb) => cb());
+    }
+
+    if (key >= '1' && key <= '8') {
+      const index = Number.parseInt(key, 10) - 1;
+      const listener = this.#hotbarListeners.get(index);
+      if (listener) {
+        event.preventDefault();
+        listener();
+      }
+    }
+
+    const lowerKey = key.toLowerCase();
+    const ability = this.#abilityListeners.get(lowerKey);
+    if (ability && !this.#abilityActiveKeys.has(lowerKey)) {
+      event.preventDefault();
+      this.#abilityActiveKeys.add(lowerKey);
+      ability();
+    }
   }
 
   #handleKeyUp(event) {
@@ -550,6 +769,12 @@ class InputHandler {
 
     if (AIM_KEYS.has(key)) {
       this.#aim.delete(key);
+      event.preventDefault();
+    }
+
+    const lowerKey = key.toLowerCase();
+    if (this.#abilityActiveKeys.has(lowerKey)) {
+      this.#abilityActiveKeys.delete(lowerKey);
       event.preventDefault();
     }
   }
@@ -597,6 +822,36 @@ class InputHandler {
     this.#pauseListeners.add(callback);
     return () => this.#pauseListeners.delete(callback);
   }
+
+  onToggleInventory(callback) {
+    this.#inventoryListeners.add(callback);
+    return () => this.#inventoryListeners.delete(callback);
+  }
+
+  onToggleQuests(callback) {
+    this.#questListeners.add(callback);
+    return () => this.#questListeners.delete(callback);
+  }
+
+  onToggleSkillTree(callback) {
+    this.#skillTreeListeners.add(callback);
+    return () => this.#skillTreeListeners.delete(callback);
+  }
+
+  onToggleMap(callback) {
+    this.#mapListeners.add(callback);
+    return () => this.#mapListeners.delete(callback);
+  }
+
+  bindHotbar(index, callback) {
+    this.#hotbarListeners.set(index, callback);
+    return () => this.#hotbarListeners.delete(index);
+  }
+
+  bindAbility(key, callback) {
+    this.#abilityListeners.set(key.toLowerCase(), callback);
+    return () => this.#abilityListeners.delete(key.toLowerCase());
+  }
 }
 
 class EventLog {
@@ -631,6 +886,9 @@ class EventLog {
 class UIController {
   constructor(ui) {
     this.ui = ui;
+    this.inventoryHandlers = {};
+    this.hotbarSlots = ui.hotbarSlots ?? [];
+    this.skillTreeHandler = null;
   }
 
   setHealth(current, max) {
@@ -650,6 +908,9 @@ class UIController {
 
   setSkillPoints(points) {
     this.ui.skillPointsValue.textContent = `${points}`;
+    if (this.ui.skillTreePoints) {
+      this.ui.skillTreePoints.textContent = `${points}`;
+    }
   }
 
   setGold(value) {
@@ -675,20 +936,48 @@ class UIController {
     const clamped = clamp(ratio, 0, 1);
     const percent = Math.round(clamped * 100);
     this.ui.townFill.style.width = `${percent}%`;
-    this.ui.townFill.parentElement?.setAttribute('aria-valuenow', `${percent}`);
+    const container = this.ui.townFill.closest('[role="progressbar"], .town-progress');
+    container?.setAttribute('aria-valuenow', `${percent}`);
+  }
+
+  setHotbar(slots) {
+    for (let i = 0; i < this.hotbarSlots.length; i += 1) {
+      const slotElement = this.hotbarSlots[i];
+      const slot = slots[i];
+      if (!slotElement) continue;
+      if (slot) {
+        slotElement.dataset.empty = 'false';
+        slotElement.dataset.name = slot.label ?? slot.name ?? '';
+        if (typeof slot.cooldownLabel === 'string' && slot.cooldownLabel.length > 0) {
+          slotElement.dataset.cooldown = slot.cooldownLabel;
+        } else {
+          delete slotElement.dataset.cooldown;
+        }
+        if (slot.active) {
+          slotElement.classList.add('active');
+        } else {
+          slotElement.classList.remove('active');
+        }
+      } else {
+        slotElement.dataset.empty = 'true';
+        slotElement.dataset.name = '';
+        delete slotElement.dataset.cooldown;
+        slotElement.classList.remove('active');
+      }
+    }
   }
 
   setUpgrades(upgrades) {
     this.ui.skillList.innerHTML = '';
     if (upgrades.length === 0) {
       const li = document.createElement('li');
-      li.textContent = 'No sparks yet. Level up to choose one!';
+      li.textContent = 'No skills unlocked yet. Earn sparks to learn new techniques.';
       this.ui.skillList.appendChild(li);
       return;
     }
     for (const upgrade of upgrades) {
       const li = document.createElement('li');
-      li.innerHTML = `<strong>${upgrade.name}</strong><br/>${upgrade.description}`;
+      li.innerHTML = `<strong>${upgrade.name}</strong><p>${upgrade.description}</p>`;
       this.ui.skillList.appendChild(li);
     }
   }
@@ -717,7 +1006,8 @@ class UIController {
     }
   }
 
-  setInventory(items) {
+  setInventory(items, handlers = {}) {
+    this.inventoryHandlers = handlers;
     this.ui.inventoryList.innerHTML = '';
     if (items.length === 0) {
       const li = document.createElement('li');
@@ -727,25 +1017,116 @@ class UIController {
     }
     for (const item of items) {
       const li = document.createElement('li');
-      const typeMap = {
-        weapon: 'Weapon',
-        armor: 'Armour',
-        shield: 'Shield',
-        consumable: 'Consumable',
-        material: 'Material',
-        medal: 'Medal',
-      };
-      const typeLabel = item.type ? typeMap[item.type] ?? item.type : '';
-      const tag = typeLabel ? `<span class="item-tag">${typeLabel}</span>` : '';
-      const notes = [];
-      if (item.goldValue) {
-        notes.push(`Sell value: ${item.goldValue} gold`);
-      } else if (item.value && item.type === 'material') {
-        notes.push(`Trade value: ${item.value} gold`);
+      const meta = [];
+      if (item.type) {
+        meta.push(item.type.charAt(0).toUpperCase() + item.type.slice(1));
       }
-      const noteHtml = notes.length > 0 ? `<p class="item-note">${notes.join(' · ')}</p>` : '';
-      li.innerHTML = `<div class="item-header"><strong>${item.name}</strong>${tag}</div><p>${item.description}</p>${noteHtml}`;
+      if (item.slot) {
+        meta.push(`Slot: ${item.slot}`);
+      }
+      if (item.goldValue) {
+        meta.push(`Sell: ${item.goldValue} gold`);
+      } else if (item.value && item.type === 'material') {
+        meta.push(`Trade: ${item.value} gold`);
+      }
+      if (item.bonuses) {
+        const bonusText = Object.entries(item.bonuses)
+          .map(([key, value]) => `${key.replace(/([A-Z])/g, ' $1')} ${value > 0 ? '+' : ''}${value}`)
+          .join(' · ');
+        if (bonusText) meta.push(bonusText);
+      }
+      const header = document.createElement('strong');
+      header.textContent = item.name;
+      li.appendChild(header);
+      const description = document.createElement('p');
+      description.textContent = item.description;
+      li.appendChild(description);
+      if (meta.length > 0) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'item-meta';
+        metaDiv.textContent = meta.join(' · ');
+        li.appendChild(metaDiv);
+      }
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      if (item.actions?.includes('equip') && handlers.onEquip) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'primary';
+        button.textContent = item.equipped ? 'Equipped' : 'Equip';
+        button.disabled = !!item.equipped;
+        button.addEventListener('click', () => handlers.onEquip(item));
+        actions.appendChild(button);
+      }
+      if (item.actions?.includes('use') && handlers.onUse) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'Use';
+        button.addEventListener('click', () => handlers.onUse(item));
+        actions.appendChild(button);
+      }
+      if (item.actions?.includes('assign') && handlers.onAssign) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'Assign to hotbar';
+        button.addEventListener('click', () => handlers.onAssign(item));
+        actions.appendChild(button);
+      }
+      if (actions.childElementCount > 0) {
+        li.appendChild(actions);
+      }
       this.ui.inventoryList.appendChild(li);
+    }
+  }
+
+  setEquipment(equipment) {
+    this.ui.equipmentList.innerHTML = '';
+    if (!equipment || Object.keys(equipment).length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'No gear equipped yet.';
+      this.ui.equipmentList.appendChild(li);
+      return;
+    }
+    for (const [slot, item] of Object.entries(equipment)) {
+      const li = document.createElement('li');
+      if (item) {
+        li.innerHTML = `<strong>${item.name}</strong><p>${item.description}</p><div class="item-meta">${slot}</div>`;
+      } else {
+        li.innerHTML = `<strong>${slot}</strong><p>Empty slot</p>`;
+      }
+      this.ui.equipmentList.appendChild(li);
+    }
+  }
+
+  setAbilities(abilities) {
+    this.ui.abilitiesList.innerHTML = '';
+    if (!abilities || abilities.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'No abilities unlocked yet. Explore the skill tree!';
+      this.ui.abilitiesList.appendChild(li);
+      return;
+    }
+    for (const ability of abilities) {
+      const li = document.createElement('li');
+      const key = ability.key ? `<span class="item-meta">Key: ${ability.key.toUpperCase()}</span>` : '';
+      li.innerHTML = `<strong>${ability.name}</strong><p>${ability.description}</p>${key}`;
+      this.ui.abilitiesList.appendChild(li);
+    }
+  }
+
+  setQuests(quests) {
+    this.ui.questsList.innerHTML = '';
+    if (!quests || quests.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'No active quests. Speak with townsfolk in the city plazas.';
+      this.ui.questsList.appendChild(li);
+      return;
+    }
+    for (const quest of quests) {
+      const li = document.createElement('li');
+      const status = quest.status ? `<div class="item-meta">${quest.status}</div>` : '';
+      li.innerHTML = `<strong>${quest.name}</strong><p>${quest.description}</p>${status}`;
+      this.ui.questsList.appendChild(li);
     }
   }
 
@@ -768,16 +1149,21 @@ class UIController {
     }
   }
 
+  setLog(entries) {
+    this.ui.log.innerHTML = '';
+    for (const entry of entries) {
+      const li = document.createElement('li');
+      li.textContent = entry;
+      this.ui.log.appendChild(li);
+    }
+  }
+
   showMenu(show) {
     this.ui.pauseMenu.setAttribute('aria-hidden', show ? 'false' : 'true');
   }
 
   showStartMenu(show) {
     this.ui.startMenu.setAttribute('aria-hidden', show ? 'false' : 'true');
-  }
-
-  showLevelOverlay(show) {
-    this.ui.levelOverlay.setAttribute('aria-hidden', show ? 'false' : 'true');
   }
 
   showShop(shop, onPurchase, onClose) {
@@ -801,6 +1187,22 @@ class UIController {
   hideShop() {
     this.ui.shopOverlay.setAttribute('aria-hidden', 'true');
     this.ui.shopOptions.innerHTML = '';
+  }
+
+  showInventory(show) {
+    this.ui.inventoryOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+
+  showQuests(show) {
+    this.ui.questsOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+
+  showSkillTree(show) {
+    this.ui.skillTreeOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+
+  showAtlas(show) {
+    this.ui.mapOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
   }
 
   showPrompt(text) {
@@ -829,32 +1231,45 @@ class UIController {
     }, 2400);
   }
 
-  renderUpgradeChoices(choices, onSelect) {
-    this.ui.upgradeOptions.innerHTML = '';
-    if (choices.length === 0) {
-      const empty = document.createElement('p');
-      empty.textContent = 'No sparks available just yet. Keep exploring!';
-      this.ui.upgradeOptions.appendChild(empty);
-      return;
+  renderSkillTree(nodes, unlocked, available, handler, points = 0) {
+    this.skillTreeHandler = handler;
+    this.ui.skillTree.innerHTML = '';
+    const nameLookup = new Map(nodes.map((node) => [node.id, node.name]));
+    for (const node of nodes) {
+      const card = document.createElement('article');
+      card.className = 'skill-node';
+      const state = unlocked.has(node.id)
+        ? 'unlocked'
+        : available.has(node.id)
+        ? 'available'
+        : 'locked';
+      card.dataset.state = state;
+      const title = document.createElement('h3');
+      title.textContent = node.name;
+      const desc = document.createElement('p');
+      desc.textContent = node.description;
+      const meta = document.createElement('div');
+      meta.className = 'node-meta';
+      const prereqNames = node.prerequisites?.map((id) => nameLookup.get(id) ?? id) ?? [];
+      const requirementText = prereqNames.length
+        ? `Requires: ${prereqNames.join(', ')}`
+        : 'Base technique';
+      const cost = node.cost ?? 1;
+      meta.textContent = `${requirementText} • Cost: ${cost} spark${cost > 1 ? 's' : ''}`;
+      card.append(title, desc, meta);
+      if (state === 'available') {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = `Unlock (${cost} spark${cost > 1 ? 's' : ''})`;
+        if (cost > points) {
+          button.disabled = true;
+          button.title = 'Earn more sparks to unlock this skill.';
+        }
+        button.addEventListener('click', () => handler(node));
+        card.appendChild(button);
+      }
+      this.ui.skillTree.appendChild(card);
     }
-    for (const choice of choices) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'upgrade-option';
-      button.innerHTML = `<h3>${choice.name}</h3><p>${choice.description}</p>`;
-      button.addEventListener('click', () => onSelect(choice));
-      this.ui.upgradeOptions.appendChild(button);
-    }
-    const firstButton = this.ui.upgradeOptions.querySelector('button');
-    firstButton?.focus();
-  }
-
-  clearUpgradeChoices() {
-    this.ui.upgradeOptions.innerHTML = '';
-  }
-
-  bindSkip(handler) {
-    this.ui.skipUpgrade.onclick = handler;
   }
 }
 
@@ -906,6 +1321,103 @@ class ParticleSystem {
       context.fill();
       context.globalAlpha = 1;
     }
+  }
+}
+
+class MinimapRenderer {
+  constructor(minimapCanvas, atlasCanvas) {
+    this.canvas = minimapCanvas;
+    this.ctx = minimapCanvas?.getContext('2d') ?? null;
+    this.atlasCanvas = atlasCanvas;
+    this.atlasCtx = atlasCanvas?.getContext('2d') ?? null;
+    this.baseMini = null;
+    this.baseAtlas = null;
+  }
+
+  setWorld(world) {
+    this.world = world;
+    if (!world) return;
+    this.#renderMinimapBase();
+    this.#renderAtlasBase();
+  }
+
+  draw(player) {
+    if (!this.ctx || !this.baseMini || !this.world) return;
+    const { ctx, canvas } = this;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(this.baseMini, 0, 0, canvas.width, canvas.height);
+    const scaleX = canvas.width / this.world.width;
+    const scaleY = canvas.height / this.world.height;
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(player.x * scaleX, player.y * scaleY, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawAtlas(player) {
+    if (!this.atlasCtx || !this.baseAtlas || !this.world) return;
+    const { atlasCtx: ctx, atlasCanvas: canvas } = this;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(this.baseAtlas, 0, 0, canvas.width, canvas.height);
+    const scaleX = canvas.width / this.world.width;
+    const scaleY = canvas.height / this.world.height;
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(player.x * scaleX, player.y * scaleY, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  #renderMinimapBase() {
+    if (!this.canvas || !this.world) return;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = this.world.width;
+    offscreen.height = this.world.height;
+    const ctx = offscreen.getContext('2d');
+    if (!ctx) return;
+    const imageData = ctx.createImageData(offscreen.width, offscreen.height);
+    let index = 0;
+    for (let y = 0; y < this.world.height; y += 1) {
+      for (let x = 0; x < this.world.width; x += 1) {
+        const tile = this.world.getTile(x, y);
+        const color = TILE_TYPES[tile.type]?.color ?? '#111827';
+        const rgb = hexToRgb(color);
+        imageData.data[index++] = rgb.r;
+        imageData.data[index++] = rgb.g;
+        imageData.data[index++] = rgb.b;
+        imageData.data[index++] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+    this.baseMini = offscreen;
+  }
+
+  #renderAtlasBase() {
+    if (!this.atlasCanvas || !this.world) return;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = this.world.width;
+    offscreen.height = this.world.height;
+    const ctx = offscreen.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+    for (let y = 0; y < this.world.height; y += 1) {
+      for (let x = 0; x < this.world.width; x += 1) {
+        const tile = this.world.getTile(x, y);
+        const info = TILE_TYPES[tile.type];
+        ctx.fillStyle = info?.color ?? '#111827';
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+    ctx.fillStyle = '#f59e0b';
+    for (const town of this.world.towns ?? []) {
+      ctx.fillRect(town.center.x - 2, town.center.y - 2, 4, 4);
+    }
+    ctx.fillStyle = '#38bdf8';
+    for (const dungeon of this.world.dungeons ?? []) {
+      ctx.fillRect(dungeon.bounds.x1, dungeon.bounds.y1, dungeon.bounds.x2 - dungeon.bounds.x1, 1);
+      ctx.fillRect(dungeon.bounds.x1, dungeon.bounds.y2, dungeon.bounds.x2 - dungeon.bounds.x1, 1);
+    }
+    this.baseAtlas = offscreen;
   }
 }
 
@@ -1531,9 +2043,9 @@ export class RoguelikeGame {
     this.context = context;
     this.input = new InputHandler();
     this.ui = new UIController(ui);
-    this.ui.bindSkip(() => this.skipUpgradeSelection());
     this.log = new EventLog(ui.log);
     this.particles = new ParticleSystem();
+    this.minimap = new MinimapRenderer(ui.minimap, ui.atlas);
     this.lastTime = 0;
     this.state = 'menu';
     this.started = false;
@@ -1549,16 +2061,31 @@ export class RoguelikeGame {
       distance: 0,
       enemiesDefeated: 0,
       damageTaken: 0,
-      upgrades: 0,
+      skillsUnlocked: 0,
       timeAlive: 0,
     };
+
+    this.hotbar = Array.from({ length: HOTBAR_SIZE }, () => null);
+    this.abilityState = new Map();
+    this.activeModifiers = [];
+    this.unlockedSkills = new Set();
+    this.availableSkillPoints = 0;
+    this.quests = [];
+    this.visitedTowns = new Set();
+    this.overlayState = { inventory: false, quests: false, skillTree: false, atlas: false };
 
     this.input.onShoot(() => this.#handleShoot());
     this.input.onDash(() => this.#handleDash());
     this.input.onPause(() => this.toggleMenu());
     this.input.onInteract(() => this.#handleInteract());
+    this.input.onToggleInventory(() => this.toggleInventory());
+    this.input.onToggleQuests(() => this.toggleQuests());
+    this.input.onToggleSkillTree(() => this.toggleSkillTree());
+    this.input.onToggleMap(() => this.toggleAtlas());
+    for (let i = 0; i < HOTBAR_SIZE; i += 1) {
+      this.input.bindHotbar(i, () => this.#useHotbarItem(i));
+    }
 
-    this.upgradePool = [...UPGRADE_LIBRARY];
     this.achievements = new Set();
     this.goal = pick(GOALS);
     this.gold = 0;
@@ -1575,6 +2102,17 @@ export class RoguelikeGame {
     this.nearbyPlot = null;
     this.lastZoneName = null;
 
+    for (const button of ui.closeButtons ?? []) {
+      button.addEventListener('click', () => {
+        const overlay = button.closest('.overlay');
+        if (overlay?.id === 'inventory-overlay') this.overlayState.inventory = false;
+        if (overlay?.id === 'quests-overlay') this.overlayState.quests = false;
+        if (overlay?.id === 'skilltree-overlay') this.overlayState.skillTree = false;
+        if (overlay?.id === 'map-overlay') this.overlayState.atlas = false;
+        overlay?.setAttribute('aria-hidden', 'true');
+      });
+    }
+
     this.#startLoop();
   }
 
@@ -1587,19 +2125,27 @@ export class RoguelikeGame {
   restart() {
     this.state = 'running';
     this.ui.showMenu(false);
-    this.ui.showLevelOverlay(false);
     this.ui.showStartMenu(false);
-    this.ui.clearUpgradeChoices();
-    this.upgradeChoices = [];
-    this.pendingSkillPoints = 0;
-    this.upgradePool = [...UPGRADE_LIBRARY];
+    this.ui.hideShop();
+    this.ui.clearPrompt();
+    this.ui.showInventory(false);
+    this.ui.showQuests(false);
+    this.ui.showSkillTree(false);
+    this.ui.showAtlas(false);
+
+    this.overlayState = { inventory: false, quests: false, skillTree: false, atlas: false };
+    this.availableSkillPoints = 0;
+    this.unlockedSkills.clear();
+    this.abilityState.clear();
+    this.activeModifiers = [];
+    this.hotbar = Array.from({ length: HOTBAR_SIZE }, () => null);
     this.achievements.clear();
     this.goal = pick(GOALS);
     this.stats = {
       distance: 0,
       enemiesDefeated: 0,
       damageTaken: 0,
-      upgrades: 0,
+      skillsUnlocked: 0,
       timeAlive: 0,
     };
     this.gold = 0;
@@ -1621,6 +2167,8 @@ export class RoguelikeGame {
     this.nearbyPlot = null;
     this.nearbyChest = null;
     this.timeOfDay = DAY_NIGHT_DURATION * 0.4;
+    this.quests = [];
+    this.visitedTowns.clear();
 
     this.world = World.generate(
       Math.max(
@@ -1661,6 +2209,16 @@ export class RoguelikeGame {
       speed: PLAYER_BASE_SPEED,
       aim: { x: 0, y: -1 },
       upgrades: [],
+      equipment: {
+        weapon: null,
+        armor: null,
+        shield: null,
+        trinket: null,
+      },
+      abilities: [],
+      xpBonus: 0,
+      sanctuaryRegen: 0,
+      abilityEmpowered: false,
     };
 
     this.camera.x = this.player.x;
@@ -1672,6 +2230,13 @@ export class RoguelikeGame {
     this.pickups = [];
     this.particles = new ParticleSystem();
     this.spawnTimer = ENEMY_SPAWN_INTERVAL;
+    this.slowFields = [];
+
+    this.minimap?.setWorld(this.world);
+    this.minimap?.draw(this.player);
+
+    this.log.entries = [];
+    this.log.render();
 
     this.ui.setHealth(this.player.health, this.player.maxHealth);
     this.ui.setExperience(
@@ -1679,25 +2244,388 @@ export class RoguelikeGame {
       this.player.experience,
       this.player.experienceToLevel
     );
-    this.ui.setSkillPoints(0);
+    this.ui.setSkillPoints(this.availableSkillPoints);
     this.ui.setUpgrades([]);
     this.ui.setAchievements([]);
     this.ui.setGoal(this.goal);
     this.ui.setMapClues(this.world.mapClues);
     this.ui.setGold(this.gold);
-    this.ui.setInventory(this.inventory);
+    this.#refreshInventoryUI();
+    this.ui.setEquipment(this.player.equipment);
+    this.ui.setAbilities(this.#describeAbilities());
+    this.ui.setQuests(this.quests);
     this.ui.setJournal(this.journalEntries);
     this.ui.setStory(this.currentStory.text);
     this.ui.setZone(this.world.getZoneName(this.player.x, this.player.y));
     this.ui.setTimeOfDay(this.#describeTimeOfDay());
     this.ui.setTownProgress(this.houseProject.label, 0);
-    this.ui.hideShop();
-    this.ui.clearPrompt();
+    this.ui.setHotbar(this.hotbar);
+    this.#refreshSkillTreeUI();
+
     this.log.push('Radiant Hearth hums with possibility. Press F to chat, trade, and build.');
+    this.log.push('Press I for inventory, K for the skill tree, and J for quests.');
 
     this.lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
   }
 
+  toggleInventory(force) {
+    if (this.state !== 'running' && force !== true) return;
+    const next = force ?? !this.overlayState.inventory;
+    this.overlayState.inventory = next;
+    this.ui.showInventory(next);
+    if (next) {
+      this.#refreshInventoryUI();
+    }
+  }
+
+  toggleQuests(force) {
+    if (this.state !== 'running' && force !== true) return;
+    const next = force ?? !this.overlayState.quests;
+    this.overlayState.quests = next;
+    this.ui.showQuests(next);
+    if (next) {
+      this.ui.setQuests(this.quests);
+    }
+  }
+
+  toggleSkillTree(force) {
+    if (this.state !== 'running' && force !== true) return;
+    const next = force ?? !this.overlayState.skillTree;
+    this.overlayState.skillTree = next;
+    this.ui.showSkillTree(next);
+    if (next) {
+      this.#refreshSkillTreeUI();
+    }
+  }
+
+  #refreshSkillTreeUI() {
+    if (!this.ui?.renderSkillTree) return;
+    if (!this.player) return;
+    const unlocked = this.unlockedSkills ?? new Set();
+    const available = new Set();
+    for (const node of SKILL_TREE_NODES) {
+      const requirements = node.prerequisites ?? [];
+      if (requirements.every((id) => unlocked.has(id))) {
+        available.add(node.id);
+      }
+    }
+
+    this.ui.renderSkillTree(
+      SKILL_TREE_NODES,
+      unlocked,
+      available,
+      (node) => this.#unlockSkill(node.id),
+      this.availableSkillPoints
+    );
+
+    const unlockedNodes = SKILL_TREE_NODES.filter((node) => unlocked.has(node.id));
+    this.player.upgrades = unlockedNodes;
+    this.ui.setUpgrades(unlockedNodes);
+    this.ui.setSkillPoints(this.availableSkillPoints);
+  }
+
+  #unlockSkill(skillId) {
+    const node = SKILL_TREE_NODES.find((entry) => entry.id === skillId);
+    if (!node) return;
+    if (this.unlockedSkills.has(node.id)) return;
+    const requirements = node.prerequisites ?? [];
+    const missing = requirements.filter((id) => !this.unlockedSkills.has(id));
+    if (missing.length > 0) {
+      this.ui.showToast('Unlock prerequisite skills first.');
+      return;
+    }
+    const cost = Math.max(1, node.cost ?? 1);
+    if (this.availableSkillPoints < cost) {
+      this.ui.showToast('You need more sparks to learn this skill.');
+      return;
+    }
+
+    this.availableSkillPoints -= cost;
+    this.unlockedSkills.add(node.id);
+    if (typeof node.apply === 'function') {
+      node.apply(this);
+    }
+    let toastMessage = `${node.name} unlocked.`;
+    if (node.unlocksAbility) {
+      const ability = ABILITY_LIBRARY[node.unlocksAbility];
+      this.#unlockAbility(node.unlocksAbility, { silent: true });
+      if (ability) {
+        toastMessage = `${node.name} unlocked. Ability ready: ${ability.name}.`;
+      }
+    }
+
+    this.stats.skillsUnlocked += 1;
+    this.ui.showToast(toastMessage);
+    this.ui.setHealth(this.player.health, this.player.maxHealth);
+    this.ui.setSkillPoints(this.availableSkillPoints);
+    this.#refreshSkillTreeUI();
+  }
+
+  toggleAtlas(force) {
+    if (this.state !== 'running' && force !== true) return;
+    const next = force ?? !this.overlayState.atlas;
+    this.overlayState.atlas = next;
+    this.ui.showAtlas(next);
+    if (next) {
+      this.minimap?.drawAtlas?.(this.player);
+    }
+  }
+
+  #refreshInventoryUI() {
+    const items = this.inventory.map((item) => ({ ...item }));
+    this.ui.setInventory(items, {
+      onEquip: (item) => this.#equipItem(item.instanceId),
+      onUse: (item) => this.#useItem(item.instanceId),
+      onAssign: (item) => this.#assignHotbar(item.instanceId),
+    });
+  }
+
+  #equipItem(instanceId) {
+    const item = this.inventory.find((entry) => entry.instanceId === instanceId);
+    if (!item || !item.slot) return;
+    const slot = item.slot;
+    const current = this.player.equipment[slot];
+    if (current?.instanceId === instanceId) {
+      this.ui.showToast(`${item.name} already equipped`);
+      return;
+    }
+    if (current) {
+      this.#unequipSlot(slot);
+    }
+    this.player.equipment[slot] = item;
+    item.equipped = true;
+    this.#applyEquipmentBonuses(item, true);
+    if (typeof item.onEquip === 'function') {
+      item.onEquip(this.player);
+    }
+    this.ui.showToast(`${item.name} equipped`);
+    this.#refreshInventoryUI();
+    this.ui.setEquipment(this.player.equipment);
+  }
+
+  #unequipSlot(slot) {
+    const current = this.player.equipment[slot];
+    if (!current) return;
+    current.equipped = false;
+    this.#applyEquipmentBonuses(current, false);
+    if (typeof current.onUnequip === 'function') {
+      current.onUnequip(this.player);
+    }
+    this.player.equipment[slot] = null;
+  }
+
+  #applyEquipmentBonuses(item, apply) {
+    const direction = apply ? 1 : -1;
+    const bonuses = item.bonuses || {};
+    if (bonuses.damage) {
+      this.player.damage += bonuses.damage * direction;
+    }
+    if (bonuses.maxHealth) {
+      this.player.maxHealth += bonuses.maxHealth * direction;
+      this.player.health = clamp(this.player.health, 0, this.player.maxHealth);
+    }
+    if (bonuses.dashDistance) {
+      this.player.dashDistance += bonuses.dashDistance * direction;
+    }
+    if (bonuses.speedMultiplier) {
+      const multiplier = bonuses.speedMultiplier;
+      this.player.speed = apply
+        ? this.player.speed * multiplier
+        : this.player.speed / multiplier;
+    }
+  }
+
+  #useItem(instanceId) {
+    const item = this.inventory.find((entry) => entry.instanceId === instanceId);
+    if (!item) return;
+    if (item.type !== 'consumable') {
+      this.ui.showToast('Only consumables can be used directly.');
+      return;
+    }
+    let consumed = false;
+    if (item.heal) {
+      const before = this.player.health;
+      this.player.health = clamp(this.player.health + item.heal, 0, this.player.maxHealth);
+      const healed = Math.round(this.player.health - before);
+      if (healed > 0) {
+        this.ui.showToast(`Restored ${healed} health`);
+        consumed = true;
+      }
+    }
+    if (typeof item.onUse === 'function') {
+      item.onUse(this);
+      consumed = true;
+    }
+    if (consumed) {
+      item.quantity = Math.max(0, (item.quantity ?? 1) - 1);
+      if (item.quantity <= 0) {
+        this.inventory = this.inventory.filter((entry) => entry.instanceId !== instanceId);
+      }
+      this.#syncHotbar();
+      this.ui.setHealth(this.player.health, this.player.maxHealth);
+      this.#refreshInventoryUI();
+    } else {
+      this.ui.showToast('Already at full effect.');
+    }
+  }
+
+  #assignHotbar(instanceId) {
+    const slotIndex = this.hotbar.findIndex((slot) => !slot);
+    if (slotIndex === -1) {
+      this.ui.showToast('Hotbar full. Remove an item before assigning.');
+      return;
+    }
+    const item = this.inventory.find((entry) => entry.instanceId === instanceId);
+    if (!item) return;
+    this.hotbar[slotIndex] = { type: 'item', instanceId, label: item.name };
+    this.#syncHotbar();
+    this.ui.showToast(`${item.name} added to hotbar slot ${slotIndex + 1}`);
+  }
+
+  #useHotbarItem(index) {
+    const slot = this.hotbar[index];
+    if (!slot) return;
+    if (slot.type === 'item') {
+      this.#useItem(slot.instanceId);
+    }
+  }
+
+  #syncHotbar() {
+    const display = this.hotbar.map((slot) => {
+      if (!slot) return null;
+      if (slot.type === 'item') {
+        const item = this.inventory.find((entry) => entry.instanceId === slot.instanceId);
+        if (!item) {
+          return null;
+        }
+        return {
+          label: item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name,
+          cooldownLabel: '',
+          active: false,
+        };
+      }
+      return null;
+    });
+    this.ui.setHotbar(display);
+  }
+
+  #describeAbilities() {
+    return this.player.abilities.map((abilityId) => {
+      const ability = ABILITY_LIBRARY[abilityId];
+      const cooldown = this.abilityState.get(abilityId)?.timer ?? 0;
+      return {
+        id: abilityId,
+        name: ability.name,
+        description: ability.description,
+        key: ability.key,
+        cooldown: cooldown,
+      };
+    });
+  }
+
+  #unlockAbility(abilityId, options = {}) {
+    if (this.player.abilities.includes(abilityId)) return;
+    const ability = ABILITY_LIBRARY[abilityId];
+    if (!ability) return;
+    this.player.abilities.push(abilityId);
+    this.abilityState.set(abilityId, { cooldown: ability.cooldown, timer: 0 });
+    this.input.bindAbility(ability.key, () => this.#triggerAbility(abilityId));
+    if (!options.silent) {
+      this.ui.showToast(`${ability.name} unlocked`);
+    }
+    this.ui.setAbilities(this.#describeAbilities());
+  }
+
+  #triggerAbility(abilityId) {
+    const state = this.abilityState.get(abilityId);
+    if (!state) return;
+    if (state.timer > 0) {
+      this.ui.showToast('Ability recharging');
+      return;
+    }
+    const ability = ABILITY_LIBRARY[abilityId];
+    if (!ability) return;
+    this.#activateAbility(abilityId, ability);
+    state.timer = ability.cooldown;
+    this.ui.setAbilities(this.#describeAbilities());
+    this.#syncHotbar();
+  }
+
+  #activateAbility(abilityId, ability) {
+    if (abilityId === 'solar-burst') {
+      const radius = 4.5;
+      for (const enemy of [...this.enemies]) {
+        const distance = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
+        if (distance <= radius) {
+          enemy.health -= this.player.damage * 2.2;
+          enemy.slowTimer = 1.5;
+          if (enemy.health <= 0) {
+            this.#onEnemyDefeated(enemy);
+            this.enemies = this.enemies.filter((target) => target !== enemy);
+          }
+        }
+      }
+      this.particles.spawn({ x: this.player.x, y: this.player.y }, { color: '#f97316', radius: 0.6, life: 0.8 });
+      this.ui.showToast('Solar Burst unleashed');
+    } else if (abilityId === 'astral-step') {
+      const direction = normalize(this.player.aim);
+      const distance = 3.5;
+      const targetX = this.player.x + direction.x * distance;
+      const targetY = this.player.y + direction.y * distance;
+      if (this.world.isWalkable(targetX, targetY)) {
+        this.player.x = targetX;
+        this.player.y = targetY;
+        this.player.vx = 0;
+        this.player.vy = 0;
+        this.slowFields = this.slowFields || [];
+        this.slowFields.push({ x: targetX, y: targetY, radius: 2, slow: 0.45, age: 0, duration: 3 });
+        this.ui.showToast('Astral Step used');
+      }
+    } else if (abilityId === 'tempest-field') {
+      const center = { x: this.player.x, y: this.player.y };
+      this.slowFields = this.slowFields || [];
+      this.slowFields.push({ x: center.x, y: center.y, radius: 5, slow: 0.35, damage: 12, age: 0, duration: 6 });
+      this.ui.showToast('Tempest Field conjured');
+    }
+  }
+
+  addTimedModifier(modifier) {
+    const existing = this.activeModifiers.find((mod) => mod.id === modifier.id);
+    if (existing) {
+      existing.remaining = modifier.duration;
+      return;
+    }
+    this.activeModifiers.push({
+      ...modifier,
+      remaining: modifier.duration,
+      applied: false,
+    });
+  }
+
+  #updateAbilityCooldowns(dt) {
+    for (const [id, state] of this.abilityState.entries()) {
+      if (state.timer > 0) {
+        state.timer = Math.max(0, state.timer - dt);
+      }
+    }
+  }
+
+  #updateModifiers(dt) {
+    const survivors = [];
+    for (const mod of this.activeModifiers) {
+      if (!mod.applied) {
+        mod.apply?.(this.player);
+        mod.applied = true;
+      }
+      mod.remaining -= dt;
+      if (mod.remaining > 0) {
+        survivors.push(mod);
+      } else {
+        mod.remove?.(this.player);
+      }
+    }
+    this.activeModifiers = survivors;
+  }
   showStartMenu(show) {
     this.ui.showStartMenu(show);
   }
@@ -1724,16 +2652,6 @@ export class RoguelikeGame {
     if (this.player?.health <= 0) return;
     this.state = 'running';
     this.ui.showMenu(false);
-  }
-
-  skipUpgradeSelection() {
-    if (this.state === 'choosing-upgrade') {
-      this.state = 'running';
-      this.ui.showLevelOverlay(false);
-      this.ui.clearUpgradeChoices();
-      this.ui.setSkillPoints(this.pendingSkillPoints);
-      this.log.push('You pocket the spark for a future moment.');
-    }
   }
 
   openShop(shop) {
@@ -1970,6 +2888,12 @@ export class RoguelikeGame {
 
     this.player.shootTimer = Math.max(0, this.player.shootTimer - dt);
     this.player.dashTimer = Math.max(0, this.player.dashTimer - dt);
+
+    this.#updateAbilityCooldowns(dt);
+    this.#updateModifiers(dt);
+    if (this.player.abilities.length > 0) {
+      this.ui.setAbilities(this.#describeAbilities());
+    }
 
     if (this.player.shield) {
       this.player.shield.timer = Math.min(
@@ -2469,47 +3393,49 @@ export class RoguelikeGame {
           this.ui.showToast(`Restored ${healed} health`);
         }
       }
-      if (typeof item.onAcquire === 'function') {
-        item.onAcquire(this.player);
+      return;
+    }
+
+    const stackable = item.stackable ?? false;
+    if (stackable) {
+      const existing = this.inventory.find((entry) => entry.id === item.id);
+      if (existing) {
+        existing.quantity = (existing.quantity ?? 1) + 1;
+        this.ui.showToast(`+1 ${item.name}`);
+        this.log.push(`You gather more ${item.name.toLowerCase()}.`);
+        this.#refreshInventoryUI();
+        this.#syncHotbar();
+        return;
       }
-      this.ui.setHealth(this.player.health, this.player.maxHealth);
-      this.log.push(`You consume ${item.name}.`);
-      return;
-    }
-
-    const alreadyOwned = this.inventory.some((existing) => existing.id === item.id);
-    if (alreadyOwned && item.type !== 'material') {
-      const stipend = item.goldValue ?? randInt(18, 32);
-      this.gold += stipend;
-      this.ui.setGold(this.gold);
-      this.ui.showToast(`Duplicate ${item.name} traded for ${stipend} gold`);
-      this.log.push(`You exchange a spare ${item.name} for supplies.`);
-      return;
-    }
-
-    if (typeof item.onAcquire === 'function') {
-      item.onAcquire(this.player);
-      this.ui.setHealth(this.player.health, this.player.maxHealth);
+    } else {
+      const duplicate = this.inventory.some((entry) => entry.id === item.id);
+      if (duplicate) {
+        const stipend = item.goldValue ?? randInt(18, 32);
+        this.gold += stipend;
+        this.ui.setGold(this.gold);
+        this.ui.showToast(`Duplicate ${item.name} traded for ${stipend} gold`);
+        this.log.push(`You exchange a spare ${item.name} for supplies.`);
+        return;
+      }
     }
 
     this.inventory.push(item);
-    this.ui.setInventory(this.inventory);
     this.ui.showToast(`${item.name} added to your satchel.`);
-    if (item.type === 'material') {
-      this.log.push(`You gather ${item.name.toLowerCase()} for future building.`);
-    } else {
-      this.log.push(`You attune to ${item.name}.`);
-    }
+    this.log.push(`You collect ${item.name.toLowerCase()}.`);
+    this.#refreshInventoryUI();
+    this.#syncHotbar();
   }
 
   #checkLevelUp() {
+    let leveled = false;
     while (this.player.experience >= this.player.experienceToLevel) {
       this.player.experience -= this.player.experienceToLevel;
       this.player.level += 1;
       this.player.experienceToLevel = Math.round(
         this.player.experienceToLevel + LEVEL_XP_GROWTH
       );
-      this.pendingSkillPoints += 1;
+      this.availableSkillPoints += 1;
+      leveled = true;
       if (this.player.onLevelUpRegen) {
         this.player.health = clamp(
           this.player.health + this.player.onLevelUpRegen,
@@ -2519,46 +3445,19 @@ export class RoguelikeGame {
       }
       this.ui.showToast(`Level ${this.player.level}! Skill spark earned.`);
       this.log.push('A new spark flares within you.');
-      this.#presentUpgrades();
     }
 
-    this.ui.setSkillPoints(this.pendingSkillPoints);
+    if (leveled) {
+      this.#refreshSkillTreeUI();
+    }
+
+    this.ui.setSkillPoints(this.availableSkillPoints);
     this.ui.setExperience(
       this.player.level,
       this.player.experience,
       this.player.experienceToLevel
     );
     this.ui.setHealth(this.player.health, this.player.maxHealth);
-  }
-
-  #presentUpgrades() {
-    this.state = 'choosing-upgrade';
-    this.ui.showLevelOverlay(true);
-    const options = [];
-    const pool = this.upgradePool.length > 0 ? this.upgradePool : [...UPGRADE_LIBRARY];
-    const attempts = Math.min(3, pool.length);
-    while (options.length < attempts) {
-      const candidate = pick(pool);
-      if (!options.includes(candidate)) {
-        options.push(candidate);
-      }
-    }
-    this.upgradeChoices = options;
-    this.ui.renderUpgradeChoices(options, (choice) => this.#applyUpgrade(choice));
-  }
-
-  #applyUpgrade(upgrade) {
-    this.pendingSkillPoints = Math.max(0, this.pendingSkillPoints - 1);
-    upgrade.apply(this.player);
-    this.player.upgrades.push(upgrade);
-    this.upgradePool = this.upgradePool.filter((item) => item.id !== upgrade.id);
-    this.stats.upgrades += 1;
-    this.ui.setUpgrades(this.player.upgrades);
-    this.ui.setSkillPoints(this.pendingSkillPoints);
-    this.ui.clearUpgradeChoices();
-    this.ui.showLevelOverlay(false);
-    this.state = 'running';
-    this.log.push(`You attune to ${upgrade.name}.`);
   }
 
   #onEnemyDefeated(enemy) {
