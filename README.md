@@ -1,50 +1,39 @@
-# Wanderlight
+# Neon Spud
 
-A cozy, top-down action roguelike prototype built for the browser. Wander through a
-hand-crafted-feeling valley, collect luminous memories, unlock wild upgrades, and
-pause for a tea break at any time.
+A Brotato-style arena survivor. Choose a potato hero, survive neon synth
+creatures for twelve waves, and spend the scrap you scoop up on wild upgrades
+between rounds.
 
-## Getting Started
+## Features
 
-Open `index.html` in any modern browser. Running a simple static server such as
-`python -m http.server 8000` lets you play with the live reload conveniences of
-your editor.
+- **4 playable characters** with unique stat kits (crit-stacked witch, tanky
+  bulwark, hyper-mobile scout, and a gunner that floods the arena with bolts).
+- **Expanded enemy roster** including swarmers, chargers, gunners that shoot back
+  and wave-gated bosses with huge health pools and bespoke drops.
+- **Large arena** that scales with your viewport so kiting space always feels
+  generous on desktop monitors.
+- **Rarity-driven shop** stocked with a dozen items spanning common, rare, and
+  epic tiers plus escalating reroll costs.
+- **Combat polish** such as glowing gradients, parallax grids, bullet trails, and
+  different projectile colors for enemies and the player.
+
+## Play
+
+Open `index.html` in your browser (or run a simple static server such as
+`python -m http.server 8000` and visit `http://localhost:8000`). The canvas
+resizes with the window, so fullscreen is recommended.
 
 ## Controls
 
 - **Move:** WASD
-- **Aim:** Arrow keys
-- **Shoot:** Space
-- **Dash:** E
-- **Interact / Talk / Trade:** F
-- **Pause:** Escape
+- **Shoot:** Automatic (locks on the closest enemy)
+- **Shop / Continue:** Click buttons when the between-wave overlay appears
 
-## What changed in this iteration?
+## Loop
 
-- The valley is now a connected overworld with two cozy towns, farmland, a firefly
-  sanctuary, and dungeon entrances instead of a single arena. Safe places let you
-  heal, decorate the scenery, and start house construction.
-- Dungeons host all combat. They feature roaming mobs plus bespoke boss guardians
-  that launch patterned barrages and drop valuable loot when defeated.
-- Looting matters: enemies spill glow shards (currency) alongside timber, stone,
-  and rare silk. Trade shards at town shops for weapon, armor, and potion upgrades,
-  or haul building materials back home to raise your personal house.
-- Towns feel alive thanks to NPCs with dialogue, journals to fill, illuminated
-  lamps, market stalls, crop rows, and a story tracker that nudges you toward the
-  next objective.
-- Movement and visuals received a pass—acceleration-based motion, a smoothed
-  camera, animated water, a full day/night sky cycle, glowing highlights, and new
-  decorative sprites lend a modern polish.
-
-## Project Structure
-
-- `index.html` — Markup for the canvas, HUD layers, overlays, and toast system.
-- `styles.css` — Visual design for the full-screen presentation, HUD panels, menus,
-  and upgrade choices.
-- `src/main.js` — Bootstraps the canvas sizing logic, UI binding, and kicks off the
-  roguelike engine.
-- `src/roguelike.js` — The meat of the experience: input handling, world generation,
-  rendering, combat systems, upgrades, achievements, and progression flow.
-
-Enjoy strolling through the valley, collect every achievement, and feel free to
-extend the systems with your own ideas.
+1. Pick a hero on the start screen and launch the run.
+2. Survive the timer for each wave. Any remaining enemies must be cleared once
+   the timer expires.
+3. Collect materials dropped by enemies to spend on upgrades and rerolls.
+4. Every fourth wave spawns a neon boss—beat it for a shower of loot.
+5. Reach Wave 12 to claim victory.

@@ -1,5285 +1,1080 @@
 export const TILE_SIZE = 32;
 
-const DIRECTIONS = {
-  w: { x: 0, y: -1 },
-  a: { x: -1, y: 0 },
-  s: { x: 0, y: 1 },
-  d: { x: 1, y: 0 },
-  ArrowUp: { x: 0, y: -1 },
-  ArrowLeft: { x: -1, y: 0 },
-  ArrowDown: { x: 0, y: 1 },
-  ArrowRight: { x: 1, y: 0 },
+const PLAYER_BASE_STATS = {
+  radius: 18,
+  speed: 220,
+  maxHealth: 100,
+  damage: 12,
+  attackDelay: 0.45,
+  projectileSpeed: 560,
+  projectileLifetime: 1.1,
+  projectiles: 1,
+  spread: 0.12,
+  critChance: 0.05,
+  critMultiplier: 1.8,
+  armor: 0,
+  pickupRange: 60,
 };
 
-const AIM_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
-const MOVE_KEYS = new Set(['w', 'a', 's', 'd']);
-
-const WORLD_PADDING_TILES = 36;
-const MIN_WORLD_WIDTH_TILES = 420;
-const MIN_WORLD_HEIGHT_TILES = 360;
-const PLAYER_BASE_SPEED = 3.8; // tiles per second
-const PLAYER_SPRINT_SPEED = 6.6;
-const PLAYER_ACCELERATION = 16;
-const PLAYER_FRICTION = 11;
-const PLAYER_BASE_HEALTH = 140;
-const PLAYER_DASH_DISTANCE = 4.4;
-const PLAYER_DASH_COOLDOWN = 1.7;
-const PLAYER_SHOT_INTERVAL = 0.38;
-const PLAYER_BASE_DAMAGE = 14;
-const PLAYER_PROJECTILE_SPEED = 12.5;
-const PLAYER_PROJECTILE_LIFETIME = 2.6;
-
-const PLAYER_HOUSE_PROGRESS_TARGET = 160;
-
-const ENEMY_BASE_HEALTH = 34;
-const ENEMY_BASE_SPEED = 1.45;
-const ENEMY_SPAWN_INTERVAL = 8.2;
-const ENEMY_CONTACT_DAMAGE = 9;
-const ENEMY_RANGE = 11;
-const ENEMY_FIRE_INTERVAL = 3.1;
-const ENEMY_PROJECTILE_SPEED = 8.5;
-const ENEMY_PROJECTILE_DAMAGE = 10;
-const ENEMY_PROJECTILE_LIFETIME = 4.2;
-
-const BOSS_HEALTH = 280;
-const BOSS_FIRE_INTERVAL = 1.45;
-const BOSS_PROJECTILE_SPEED = 14;
-const BOSS_CONTACT_DAMAGE = 20;
-const BOSS_PROJECTILE_DAMAGE = 16;
-
-const PICKUP_ATTRACTION_RANGE = 3.2;
-const PICKUP_ATTRACTION_SPEED = 2.7;
-
-const XP_PER_LEVEL = 64;
-const LEVEL_XP_GROWTH = 28;
-
-const DAY_NIGHT_DURATION = 180;
-const SKY_STARS = 45;
-
-const TILE_TYPES = {
-  grass: { color: '#168a7c', variants: ['#12937f', '#1f9d88', '#0f7f70'] },
-  meadow: { color: '#1fa38f', variants: ['#27b49d', '#1c9689', '#23c2a6'] },
-  grove: { color: '#0f4f63', variants: ['#155b6f', '#0e4658', '#1b6473'] },
-  path: { color: '#ff6f91', variants: ['#ff8da6', '#ff5a7d', '#ff7a9e'] },
-  sand: { color: '#f9d472', variants: ['#f7c65c', '#f9dd8e', '#f4be45'] },
-  water: { color: '#05355f', variants: ['#0b3f73', '#0f4d89', '#0a2f5e'], blocked: true },
-  stone: { color: '#231d3f', variants: ['#2b2549', '#1a1534', '#31275b'], blocked: true },
-  plaza: { color: '#c084fc', variants: ['#d946ef', '#a855f7', '#f472b6'] },
-  townTile: { color: '#ff9ab5', variants: ['#ff7aa1', '#ff86ad', '#ffb4c8'] },
-  farmland: { color: '#2fd5bf', variants: ['#25c3ac', '#3ee3d1', '#1fb7a0'] },
-  sanctuary: { color: '#36f1cd', variants: ['#2ae4bf', '#42f2d7', '#2ad5ba'] },
-  dungeonFloor: { color: '#241f3d', variants: ['#2e294a', '#1c1534', '#312a4f'] },
-  dungeonWall: { color: '#110c26', variants: ['#190f33', '#0c081b', '#21113b'], blocked: true },
-  cityStreet: { color: '#ff6f61', variants: ['#ff8f78', '#ff5c50', '#ff7b66'] },
-  cityPlaza: { color: '#ff8d9a', variants: ['#ff7a88', '#ff9dac', '#ff6f82'] },
-  cityGarden: { color: '#24c7a0', variants: ['#1fb795', '#2edbb1', '#18a685'] },
-  cityCanal: { color: '#0d4c7f', variants: ['#0f5a97', '#0a3f6a', '#1364a6'], blocked: true },
-  cityRoof: { color: '#ffb86c', variants: ['#ff9e54', '#ffce81', '#ffa45f'], blocked: true },
-  cityBridge: { color: '#f472b6', variants: ['#f09ce1', '#ff5fa5', '#ff7bbb'] },
-};
-
-const SCENERY_COLORS = {
-  palmTrunk: '#b0723c',
-  palmLeaves: ['#34d399', '#22c55e', '#2dd4bf'],
-  neonBloom: '#fda4af',
-  beaconAura: 'rgba(96, 239, 255, 0.28)',
-  beaconGlow: 'rgba(217, 70, 239, 0.6)',
-  villaWall: '#ffe7d9',
-  villaRoof: '#ff6f61',
-  vendorAwning: '#60a5fa',
-  coralGlow: '#facc15',
-  npcCloak: ['#ff8fab', '#4fd1c5', '#c084fc'],
-  lampPost: '#fde68a',
-};
-
-const ENEMY_PALETTE = ['#ff6f91', '#4fd1c5', '#a855f7'];
-const BULLET_COLOR = '#fdd663';
-const ENEMY_BULLET_COLOR = '#60a5fa';
-
-const BOSS_PALETTE = ['#ff6f61', '#d946ef', '#38bdf8'];
-
-const ELEMENT_COLORS = {
-  radiant: '#fdd663',
-  ember: '#ff6f61',
-  frost: '#60efff',
-  verdant: '#34d399',
-  astral: '#d946ef',
-  stasis: '#818cf8',
-  void: '#6366f1',
-};
-
-const DEFAULT_WEAPON_PROFILE = {
-  id: 'radiant-bolt',
-  name: 'Radiant Bolt',
-  description: 'Standard radiant bolts fired from your focus.',
-  attackSpeedBonus: 0,
-  projectileCount: 1,
-  spread: 0,
-  pierce: 0,
-  element: 'radiant',
-  status: null,
-  travel: {
-    speedMultiplier: 1,
-    lifetimeBonus: 0,
+export const CHARACTERS = [
+  {
+    id: 'aurora',
+    name: 'Aurora Scout',
+    role: 'Skirmisher',
+    description: '+15% move speed, +20 pickup range, +10 max HP.',
+    apply: (player) => {
+      player.speed *= 1.15;
+      player.pickupRange += 20;
+      player.maxHealth += 10;
+      player.health = player.maxHealth;
+    },
   },
-};
-
-const ITEM_RARITIES = {
-  common: { id: 'common', label: 'Common', color: '#cbd5f5', affixes: 1, power: 1 },
-  rare: { id: 'rare', label: 'Rare', color: '#60a5fa', affixes: 2, power: 1.35 },
-  epic: { id: 'epic', label: 'Epic', color: '#a855f7', affixes: 3, power: 1.7 },
-  legendary: { id: 'legendary', label: 'Legendary', color: '#fbbf24', affixes: 4, power: 2.1 },
-};
-
-const ITEM_RARITY_WEIGHTS = [
-  { rarity: 'common', weight: 36 },
-  { rarity: 'rare', weight: 26 },
-  { rarity: 'epic', weight: 10 },
-  { rarity: 'legendary', weight: 3 },
+  {
+    id: 'arc',
+    name: 'Arc Gunner',
+    role: 'Artillery',
+    description: '+1 projectile, +35% projectile speed, -10% damage.',
+    apply: (player) => {
+      player.projectiles += 1;
+      player.projectileSpeed *= 1.35;
+      player.damage *= 0.9;
+    },
+  },
+  {
+    id: 'bulwark',
+    name: 'Stonefruit Bulwark',
+    role: 'Tank',
+    description: '+40 max HP, +6 armor, -10% move speed.',
+    apply: (player) => {
+      player.maxHealth += 40;
+      player.health = player.maxHealth;
+      player.armor += 6;
+      player.speed *= 0.9;
+    },
+  },
+  {
+    id: 'witch',
+    name: 'Rift Witch',
+    role: 'Hexer',
+    description: '+35% damage, +15% crit chance, -20 max HP.',
+    apply: (player) => {
+      player.damage *= 1.35;
+      player.critChance += 0.15;
+      player.maxHealth = Math.max(40, player.maxHealth - 20);
+      player.health = player.maxHealth;
+    },
+  },
 ];
 
-const EQUIPMENT_BLUEPRINTS = {
-  dawnbow: {
-    slot: 'weapon',
-    baseName: 'Dawnbow',
-    style: 'volley',
-    baseDamage: [16, 22],
-    description: 'A starlit bow that fires arcing volleys of light.',
-    profile: {
-      projectileCount: 2,
-      spread: 0.18,
-      travel: { speedMultiplier: 1.05, lifetimeBonus: 0.4 },
-    },
-  },
-  embercleaver: {
-    slot: 'weapon',
-    baseName: 'Embercleaver',
-    style: 'cleave',
-    baseDamage: [22, 30],
-    description: 'A heavy cleaver that launches crescent waves of flame.',
-    profile: {
-      projectileCount: 1,
-      spread: 0,
-      pierce: 1,
-      element: 'ember',
-      status: { type: 'burn', damage: 4, duration: 4 },
-      travel: { speedMultiplier: 0.85, lifetimeBonus: 0.6 },
-    },
-  },
-  astralspike: {
-    slot: 'weapon',
-    baseName: 'Astral Spike',
-    style: 'pierce',
-    baseDamage: [18, 26],
-    description: 'A precision focus that punctures foes with astral lances.',
-    profile: {
-      projectileCount: 1,
-      spread: 0,
-      pierce: 2,
-      element: 'stasis',
-      status: { type: 'slow', slow: 0.35, duration: 2.5 },
-      travel: { speedMultiplier: 1.25, lifetimeBonus: 0.2 },
-    },
-  },
-  starwarden: {
-    slot: 'armor',
-    baseName: 'Starwarden Cloak',
-    description: 'A cloak of woven starlight that bolsters vitality.',
-    baseDefense: [18, 28],
-  },
-  emberplate: {
-    slot: 'armor',
-    baseName: 'Emberplate Mail',
-    description: 'Molten-forged armor that channels ember fury.',
-    baseDefense: [24, 36],
-  },
-  veilring: {
-    slot: 'trinket',
-    baseName: 'Veilring',
-    description: 'A sigil ring that amplifies critical strikes.',
-  },
-  sunfocus: {
-    slot: 'weapon',
-    baseName: 'Sunfocus Prism',
-    style: 'beam',
-    baseDamage: [14, 20],
-    description: 'A radiant prism that accelerates spellcasting.',
-    profile: {
-      projectileCount: 1,
-      spread: 0,
-      element: 'radiant',
-      status: { type: 'burn', damage: 3, duration: 3 },
-      travel: { speedMultiplier: 1.4, lifetimeBonus: 0.3 },
-    },
-  },
-  moondial: {
-    slot: 'weapon',
-    baseName: 'Moondial Lens',
-    style: 'pulse',
-    baseDamage: [12, 18],
-    description: 'A prismatic lens that bends time for spellcasters.',
-    profile: {
-      projectileCount: 3,
-      spread: 0.22,
-      element: 'stasis',
-      status: { type: 'slow', slow: 0.28, duration: 3.5 },
-      travel: { speedMultiplier: 1, lifetimeBonus: 0.8 },
-    },
-  },
-  auricband: {
-    slot: 'trinket',
-    baseName: 'Auric Band',
-    description: 'A golden band that attracts wealth and fortune.',
-  },
-};
-
-const EQUIPMENT_AFFIXES = {
-  weapon: [
-    { key: 'damage', label: 'Damage', range: [4, 10], type: 'add' },
-    { key: 'attackSpeed', label: 'Attack Speed', range: [0.08, 0.22], type: 'scale' },
-    { key: 'critChance', label: 'Critical Chance', range: [0.03, 0.08], type: 'add' },
-    { key: 'critMultiplier', label: 'Critical Damage', range: [0.1, 0.35], type: 'add' },
-    { key: 'projectileSpeed', label: 'Projectile Speed', range: [0.08, 0.24], type: 'scale' },
-  ],
-  armor: [
-    { key: 'maxHealth', label: 'Max Health', range: [20, 45], type: 'add' },
-    { key: 'damageReduction', label: 'Damage Reduction', range: [0.04, 0.12], type: 'add' },
-    { key: 'regen', label: 'Regeneration', range: [2, 6], type: 'add' },
-  ],
-  focus: [
-    { key: 'attackSpeed', label: 'Attack Speed', range: [0.12, 0.28], type: 'scale' },
-    { key: 'projectileLifetime', label: 'Projectile Lifetime', range: [0.2, 0.6], type: 'add' },
-    { key: 'abilityPower', label: 'Ability Power', range: [0.08, 0.22], type: 'add' },
-  ],
-  trinket: [
-    { key: 'critChance', label: 'Critical Chance', range: [0.04, 0.1], type: 'add' },
-    { key: 'goldFind', label: 'Gold Find', range: [0.1, 0.25], type: 'add' },
-    { key: 'xpGain', label: 'Experience Gain', range: [0.08, 0.18], type: 'add' },
-  ],
-};
-
-const NAME_PREFIXES = {
-  radiant: ['Luminous', 'Sunlit', 'Auric', 'Dawnforged'],
-  ember: ['Emberborn', 'Blazewrought', 'Cinderbrand', 'Pyrestone'],
-  frost: ['Glacier', 'Frostveiled', 'Winterbound', 'Iceglass'],
-  astral: ['Starwoven', 'Astral', 'Voidlaced', 'Skyforged'],
-  verdant: ['Thornbound', 'Sylvan', 'Groveguard', 'Wildroot'],
-};
-
-const NAME_SUFFIXES = {
-  weapon: ['of Radiance', 'of the Phoenix', 'of Silent Stars', 'of Roaring Winds'],
-  armor: ['Aegis', 'Bulwark', 'Guard', 'Mantle'],
-  focus: ['Prism', 'Conduit', 'Catalyst', 'Spire'],
-  trinket: ['Charm', 'Band', 'Sigil', 'Emblem'],
-};
-
-const BLUEPRINT_POOLS = {
-  weapon: ['dawnbow', 'embercleaver', 'astralspike', 'sunfocus', 'moondial'],
-  armor: ['starwarden', 'emberplate'],
-  trinket: ['veilring', 'auricband'],
-};
-
-const THEME_PREFERRED_BLUEPRINTS = {
-  volcano: ['embercleaver', 'emberplate', 'auricband'],
-  reef: ['astralspike', 'starwarden', 'veilring'],
-  skyline: ['astralspike', 'sunfocus', 'moondial'],
-  jungle: ['dawnbow', 'starwarden', 'veilring', 'moondial'],
-  mirage: ['dawnbow', 'sunfocus', 'auricband', 'astralspike'],
-};
-
-const GOLD_RANGES = {
-  mob: [8, 18],
-  boss: [70, 110],
-  chestTown: [18, 30],
-  chestDungeon: [30, 54],
-  chestCapital: [44, 78],
-};
-
-const HOTBAR_SIZE = 6;
-let ITEM_UID = 0;
-
-const ABILITY_LIBRARY = {
-  'sonic-crash': {
-    id: 'sonic-crash',
-    name: 'Sonic Crash',
-    key: 'q',
-    cooldown: 12,
-    description: 'Detonate a close-range shockwave that staggers and scorches nearby foes.',
-  },
-  'flux-step': {
-    id: 'flux-step',
-    name: 'Flux Step',
-    key: 'r',
-    cooldown: 9,
-    description: 'Blink forward in the aim direction, leaving a slowing neon trail.',
-  },
-  'tempest-field': {
-    id: 'tempest-field',
-    name: 'Storm Dome',
-    key: 'c',
-    cooldown: 18,
-    description: 'Summon a stasis storm that damages and weakens enemies over time.',
-  },
-  'sunset-overdrive': {
-    id: 'sunset-overdrive',
-    name: 'Sunset Overdrive',
-    key: 'v',
-    cooldown: 0,
-    requiresSuper: true,
-    description: 'Consume a full supercharge to fire a cascade of burning bolts.',
-  },
-};
-
-const SKILL_TREE_NODES = [
+const ENEMY_TYPES = [
+  { id: 'chaser', color: '#ff6f91', health: 45, speed: 110, damage: 8, radius: 16, minWave: 1 },
+  { id: 'swarmer', color: '#7dd3fc', health: 30, speed: 190, damage: 6, radius: 12, minWave: 2 },
+  { id: 'howler', color: '#7ee0d1', health: 70, speed: 140, damage: 10, radius: 16, minWave: 3 },
   {
-    id: 'vital-surge',
-    name: 'Vital Surge',
-    description: 'Increase maximum health by 25 and restore 25 health.',
-    cost: 1,
+    id: 'gunner',
+    color: '#a78bfa',
+    health: 90,
+    speed: 110,
+    damage: 10,
+    radius: 18,
+    minWave: 3,
+    behavior: 'shooter',
+    attackDelay: 1.6,
+    fireRange: 520,
+    projectileSpeed: 280,
+    projectileDamage: 12,
+  },
+  {
+    id: 'charger',
+    color: '#f97316',
+    health: 85,
+    speed: 95,
+    damage: 16,
+    radius: 20,
+    minWave: 4,
+    behavior: 'charger',
+    chargeSpeed: 290,
+    chargeCooldown: [2.2, 4],
+  },
+  {
+    id: 'brute',
+    color: '#fcd34d',
+    health: 160,
+    speed: 80,
+    damage: 20,
+    radius: 22,
+    minWave: 5,
+    behavior: 'tank',
+  },
+];
+
+const BOSS_TYPES = [
+  {
+    id: 'titan',
+    name: 'Pulse Titan',
+    color: '#fb7185',
+    health: 1800,
+    speed: 80,
+    damage: 24,
+    radius: 44,
+    behavior: 'shooter',
+    attackDelay: 0.9,
+    fireRange: 640,
+    projectileSpeed: 320,
+    projectileDamage: 20,
+    dropMultiplier: 6,
+  },
+  {
+    id: 'wyrm',
+    name: 'Singularity Wyrm',
+    color: '#38bdf8',
+    health: 2200,
+    speed: 70,
+    damage: 32,
+    radius: 48,
+    behavior: 'charger',
+    chargeSpeed: 320,
+    chargeCooldown: [2, 3.2],
+    dropMultiplier: 7,
+  },
+  {
+    id: 'idol',
+    name: 'Myriad Idol',
+    color: '#c084fc',
+    health: 2600,
+    speed: 85,
+    damage: 28,
+    radius: 46,
+    behavior: 'tank',
+    dropMultiplier: 8,
+  },
+];
+
+const MATERIAL_DROP = { min: 4, max: 10 };
+const MAX_WAVES = 12;
+const BASE_WAVE_DURATION = 32;
+const REROLL_BASE_COST = 5;
+
+const SHOP_RARITY_WEIGHTS = {
+  common: 55,
+  rare: 30,
+  epic: 15,
+};
+
+const SHOP_ITEMS = [
+  {
+    id: 'damage-up',
+    name: 'Targeting Lens',
+    description: '+25% damage.',
+    cost: 25,
+    rarity: 'rare',
+    apply: (game) => {
+      game.player.damage *= 1.25;
+    },
+  },
+  {
+    id: 'attack-speed',
+    name: 'Trigger Gloves',
+    description: '+25% attack speed.',
+    cost: 30,
+    rarity: 'rare',
+    apply: (game) => {
+      game.player.attackDelay = Math.max(0.12, game.player.attackDelay * 0.75);
+    },
+  },
+  {
+    id: 'scatter',
+    name: 'Scatter Core',
+    description: '+1 projectile, +5% spread.',
+    cost: 35,
+    rarity: 'rare',
+    apply: (game) => {
+      game.player.projectiles += 1;
+      game.player.spread += 0.05;
+    },
+  },
+  {
+    id: 'speed',
+    name: 'Jet Boots',
+    description: '+15% movement speed.',
+    cost: 28,
+    rarity: 'common',
+    apply: (game) => {
+      game.player.speed *= 1.15;
+    },
+  },
+  {
+    id: 'health',
+    name: 'Organic Armor',
+    description: '+25 max HP, heal 25%.',
+    cost: 32,
+    rarity: 'common',
     apply: (game) => {
       game.player.maxHealth += 25;
-      game.player.health = clamp(game.player.health + 25, 0, game.player.maxHealth);
+      game.player.health = Math.min(
+        game.player.maxHealth,
+        game.player.health + game.player.maxHealth * 0.25
+      );
     },
   },
   {
-    id: 'wind-step',
-    name: 'Wind Step',
-    description: 'Increase movement speed by 12% and dash distance by 1 tile.',
-    cost: 1,
+    id: 'lifesteal',
+    name: 'Nanite Drink',
+    description: 'Heal 2 HP per kill.',
+    cost: 38,
+    rarity: 'rare',
     apply: (game) => {
-      game.player.speed *= 1.12;
-      game.player.dashDistance += 1;
+      game.player.lifeOnKill = (game.player.lifeOnKill || 0) + 2;
     },
   },
   {
-    id: 'sonic-crash',
-    name: 'Sonic Crash',
-    description: 'Unlock the Sonic Crash ability (press Q).',
-    cost: 1,
-    prerequisites: ['vital-surge'],
-    unlocksAbility: 'sonic-crash',
-  },
-  {
-    id: 'flux-step',
-    name: 'Flux Step',
-    description: 'Unlock the Flux Step ability (press R).',
-    cost: 1,
-    prerequisites: ['wind-step'],
-    unlocksAbility: 'flux-step',
-  },
-  {
-    id: 'aurora-ward',
-    name: 'Glitter Shield',
-    description: 'Gain a permanent barrier that refreshes faster.',
-    cost: 1,
-    prerequisites: ['vital-surge'],
+    id: 'pickup',
+    name: 'Magnet Drone',
+    description: '+40 pickup range.',
+    cost: 22,
+    rarity: 'common',
     apply: (game) => {
-      if (!game.player.shield) {
-        game.player.shield = { cooldown: 16, timer: 16, active: true };
-      } else {
-        game.player.shield.cooldown = Math.max(10, game.player.shield.cooldown - 2);
-      }
-      game.player.maxHealth += 10;
+      game.player.pickupRange += 40;
     },
   },
   {
-    id: 'luminous-archer',
-    name: 'Neon Gunner',
-    description: 'Projectiles travel 15% faster and deal +4 damage.',
-    cost: 1,
-    prerequisites: ['wind-step'],
+    id: 'armor',
+    name: 'Guard Plating',
+    description: '+4 armor.',
+    cost: 34,
+    rarity: 'common',
     apply: (game) => {
-      game.player.projectileSpeed *= 1.15;
-      game.player.damage += 4;
+      game.player.armor += 4;
     },
   },
   {
-    id: 'radiant-volley',
-    name: 'Chromatic Volley',
-    description: 'Gain an additional split shot and extend projectile lifetime.',
-    cost: 2,
-    prerequisites: ['luminous-archer'],
+    id: 'crit',
+    name: 'Volt Edge',
+    description: '+8% crit chance, +0.4x crit damage.',
+    cost: 33,
+    rarity: 'rare',
     apply: (game) => {
-      game.player.doubleShot = true;
-      game.player.projectileLifetime += 0.4;
+      game.player.critChance += 0.08;
+      game.player.critMultiplier += 0.4;
     },
   },
   {
-    id: 'forest-harmony',
-    name: 'Lagoon Harmony',
-    description: 'Regenerate 20 health whenever you level up and improve sanctuary healing.',
-    cost: 2,
-    prerequisites: ['aurora-ward'],
+    id: 'projectile-speed',
+    name: 'Ion Thrusters',
+    description: 'Shots travel 30% faster.',
+    cost: 20,
+    rarity: 'common',
     apply: (game) => {
-      game.player.onLevelUpRegen = (game.player.onLevelUpRegen || 0) + 20;
-      game.player.sanctuaryRegen = (game.player.sanctuaryRegen || 0) + 6;
+      game.player.projectileSpeed *= 1.3;
     },
   },
   {
-    id: 'storm-call',
-    name: 'Storm Dome',
-    description: 'Unlock the Storm Dome ability (press C).',
-    cost: 2,
-    prerequisites: ['radiant-volley', 'forest-harmony'],
-    unlocksAbility: 'tempest-field',
-  },
-  {
-    id: 'ember-heart',
-    name: 'Voltaic Core',
-    description: 'Increase damage by 6 and critical damage by 0.2.',
-    cost: 1,
-    prerequisites: ['luminous-archer'],
+    id: 'temporal',
+    name: 'Temporal Loop',
+    description: 'Attack 35% faster, -10% damage.',
+    cost: 45,
+    rarity: 'epic',
     apply: (game) => {
-      game.player.damage += 6;
-      game.player.critMultiplier += 0.2;
+      game.player.attackDelay = Math.max(0.12, game.player.attackDelay * 0.65);
+      game.player.damage *= 0.9;
     },
   },
   {
-    id: 'sunset-overdrive',
-    name: 'Sunset Overdrive',
-    description: 'Unlock the Sunset Overdrive super (press V with a full supercharge).',
-    cost: 3,
-    prerequisites: ['storm-call', 'ember-heart'],
-    unlocksAbility: 'sunset-overdrive',
-  },
-  {
-    id: 'zenith-mastery',
-    name: 'Neon Legend',
-    description: 'Greatly increase all stats and empower abilities with lingering effects.',
-    cost: 3,
-    prerequisites: ['sunset-overdrive'],
+    id: 'sprayer',
+    name: 'Plasma Sprayer',
+    description: '+2 projectiles, +10% spread.',
+    cost: 55,
+    rarity: 'epic',
     apply: (game) => {
-      game.player.damage += 6;
-      game.player.maxHealth += 30;
-      game.player.speed *= 1.08;
-      game.player.abilityEmpowered = true;
+      game.player.projectiles += 2;
+      game.player.spread += 0.1;
+    },
+  },
+  {
+    id: 'bulwark',
+    name: 'Stonehide',
+    description: '+35 HP, +2 armor, -8% speed.',
+    cost: 40,
+    rarity: 'rare',
+    apply: (game) => {
+      game.player.maxHealth += 35;
+      game.player.health = Math.min(game.player.maxHealth, game.player.health + 35);
+      game.player.armor += 2;
+      game.player.speed *= 0.92;
+    },
+  },
+  {
+    id: 'catalyst',
+    name: 'Catalyst Core',
+    description: '+15% damage, +10% attack speed.',
+    cost: 44,
+    rarity: 'rare',
+    apply: (game) => {
+      game.player.damage *= 1.15;
+      game.player.attackDelay = Math.max(0.12, game.player.attackDelay * 0.9);
     },
   },
 ];
 
-const QUEST_LIBRARY = [
-  {
-    id: 'rebuild-home',
-    name: 'Neon Haven Build',
-    giver: 'artisan',
-    description: 'Deliver 6 driftwood crates and 6 coral bricks to finish your oceanside safehouse.',
-    requirements: { timber: 6, stone: 6 },
-    onComplete: (game) => {
-      game.houseProject.completed = true;
-      game.ui.showToast('Your Neon Haven now glows above Paradise Point.');
-    },
-  },
-  {
-    id: 'boss-hunt',
-    name: 'Crush the Guardian',
-    giver: 'scout',
-    description: 'Defeat any awakened megadungeon guardian to free a district.',
-    onComplete: (game) => {
-      game.gold += 80;
-      game.ui.setGold(game.gold);
-      game.log.push('Runner Emil rewards you for pushing back the gangs.');
-    },
-  },
-  {
-    id: 'city-of-light',
-    name: 'City of Light',
-    giver: 'mayor',
-    description: 'Visit each of the four towns and rekindle their plaza braziers.',
-  },
-];
-
-const ENEMY_TYPES = {
-  emberkin: {
-    id: 'emberkin',
-    health: 58,
-    speed: 1.6,
-    color: '#fb923c',
-    attack: 'firebolt',
-    damage: 14,
-    range: 13,
-    projectileColor: '#f97316',
-    element: 'ember',
-  },
-  gloomstalker: {
-    id: 'gloomstalker',
-    health: 64,
-    speed: 1.45,
-    color: '#6366f1',
-    attack: 'dash',
-    damage: 16,
-    range: 10,
-    projectileColor: '#818cf8',
-    element: 'void',
-  },
-  frostwisp: {
-    id: 'frostwisp',
-    health: 44,
-    speed: 1.5,
-    color: '#38bdf8',
-    attack: 'slow',
-    damage: 12,
-    range: 12,
-    projectileColor: '#38bdf8',
-    element: 'frost',
-  },
-  thornbeast: {
-    id: 'thornbeast',
-    health: 72,
-    speed: 1.3,
-    color: '#22c55e',
-    attack: 'spread',
-    damage: 15,
-    range: 11,
-    projectileColor: '#22c55e',
-    element: 'verdant',
-  },
-  astralSentinel: {
-    id: 'astralSentinel',
-    health: 78,
-    speed: 1.25,
-    color: '#a855f7',
-    attack: 'beam',
-    damage: 18,
-    range: 14,
-    projectileColor: '#c084fc',
-    element: 'astral',
-  },
-};
-
-const DUNGEON_THEMES = {
-  catacombs: { tint: '#64748b', enemyPool: ['gloomstalker', 'frostwisp'], boss: 'umbra-titan' },
-  ember: { tint: '#ea580c', enemyPool: ['emberkin', 'thornbeast'], boss: 'ember-colossus' },
-  observatory: { tint: '#818cf8', enemyPool: ['astralSentinel', 'frostwisp'], boss: 'star-custodian' },
-  warrens: { tint: '#22c55e', enemyPool: ['thornbeast', 'gloomstalker'], boss: 'briar-queen' },
-  vault: { tint: '#c084fc', enemyPool: ['astralSentinel', 'emberkin'], boss: 'auric-warden' },
-};
-
-const ITEM_LIBRARY = {
-  timber: {
-    id: 'timber',
-    name: 'Driftwood Crate',
-    description: 'Recovered boardwalk planks perfect for rebuilding.',
-    type: 'material',
-    value: 12,
-    stackable: true,
-    actions: [],
-  },
-  stone: {
-    id: 'stone',
-    name: 'Coral Brick',
-    description: 'Hand-cut coral masonry used across Paradise Point.',
-    type: 'material',
-    value: 10,
-    stackable: true,
-    actions: [],
-  },
-  silk: {
-    id: 'silk',
-    name: 'Neon Fiber',
-    description: 'Luminous fabric prized by stylists and vendors.',
-    type: 'material',
-    value: 18,
-    stackable: true,
-    actions: [],
-  },
-  'sun-elixir': {
-    id: 'sun-elixir',
-    name: 'Beachside Medkit',
-    description: 'Instantly restores 40 health when consumed.',
-    type: 'consumable',
-    heal: 40,
-    stackable: true,
-    actions: ['use', 'assign'],
-  },
-  'moondrop-elixir': {
-    id: 'moondrop-elixir',
-    name: 'Starlit Smoothie',
-    description: 'Restore 70 health and reduce dash cooldown by 10% temporarily.',
-    type: 'consumable',
-    heal: 70,
-    stackable: true,
-    actions: ['use', 'assign'],
-    onUse: (game) => {
-      game.addTimedModifier({
-        id: 'moondrop-dash',
-        duration: 45,
-        apply: (player) => {
-          player.dashCooldown *= 0.9;
-        },
-        remove: (player) => {
-          player.dashCooldown /= 0.9;
-        },
-      });
-    },
-  },
-  'ember-blade': {
-    id: 'ember-blade',
-    name: 'Flare Cutlass',
-    description: 'A blazing blade that increases damage output.',
-    type: 'weapon',
-    slot: 'weapon',
-    bonuses: { damage: 8 },
-    actions: ['equip'],
-    onEquip: (player) => {
-      player.infernoTrails = true;
-    },
-    onUnequip: (player) => {
-      player.infernoTrails = false;
-    },
-  },
-  'aurora-lance': {
-    id: 'aurora-lance',
-    name: 'Pulse Lance',
-    description: 'Shots pierce one additional foe after striking.',
-    type: 'weapon',
-    slot: 'weapon',
-    bonuses: { damage: 4 },
-    actions: ['equip'],
-    onEquip: (player) => {
-      player.piercingShots = true;
-    },
-    onUnequip: (player) => {
-      player.piercingShots = false;
-    },
-  },
-  dawnshield: {
-    id: 'dawnshield',
-    name: 'Sunshield Bulwark',
-    description: 'Reinforces health and refreshes the protective barrier quickly.',
-    type: 'shield',
-    slot: 'shield',
-    bonuses: { maxHealth: 35 },
-    actions: ['equip'],
-    onEquip: (player) => {
-      player.shield = player.shield ?? { cooldown: 18, timer: 18, active: true };
-      player.shield.cooldown = Math.max(10, player.shield.cooldown * 0.75);
-      player.shield.timer = player.shield.cooldown;
-      player.shield.active = true;
-    },
-  },
-  'gale-cloak': {
-    id: 'gale-cloak',
-    name: 'Jetstream Jacket',
-    description: 'Light armour that boosts movement speed and dash distance.',
-    type: 'armor',
-    slot: 'armor',
-    bonuses: { speedMultiplier: 1.1, dashDistance: 1 },
-    actions: ['equip'],
-  },
-  'starlight-charm': {
-    id: 'starlight-charm',
-    name: 'Glow Charm',
-    description: 'A charm that increases experience gain by 12%.',
-    type: 'trinket',
-    slot: 'trinket',
-    actions: ['equip'],
-    onEquip: (player) => {
-      player.xpBonus = (player.xpBonus || 0) + 0.12;
-    },
-    onUnequip: (player) => {
-      player.xpBonus = Math.max(0, (player.xpBonus || 0) - 0.12);
-    },
-  },
-  'ember-medal': {
-    id: 'ember-medal',
-    name: 'Gang Insignia',
-    description: 'Vendors will buy this confiscated insignia for 45 creds.',
-    type: 'medal',
-    goldValue: 45,
-    consumedOnPickup: true,
-  },
-  'star-medal': {
-    id: 'star-medal',
-    name: 'Paradise Emblem',
-    description: 'A radiant emblem worth a hefty 75 creds.',
-    type: 'medal',
-    goldValue: 75,
-    consumedOnPickup: true,
-  },
-};
-
-const RESOURCE_DROPS = ['timber', 'stone', 'silk'];
-
-const CHEST_LOOT_TABLES = {
-  town: [
-    { type: 'item', id: 'timber', weight: 6 },
-    { type: 'item', id: 'stone', weight: 6 },
-    { type: 'item', id: 'sun-elixir', weight: 3 },
-    { type: 'equipment', category: 'trinket', bias: 0.1, weight: 2 },
-    { type: 'gold', amount: 35, weight: 1 },
-  ],
-  dungeon: [
-    { type: 'equipment', category: 'weapon', bias: 0.55, weight: 4 },
-    { type: 'equipment', category: 'armor', bias: 0.5, weight: 3 },
-    { type: 'equipment', category: 'trinket', bias: 0.45, weight: 2 },
-    { type: 'item', id: 'sun-elixir', weight: 1 },
-    { type: 'item', id: 'moondrop-elixir', weight: 1 },
-  ],
-  capital: [
-    { type: 'equipment', category: 'weapon', bias: 0.75, weight: 4 },
-    { type: 'equipment', category: 'armor', bias: 0.7, weight: 3 },
-    { type: 'equipment', category: 'trinket', bias: 0.65, weight: 2 },
-    { type: 'item', id: 'moondrop-elixir', weight: 1 },
-  ],
-};
-
-const BOSS_LOOT_TABLE = [
-  { type: 'equipment', category: 'weapon', bias: 0.9, weight: 3 },
-  { type: 'equipment', category: 'armor', bias: 0.8, weight: 2 },
-  { type: 'equipment', category: 'trinket', bias: 0.75, weight: 2 },
-  { type: 'item', id: 'star-medal', weight: 1 },
-];
-
-const SHOP_LIBRARY = [
-  {
-    id: 'weapons',
-    name: 'Neon Arsenal',
-    description: 'Chromatic firearms, blade cores, and custom rigs.',
-    stock: [
-      {
-        id: 'pulse-core',
-        label: 'Pulse Core Barrel',
-        cost: 55,
-        effect: (player) => {
-          player.damage += 8;
-          player.projectileSpeed *= 1.15;
-        },
-      },
-      {
-        id: 'vector-sight',
-        label: 'Vector Sight',
-        cost: 48,
-        effect: (player) => {
-          player.attackSpeed = (player.attackSpeed ?? 1) + 0.25;
-          const baseInterval = player.shootInterval ?? PLAYER_SHOT_INTERVAL;
-          player.effectiveShootInterval = Math.max(0.1, baseInterval / player.attackSpeed);
-        },
-      },
-    ],
-  },
-  {
-    id: 'armory',
-    name: 'Paradise Wardrobe',
-    description: 'Impact vests and kinetic kicks for island agents.',
-    stock: [
-      {
-        id: 'impact-vest',
-        label: 'Impact Vest',
-        cost: 46,
-        effect: (player) => {
-          player.maxHealth += 28;
-          player.health = Math.min(player.maxHealth, player.health + 28);
-          player.damageReduction = (player.damageReduction ?? 0) + 0.08;
-        },
-      },
-      {
-        id: 'drift-sneakers',
-        label: 'Drift Sneakers',
-        cost: 38,
-        effect: (player) => {
-          player.speed *= 1.12;
-          player.dashCooldown *= 0.85;
-          player.dashDistance += 0.5;
-        },
-      },
-    ],
-  },
-  {
-    id: 'alchemy',
-    name: 'Synthwave Juice Bar',
-    description: 'Boosters that refill health and supercharge energy.',
-    stock: [
-      {
-        id: 'palma-colada',
-        label: 'Palma Colada',
-        cost: 28,
-        effect: (player, game) => {
-          player.health = Math.min(player.maxHealth, player.health + 45);
-          game?.grantSuperCharge?.(18);
-        },
-      },
-      {
-        id: 'overdrive-shot',
-        label: 'Overdrive Shot',
-        cost: 34,
-        effect: (player, game) => {
-          if (game?.player) {
-            const bonus = game.player.superChargeMax ?? 100;
-            game.grantSuperCharge?.(bonus * 0.35);
-          }
-          player.damage += 3;
-        },
-      },
-    ],
-  },
-];
-
-const NPC_LIBRARY = [
-  {
-    id: 'mayor',
-    name: 'Producer Kyra',
-    line: 'Keep the boardwalk lights blazing and the gangs lose their grip.',
-    journal: 'Kyra wants the plaza stages rebuilt so the survivors can gather again.',
-  },
-  {
-    id: 'scout',
-    name: 'Runner Emil',
-    line: 'I mapped every ruin in these neon tides. Ready when you are.',
-    journal: 'Emil marked synth gang lairs scattered across the paradise ring.',
-  },
-  {
-    id: 'artisan',
-    name: 'Architect Mila',
-    line: 'Bring me alloys and wood—we\'ll craft villas that feel like home again.',
-    journal: 'Mila promised to transform the safehouse once I deliver supplies.',
-  },
-  {
-    id: 'sage',
-    name: 'Oracle Miren',
-    line: 'The city hums with memories. Listen and the dungeons will reveal themselves.',
-    journal: 'Miren urged me to complete each district beat before storming the megadungeons.',
-  },
-  {
-    id: 'archivist',
-    name: 'Archivist Elowen',
-    line: 'Every relic you recover tunes the Paradise Atlas. Don\'t stop exploring.',
-    journal: 'Elowen tracks relics to unlock deeper fast travel routes.',
-  },
-  {
-    id: 'river-warden',
-    name: 'Lifeguard Thace',
-    line: 'The canals are clogged with rogue drones. Clear them and the ferries run again.',
-    journal: 'Thace asked me to reclaim the canals feeding Sunset Marina.',
-  },
-  {
-    id: 'merchant',
-    name: 'Vendor Sall',
-    line: 'My stalls need legendary loot. Crack those vaults and I\'ll keep you stocked.',
-    journal: 'Sall will trade rare mods once I liberate the Mirage Vault.',
-  },
-  {
-    id: 'captain',
-    name: 'Captain Roan',
-    line: 'Bring me medals and I\'ll spin up patrols to guard your progress.',
-    journal: 'Roan will convert recovered medals into creds to fund the rebuild.',
-  },
-];
-
-const STORY_BEATS = [
-  { id: 'arrival', text: 'Touch down at Paradise Point and rally the survivors.' },
-  { id: 'first-dungeon', text: 'Clear a megadungeon to break the gangs\' first foothold.' },
-  { id: 'house-finished', text: 'Rebuild your island safehouse overlooking the boardwalk.' },
-  { id: 'boss-victory', text: 'Defeat a guardian boss to ignite the skyline beacon.' },
-];
-
-const ACHIEVEMENT_LIBRARY = [
-  {
-    id: 'first-steps',
-    label: 'Beach Runner',
-    check: (stats) => stats.distance > 40,
-    description: 'Sprint forty tiles across the paradise shoreline.',
-  },
-  {
-    id: 'spark-collector',
-    label: 'Circuit Breaker',
-    check: (stats) => stats.skillsUnlocked >= 3,
-    description: 'Unlock three neon drive nodes.',
-  },
-  {
-    id: 'calm-guardian',
-    label: 'Low Tide Survivor',
-    check: (stats) => stats.damageTaken < 50 && stats.timeAlive > 120,
-    description: 'Survive two minutes of chaos while keeping damage low.',
-  },
-  {
-    id: 'glow-hunter',
-    label: 'Synth Cleaver',
-    check: (stats) => stats.enemiesDefeated >= 12,
-    description: 'Defeat twelve synth raiders in a single run.',
-  },
-];
-
-const GOALS = [
-  'Finish rebuilding your Neon Haven safehouse',
-  'Complete contracts in every paradise district',
-  'Break a megadungeon guardian to push the gangs back',
-  'Deliver materials so residents can reopen their boardwalk stalls',
-  'Restore the sanctuary lagoon to calm the island spirit',
-];
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function lerp(start, end, t) {
-  return start + (end - start) * t;
-}
+const SHOP_ITEMS_BY_ID = SHOP_ITEMS.reduce((map, item) => {
+  map[item.id] = item;
+  return map;
+}, {});
 
 function randRange(min, max) {
   return Math.random() * (max - min) + min;
 }
 
 function randInt(min, max) {
-  return Math.floor(randRange(min, max + 1));
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pick(array) {
-  return array[randInt(0, array.length - 1)];
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
-function randomGold(range) {
-  return randInt(range[0], range[1]);
-}
-
-function cloneItem(id) {
-  const template = ITEM_LIBRARY[id];
-  if (!template) {
-    throw new Error(`Unknown item id: ${id}`);
+function pickShopItem() {
+  const total = SHOP_ITEMS.reduce((sum, item) => sum + (SHOP_RARITY_WEIGHTS[item.rarity] || 1), 0);
+  let roll = Math.random() * total;
+  for (const item of SHOP_ITEMS) {
+    roll -= SHOP_RARITY_WEIGHTS[item.rarity] || 1;
+    if (roll <= 0) return item;
   }
-  return {
-    ...template,
-    actions: template.actions ? [...template.actions] : [],
-    quantity: template.stackable ? 1 : 1,
-    instanceId: `${id}-${ITEM_UID++}`,
-  };
-}
-
-function weightedPick(entries) {
-  if (!entries || entries.length === 0) return null;
-  const total = entries.reduce((sum, entry) => sum + (entry.weight ?? 0), 0);
-  if (total <= 0) {
-    return entries[entries.length - 1];
-  }
-  let threshold = Math.random() * total;
-  for (const entry of entries) {
-    threshold -= entry.weight ?? 0;
-    if (threshold <= 0) {
-      return entry;
-    }
-  }
-  return entries[entries.length - 1];
-}
-
-function rollRarity(bias = 0) {
-  const adjusted = ITEM_RARITY_WEIGHTS.map((entry) => {
-    const info = ITEM_RARITIES[entry.rarity];
-    const modifier = 1 + bias * (info.power - 1);
-    return { rarity: entry.rarity, weight: entry.weight * Math.max(0.2, modifier) };
-  });
-  const result = weightedPick(adjusted);
-  return result?.rarity ?? 'common';
-}
-
-function rollFromRange(range, multiplier = 1) {
-  const [min, max] = range;
-  return randRange(min, max) * multiplier;
-}
-
-function buildItemName(blueprint, rarity, theme) {
-  const themeKey =
-    theme && NAME_PREFIXES[theme]
-      ? theme
-      : blueprint.style === 'cleave'
-      ? 'ember'
-      : blueprint.style === 'pierce' || blueprint.style === 'beam'
-      ? 'astral'
-      : blueprint.style === 'pulse'
-      ? 'verdant'
-      : 'radiant';
-  const prefixPool = NAME_PREFIXES[themeKey] ?? NAME_PREFIXES.radiant;
-  const suffixPool = NAME_SUFFIXES[blueprint.slot] ?? NAME_SUFFIXES.weapon;
-  const prefix = pick(prefixPool);
-  const suffix = pick(suffixPool);
-  return `${prefix} ${blueprint.baseName} ${suffix}`;
-}
-
-function rollAffixes(slot, rarityInfo, powerBonus = 0) {
-  const pool = EQUIPMENT_AFFIXES[slot];
-  if (!pool || pool.length === 0) return [];
-  const count = Math.min(rarityInfo.affixes, pool.length);
-  const candidates = [...pool];
-  const affixes = [];
-  for (let i = 0; i < count; i += 1) {
-    const index = randInt(0, candidates.length - 1);
-    const picked = candidates.splice(index, 1)[0];
-    affixes.push({ ...picked, value: rollFromRange(picked.range, rarityInfo.power + powerBonus) });
-  }
-  return affixes;
-}
-
-function generateEquipment({ category = 'weapon', theme, bias = 0, blueprintId, powerBonus = 0 } = {}) {
-  const pool = [];
-  if (theme && THEME_PREFERRED_BLUEPRINTS[theme]) {
-    pool.push(...THEME_PREFERRED_BLUEPRINTS[theme]);
-  }
-  if (BLUEPRINT_POOLS[category]) {
-    pool.push(...BLUEPRINT_POOLS[category]);
-  }
-  const chosenId = blueprintId ?? pick(pool);
-  const blueprint = EQUIPMENT_BLUEPRINTS[chosenId];
-  if (!blueprint) return null;
-  const rarityKey = rollRarity(bias);
-  const rarityInfo = ITEM_RARITIES[rarityKey];
-  const bonuses = {};
-  if (blueprint.slot === 'weapon' && blueprint.baseDamage) {
-    bonuses.damage = Math.round(rollFromRange(blueprint.baseDamage, rarityInfo.power + powerBonus));
-  } else if (blueprint.slot === 'armor' && blueprint.baseDefense) {
-    bonuses.maxHealth = Math.round(rollFromRange(blueprint.baseDefense, rarityInfo.power + powerBonus));
-    bonuses.damageReduction = (bonuses.damageReduction ?? 0) + 0.04 * rarityInfo.power;
-  }
-
-  const affixes = rollAffixes(blueprint.slot, rarityInfo, powerBonus * 0.5);
-  for (const affix of affixes) {
-    if (affix.type === 'add') {
-      bonuses[affix.key] = (bonuses[affix.key] ?? 0) + affix.value;
-    } else if (affix.type === 'scale') {
-      bonuses[affix.key] = (bonuses[affix.key] ?? 0) + affix.value;
-    }
-  }
-
-  const weaponProfile =
-    blueprint.slot === 'weapon'
-      ? {
-          ...DEFAULT_WEAPON_PROFILE,
-          ...(blueprint.profile ?? {}),
-        }
-      : undefined;
-
-  return {
-    id: `${blueprint.slot}-${chosenId}-${rarityKey}`,
-    instanceId: `loot-${ITEM_UID++}`,
-    name: buildItemName(blueprint, rarityKey, theme),
-    description: blueprint.description,
-    type: 'equipment',
-    slot: blueprint.slot === 'trinket' ? 'trinket' : blueprint.slot,
-    rarity: rarityKey,
-    rarityLabel: rarityInfo.label,
-    rarityColor: rarityInfo.color,
-    actions: ['equip', ...(blueprint.slot === 'weapon' ? ['assign'] : [])],
-    bonuses,
-    weaponProfile,
-    style: blueprint.style,
-  };
-}
-
-function resolveLootEntry(entry, context = {}) {
-  if (!entry) return null;
-  if (typeof entry === 'string') {
-    return cloneItem(entry);
-  }
-  if (entry.type === 'equipment') {
-    return generateEquipment({
-      category: entry.category ?? 'weapon',
-      theme: entry.theme ?? context.theme,
-      bias: entry.bias ?? context.bias ?? 0,
-      blueprintId: entry.blueprint,
-      powerBonus: context.powerBonus ?? 0,
-    });
-  }
-  if (entry.type === 'gold') {
-    return {
-      id: 'gold-pouch',
-      name: 'Gold Pouch',
-      type: 'medal',
-      goldValue: entry.amount ?? 20,
-      consumedOnPickup: true,
-      instanceId: `gold-${ITEM_UID++}`,
-    };
-  }
-  if (entry.type === 'item') {
-    return cloneItem(entry.id);
-  }
-  return null;
-}
-
-function drawFromLootTable(table, context) {
-  if (!Array.isArray(table) || table.length === 0) return null;
-  const weighted = table.map((entry) => ({ entry, weight: entry.weight ?? 1 }));
-  const picked = weightedPick(weighted);
-  return resolveLootEntry(picked?.entry, context);
-}
-
-function vectorLength(v) {
-  return Math.hypot(v.x, v.y);
-}
-
-function normalize(v) {
-  const len = vectorLength(v);
-  if (len === 0) return { x: 0, y: 0 };
-  return { x: v.x / len, y: v.y / len };
-}
-
-function hexToRgb(hex) {
-  const value = hex.replace('#', '');
-  const bigint = parseInt(value, 16);
-  return {
-    r: (bigint >> 16) & 255,
-    g: (bigint >> 8) & 255,
-    b: bigint & 255,
-  };
-}
-
-function mixColor(a, bColor, t) {
-  const colorA = hexToRgb(a);
-  const colorB = hexToRgb(bColor);
-  const lerpChannel = (channel) =>
-    Math.round(colorA[channel] + (colorB[channel] - colorA[channel]) * t);
-  const red = lerpChannel('r');
-  const green = lerpChannel('g');
-  const blue = lerpChannel('b');
-  return `rgb(${red}, ${green}, ${blue})`;
+  return SHOP_ITEMS[SHOP_ITEMS.length - 1];
 }
 
 class InputHandler {
-  #pressed = new Set();
-  #aim = new Set();
-  #shootListeners = new Set();
-  #dashListeners = new Set();
-  #pauseListeners = new Set();
-  #interactListeners = new Set();
-  #inventoryListeners = new Set();
-  #questListeners = new Set();
-  #skillTreeListeners = new Set();
-  #mapListeners = new Set();
-  #hotbarListeners = new Map();
-  #abilityListeners = new Map();
-  #abilityActiveKeys = new Set();
-
   constructor() {
-    window.addEventListener('keydown', (event) => this.#handleKeyDown(event));
-    window.addEventListener('keyup', (event) => this.#handleKeyUp(event));
+    this.keys = new Set();
+    window.addEventListener('keydown', (event) => this.#handleDown(event));
+    window.addEventListener('keyup', (event) => this.#handleUp(event));
   }
 
-  #handleKeyDown(event) {
-    const key = event.key;
-    if (MOVE_KEYS.has(key)) {
-      this.#pressed.add(key);
+  #handleDown(event) {
+    const key = event.key.toLowerCase();
+    if (['w', 'a', 's', 'd'].includes(key)) {
       event.preventDefault();
-    }
-
-    if (AIM_KEYS.has(key)) {
-      this.#aim.add(key);
-      event.preventDefault();
-    }
-
-    if (key === ' ') {
-      event.preventDefault();
-      this.#shootListeners.forEach((cb) => cb());
-    }
-
-    if (key === 'e' || key === 'E') {
-      event.preventDefault();
-      this.#dashListeners.forEach((cb) => cb());
-    }
-
-    if (key === 'f' || key === 'F') {
-      event.preventDefault();
-      this.#interactListeners.forEach((cb) => cb());
-    }
-
-    if (key === 'Escape') {
-      event.preventDefault();
-      this.#pauseListeners.forEach((cb) => cb());
-    }
-
-    if (key === 'i' || key === 'I') {
-      event.preventDefault();
-      this.#inventoryListeners.forEach((cb) => cb());
-    }
-
-    if (key === 'j' || key === 'J') {
-      event.preventDefault();
-      this.#questListeners.forEach((cb) => cb());
-    }
-
-    if (key === 'k' || key === 'K') {
-      event.preventDefault();
-      this.#skillTreeListeners.forEach((cb) => cb());
-    }
-
-    if (key === 'm' || key === 'M') {
-      event.preventDefault();
-      this.#mapListeners.forEach((cb) => cb());
-    }
-
-    if (key >= '1' && key <= '8') {
-      const index = Number.parseInt(key, 10) - 1;
-      const listener = this.#hotbarListeners.get(index);
-      if (listener) {
-        event.preventDefault();
-        listener();
-      }
-    }
-
-    const lowerKey = key.toLowerCase();
-    const ability = this.#abilityListeners.get(lowerKey);
-    if (ability && !this.#abilityActiveKeys.has(lowerKey)) {
-      event.preventDefault();
-      this.#abilityActiveKeys.add(lowerKey);
-      ability();
+      this.keys.add(key);
     }
   }
 
-  #handleKeyUp(event) {
-    const key = event.key;
-    if (MOVE_KEYS.has(key)) {
-      this.#pressed.delete(key);
+  #handleUp(event) {
+    const key = event.key.toLowerCase();
+    if (this.keys.has(key)) {
       event.preventDefault();
-    }
-
-    if (AIM_KEYS.has(key)) {
-      this.#aim.delete(key);
-      event.preventDefault();
-    }
-
-    const lowerKey = key.toLowerCase();
-    if (this.#abilityActiveKeys.has(lowerKey)) {
-      this.#abilityActiveKeys.delete(lowerKey);
-      event.preventDefault();
+      this.keys.delete(key);
     }
   }
 
   getMovementVector() {
     let vx = 0;
     let vy = 0;
-    for (const key of this.#pressed) {
-      vx += DIRECTIONS[key].x;
-      vy += DIRECTIONS[key].y;
-    }
+    if (this.keys.has('w')) vy -= 1;
+    if (this.keys.has('s')) vy += 1;
+    if (this.keys.has('a')) vx -= 1;
+    if (this.keys.has('d')) vx += 1;
     if (vx === 0 && vy === 0) return { x: 0, y: 0 };
-    return normalize({ x: vx, y: vy });
-  }
-
-  getAimVector(fallback) {
-    let vx = 0;
-    let vy = 0;
-    for (const key of this.#aim) {
-      vx += DIRECTIONS[key].x;
-      vy += DIRECTIONS[key].y;
-    }
-    if (vx === 0 && vy === 0) {
-      return fallback || { x: 0, y: -1 };
-    }
-    return normalize({ x: vx, y: vy });
-  }
-
-  onShoot(callback) {
-    this.#shootListeners.add(callback);
-    return () => this.#shootListeners.delete(callback);
-  }
-
-  onDash(callback) {
-    this.#dashListeners.add(callback);
-    return () => this.#dashListeners.delete(callback);
-  }
-
-  onInteract(callback) {
-    this.#interactListeners.add(callback);
-    return () => this.#interactListeners.delete(callback);
-  }
-
-  onPause(callback) {
-    this.#pauseListeners.add(callback);
-    return () => this.#pauseListeners.delete(callback);
-  }
-
-  onToggleInventory(callback) {
-    this.#inventoryListeners.add(callback);
-    return () => this.#inventoryListeners.delete(callback);
-  }
-
-  onToggleQuests(callback) {
-    this.#questListeners.add(callback);
-    return () => this.#questListeners.delete(callback);
-  }
-
-  onToggleSkillTree(callback) {
-    this.#skillTreeListeners.add(callback);
-    return () => this.#skillTreeListeners.delete(callback);
-  }
-
-  onToggleMap(callback) {
-    this.#mapListeners.add(callback);
-    return () => this.#mapListeners.delete(callback);
-  }
-
-  bindHotbar(index, callback) {
-    this.#hotbarListeners.set(index, callback);
-    return () => this.#hotbarListeners.delete(index);
-  }
-
-  bindAbility(key, callback) {
-    this.#abilityListeners.set(key.toLowerCase(), callback);
-    return () => this.#abilityListeners.delete(key.toLowerCase());
+    const length = Math.hypot(vx, vy) || 1;
+    return { x: vx / length, y: vy / length };
   }
 }
 
-class EventLog {
-  constructor(element, maxEntries = 8) {
-    this.element = element;
-    this.maxEntries = maxEntries;
-    this.entries = [];
-  }
-
-  push(message) {
-    const time = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    this.entries.unshift({ message, time });
-    this.entries = this.entries.slice(0, this.maxEntries);
-    this.render();
-  }
-
-  render() {
-    if (!this.element) return;
-    this.element.innerHTML = '';
-    for (const entry of this.entries) {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${entry.time}</strong> ${entry.message}`;
-      this.element.appendChild(li);
-    }
-  }
-}
-
-class UIController {
+class HUDController {
   constructor(ui) {
     this.ui = ui;
-    this.inventoryHandlers = {};
-    this.hotbarSlots = ui.hotbarSlots ?? [];
-    this.skillTreeHandler = null;
   }
 
   setHealth(current, max) {
-    const clamped = clamp(current, 0, max);
-    this.ui.healthValue.textContent = `${Math.round(clamped)} / ${Math.round(max)}`;
-    const ratio = max === 0 ? 0 : (clamped / max) * 100;
-    this.ui.healthFill.style.width = `${ratio}%`;
-    this.ui.healthFill.parentElement?.setAttribute('aria-valuenow', `${Math.round(ratio)}`);
+    const percent = clamp(current / max, 0, 1);
+    this.ui.healthFill.style.transform = `scaleX(${percent})`;
+    this.ui.healthValue.textContent = `${Math.max(0, Math.ceil(current))} / ${Math.ceil(max)}`;
+    this.ui.healthFill.style.background =
+      percent < 0.3 ? '#ff5678' : 'linear-gradient(90deg,#ff6f91,#f7ca57)';
   }
 
-  setPower(current, max = 1, label) {
-    if (!this.ui.powerFill || !this.ui.powerValue) return;
-    const clamped = clamp(current, 0, max);
-    const ratio = max === 0 ? 0 : (clamped / max) * 100;
-    this.ui.powerFill.style.width = `${ratio}%`;
-    this.ui.powerFill.parentElement?.setAttribute('aria-valuenow', `${Math.round(ratio)}`);
-    if (label) {
-      this.ui.powerValue.textContent = label;
-    } else {
-      this.ui.powerValue.textContent = ratio >= 99 ? 'Ready' : `${Math.round(ratio)}%`;
-    }
+  setHero(name) {
+    this.ui.heroLabel.textContent = name;
   }
 
-  setExperience(level, current, required) {
-    this.ui.progressValue.textContent = `Level ${level}`;
-    const ratio = required === 0 ? 0 : clamp((current / required) * 100, 0, 100);
-    this.ui.progressFill.style.width = `${ratio}%`;
-    this.ui.progressFill.parentElement?.setAttribute('aria-valuenow', `${Math.round(ratio)}`);
+  setWave(wave) {
+    this.ui.waveLabel.textContent = wave;
+    this.ui.shopWave.textContent = wave;
   }
 
-  setSkillPoints(points) {
-    this.ui.skillPointsValue.textContent = `${points}`;
-    if (this.ui.skillTreePoints) {
-      this.ui.skillTreePoints.textContent = `${points}`;
-    }
+  setTimer(time) {
+    this.ui.waveTimer.textContent = `${time.toFixed(1)}s`;
   }
 
-  setGold(value) {
-    this.ui.currencyValue.textContent = `${value}`;
+  setMaterials(amount) {
+    this.ui.currencyValue.textContent = amount;
+    this.ui.shopMaterials.textContent = amount;
   }
 
-  setGoal(text) {
-    this.ui.goalValue.textContent = text;
+  toggleStartScreen(show) {
+    this.ui.startScreen.classList.toggle('hidden', !show);
   }
 
-  setZone(text) {
-    this.ui.zoneLabel.textContent = text;
+  toggleShop(show) {
+    this.ui.shopOverlay.classList.toggle('hidden', !show);
   }
 
-  setTimeOfDay(text) {
-    if (this.ui.timeOfDayValue) {
-      this.ui.timeOfDayValue.textContent = text;
-    }
+  toggleGameOver(show) {
+    this.ui.gameOverOverlay.classList.toggle('hidden', !show);
   }
 
-  setTownProgress(label, ratio) {
-    this.ui.townLabel.textContent = label;
-    const clamped = clamp(ratio, 0, 1);
-    const percent = Math.round(clamped * 100);
-    this.ui.townFill.style.width = `${percent}%`;
-    const container = this.ui.townFill.closest('[role="progressbar"], .town-progress');
-    container?.setAttribute('aria-valuenow', `${percent}`);
-  }
-
-  setHotbar(slots) {
-    for (let i = 0; i < this.hotbarSlots.length; i += 1) {
-      const slotElement = this.hotbarSlots[i];
-      const slot = slots[i];
-      if (!slotElement) continue;
-      if (slot) {
-        slotElement.dataset.empty = 'false';
-        slotElement.dataset.name = slot.label ?? slot.name ?? '';
-        if (slot.rarity) {
-          slotElement.dataset.rarity = slot.rarity;
-        } else {
-          delete slotElement.dataset.rarity;
-        }
-        if (typeof slot.cooldownLabel === 'string' && slot.cooldownLabel.length > 0) {
-          slotElement.dataset.cooldown = slot.cooldownLabel;
-        } else {
-          delete slotElement.dataset.cooldown;
-        }
-        if (slot.active) {
-          slotElement.classList.add('active');
-        } else {
-          slotElement.classList.remove('active');
-        }
-      } else {
-        slotElement.dataset.empty = 'true';
-        slotElement.dataset.name = '';
-        delete slotElement.dataset.rarity;
-        delete slotElement.dataset.cooldown;
-        slotElement.classList.remove('active');
-      }
-    }
-  }
-
-  setUpgrades(upgrades) {
-    this.ui.skillList.innerHTML = '';
-    if (upgrades.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No skills unlocked yet. Earn sparks to learn new techniques.';
-      this.ui.skillList.appendChild(li);
-      return;
-    }
-    for (const upgrade of upgrades) {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${upgrade.name}</strong><p>${upgrade.description}</p>`;
-      this.ui.skillList.appendChild(li);
-    }
-  }
-
-  setAchievements(achievements) {
-    this.ui.achievementList.innerHTML = '';
-    if (achievements.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'Discover hidden feats to fill this list.';
-      this.ui.achievementList.appendChild(li);
-      return;
-    }
-    for (const achievement of achievements) {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${achievement.label}</strong><br/>${achievement.description}`;
-      this.ui.achievementList.appendChild(li);
-    }
-  }
-
-  setMapClues(clues) {
-    this.ui.mapInfo.innerHTML = '';
-    for (const clue of clues) {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${clue.title}</strong><br/>${clue.description}`;
-      this.ui.mapInfo.appendChild(li);
-    }
-  }
-
-  setInventory(items, handlers = {}) {
-    this.inventoryHandlers = handlers;
-    this.ui.inventoryList.innerHTML = '';
-    if (items.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'Your satchel is empty. Venture into the dungeons to gather loot.';
-      this.ui.inventoryList.appendChild(li);
-      return;
-    }
-    for (const item of items) {
-      const li = document.createElement('li');
-      li.className = 'inventory-item';
-      if (item.rarity) {
-        li.dataset.rarity = item.rarity;
-      } else {
-        delete li.dataset.rarity;
-      }
-      const meta = [];
-      if (item.type) {
-        meta.push(item.type.charAt(0).toUpperCase() + item.type.slice(1));
-      }
-      if (item.slot) {
-        meta.push(`Slot: ${item.slot}`);
-      }
-      if (item.goldValue) {
-        meta.push(`Sell: ${item.goldValue} gold`);
-      } else if (item.value && item.type === 'material') {
-        meta.push(`Trade: ${item.value} gold`);
-      }
-      if (item.bonuses) {
-        const bonusText = Object.entries(item.bonuses)
-          .map(([key, value]) => {
-            const label = key.replace(/([A-Z])/g, ' $1');
-            let display = value;
-            if (typeof value === 'number') {
-              display = Math.abs(value) < 1 ? value.toFixed(2) : Math.round(value);
-            }
-            return `${label} ${value > 0 ? '+' : ''}${display}`;
-          })
-          .join(' · ');
-        if (bonusText) meta.push(bonusText);
-      }
-      const header = document.createElement('div');
-      header.className = 'item-header';
-      const title = document.createElement('strong');
-      title.textContent = item.name;
-      header.appendChild(title);
-      if (item.rarityLabel) {
-        const rarity = document.createElement('span');
-        rarity.className = 'item-rarity';
-        rarity.textContent = item.rarityLabel;
-        header.appendChild(rarity);
-      }
-      li.appendChild(header);
-      const description = document.createElement('p');
-      description.textContent = item.description;
-      li.appendChild(description);
-      if (meta.length > 0) {
-        const metaDiv = document.createElement('div');
-        metaDiv.className = 'item-meta';
-        metaDiv.textContent = meta.join(' · ');
-        li.appendChild(metaDiv);
-      }
-      const actions = document.createElement('div');
-      actions.className = 'item-actions';
-      if (item.actions?.includes('equip') && handlers.onEquip) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'primary';
-        button.textContent = item.equipped ? 'Equipped' : 'Equip';
-        button.disabled = !!item.equipped;
-        button.addEventListener('click', () => handlers.onEquip(item));
-        actions.appendChild(button);
-      }
-      if (item.actions?.includes('use') && handlers.onUse) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = 'Use';
-        button.addEventListener('click', () => handlers.onUse(item));
-        actions.appendChild(button);
-      }
-      if (item.actions?.includes('assign') && handlers.onAssign) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = 'Assign to hotbar';
-        button.addEventListener('click', () => handlers.onAssign(item));
-        actions.appendChild(button);
-      }
-      if (actions.childElementCount > 0) {
-        li.appendChild(actions);
-      }
-      this.ui.inventoryList.appendChild(li);
-    }
-  }
-
-  setEquipment(equipment) {
-    this.ui.equipmentList.innerHTML = '';
-    if (!equipment || Object.keys(equipment).length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No gear equipped yet.';
-      this.ui.equipmentList.appendChild(li);
-      return;
-    }
-    for (const [slot, item] of Object.entries(equipment)) {
-      const li = document.createElement('li');
-      if (item) {
-        li.className = 'equipment-item';
-        if (item.rarity) {
-          li.dataset.rarity = item.rarity;
-        }
-        li.innerHTML = `<strong>${item.name}</strong><p>${item.description}</p><div class="item-meta">${slot}</div>`;
-      } else {
-        li.innerHTML = `<strong>${slot}</strong><p>Empty slot</p>`;
-      }
-      this.ui.equipmentList.appendChild(li);
-    }
-  }
-
-  setAbilities(abilities) {
-    this.ui.abilitiesList.innerHTML = '';
-    if (!abilities || abilities.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No abilities unlocked yet. Explore the skill tree!';
-      this.ui.abilitiesList.appendChild(li);
-      return;
-    }
-    for (const ability of abilities) {
-      const li = document.createElement('li');
-      const key = ability.key ? `<span class="item-meta">Key: ${ability.key.toUpperCase()}</span>` : '';
-      li.innerHTML = `<strong>${ability.name}</strong><p>${ability.description}</p>${key}`;
-      this.ui.abilitiesList.appendChild(li);
-    }
-  }
-
-  setQuests(quests) {
-    this.ui.questsList.innerHTML = '';
-    if (!quests || quests.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No active quests. Speak with townsfolk in the city plazas.';
-      this.ui.questsList.appendChild(li);
-      return;
-    }
-    for (const quest of quests) {
-      const li = document.createElement('li');
-      const status = quest.status ? `<div class="item-meta">${quest.status}</div>` : '';
-      li.innerHTML = `<strong>${quest.name}</strong><p>${quest.description}</p>${status}`;
-      this.ui.questsList.appendChild(li);
-    }
-  }
-
-  setStory(text) {
-    this.ui.storyline.textContent = text;
-  }
-
-  setJournal(entries) {
-    this.ui.npcJournal.innerHTML = '';
-    if (entries.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No journal notes yet. Talk to townsfolk to learn more.';
-      this.ui.npcJournal.appendChild(li);
-      return;
-    }
-    for (const entry of entries) {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${entry.name}</strong><br/>${entry.note}`;
-      this.ui.npcJournal.appendChild(li);
-    }
-  }
-
-  setLog(entries) {
-    this.ui.log.innerHTML = '';
-    for (const entry of entries) {
-      const li = document.createElement('li');
-      li.textContent = entry;
-      this.ui.log.appendChild(li);
-    }
-  }
-
-  showMenu(show) {
-    this.ui.pauseMenu.setAttribute('aria-hidden', show ? 'false' : 'true');
-  }
-
-  showStartMenu(show) {
-    this.ui.startMenu.setAttribute('aria-hidden', show ? 'false' : 'true');
-  }
-
-  showShop(shop, onPurchase, onClose) {
-    this.ui.shopName.textContent = shop.name;
-    this.ui.shopDescription.textContent = shop.description;
+  setShopOptions(options, onPurchase) {
     this.ui.shopOptions.innerHTML = '';
-    for (const item of shop.stock) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'upgrade-option';
-      button.innerHTML = `<h3>${item.label}</h3><p>Cost: ${item.cost} gold</p>`;
-      button.addEventListener('click', () => onPurchase(item));
-      this.ui.shopOptions.appendChild(button);
-    }
-    this.ui.leaveShop.onclick = onClose;
-    this.ui.shopOverlay.setAttribute('aria-hidden', 'false');
-    const firstButton = this.ui.shopOptions.querySelector('button');
-    firstButton?.focus();
-  }
-
-  hideShop() {
-    this.ui.shopOverlay.setAttribute('aria-hidden', 'true');
-    this.ui.shopOptions.innerHTML = '';
-  }
-
-  showInventory(show) {
-    this.ui.inventoryOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
-  }
-
-  showQuests(show) {
-    this.ui.questsOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
-  }
-
-  showSkillTree(show) {
-    this.ui.skillTreeOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
-  }
-
-  showAtlas(show) {
-    this.ui.mapOverlay?.setAttribute('aria-hidden', show ? 'false' : 'true');
-  }
-
-  showPrompt(text) {
-    if (!text) {
-      this.ui.prompt.textContent = '';
-      this.ui.prompt.classList.remove('show');
-      return;
-    }
-    this.ui.prompt.textContent = text;
-    this.ui.prompt.classList.add('show');
-  }
-
-  clearPrompt() {
-    this.showPrompt('');
-  }
-
-  showToast(message) {
-    const toast = this.ui.toast;
-    toast.textContent = message;
-    toast.classList.remove('hidden');
-    toast.classList.add('show');
-    clearTimeout(this.toastTimer);
-    this.toastTimer = window.setTimeout(() => {
-      toast.classList.remove('show');
-      toast.classList.add('hidden');
-    }, 2400);
-  }
-
-  renderSkillTree(nodes, unlocked, available, handler, points = 0) {
-    this.skillTreeHandler = handler;
-    this.ui.skillTree.innerHTML = '';
-    const nameLookup = new Map(nodes.map((node) => [node.id, node.name]));
-    for (const node of nodes) {
-      const card = document.createElement('article');
-      card.className = 'skill-node';
-      const state = unlocked.has(node.id)
-        ? 'unlocked'
-        : available.has(node.id)
-        ? 'available'
-        : 'locked';
-      card.dataset.state = state;
+    options.forEach((option) => {
+      const li = document.createElement('li');
+      li.className = 'shop-option';
+      li.dataset.rarity = option.rarity;
+      const info = document.createElement('header');
+      const rarity = document.createElement('span');
+      rarity.className = 'rarity';
+      rarity.textContent = option.rarity;
       const title = document.createElement('h3');
-      title.textContent = node.name;
+      title.textContent = option.name;
       const desc = document.createElement('p');
-      desc.textContent = node.description;
-      const meta = document.createElement('div');
-      meta.className = 'node-meta';
-      const prereqNames = node.prerequisites?.map((id) => nameLookup.get(id) ?? id) ?? [];
-      const requirementText = prereqNames.length
-        ? `Requires: ${prereqNames.join(', ')}`
-        : 'Base technique';
-      const cost = node.cost ?? 1;
-      meta.textContent = `${requirementText} • Cost: ${cost} spark${cost > 1 ? 's' : ''}`;
-      card.append(title, desc, meta);
-      if (state === 'available') {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = `Unlock (${cost} spark${cost > 1 ? 's' : ''})`;
-        if (cost > points) {
-          button.disabled = true;
-          button.title = 'Earn more sparks to unlock this skill.';
-        }
-        button.addEventListener('click', () => handler(node));
-        card.appendChild(button);
-      }
-      this.ui.skillTree.appendChild(card);
-    }
-  }
-}
-
-class ParticleSystem {
-  constructor() {
-    this.particles = [];
-  }
-
-  spawn(point, options) {
-    this.particles.push({
-      x: point.x,
-      y: point.y,
-      vx: options.vx ?? randRange(-0.5, 0.5),
-      vy: options.vy ?? randRange(-0.5, 0.5),
-      radius: options.radius ?? randRange(0.1, 0.25),
-      life: options.life ?? randRange(0.5, 1.2),
-      color: options.color ?? '#ffffff',
+      desc.textContent = option.description;
+      info.append(rarity, title, desc);
+      const button = document.createElement('button');
+      button.className = 'primary';
+      button.textContent = option.soldOut ? 'Purchased' : `Buy (${option.cost})`;
+      button.disabled = option.soldOut || option.disabled;
+      button.addEventListener('click', () => onPurchase(option));
+      li.append(info, button);
+      this.ui.shopOptions.appendChild(li);
     });
   }
 
-  update(dt) {
-    this.particles = this.particles
-      .map((p) => ({ ...p, x: p.x + p.vx * dt, y: p.y + p.vy * dt, life: p.life - dt }))
-      .filter((p) => p.life > 0);
+  setRerollCost(cost) {
+    this.ui.rerollButton.textContent = `Reroll (${cost})`;
   }
 
-  draw(context, view) {
-    for (const particle of this.particles) {
-      const alpha = clamp(particle.life, 0, 1);
-      if (
-        view &&
-        (particle.x < view.offsetX - 2 ||
-          particle.x > view.offsetX + view.viewWidth + 2 ||
-          particle.y < view.offsetY - 2 ||
-          particle.y > view.offsetY + view.viewHeight + 2)
-      ) {
-        continue;
-      }
-      context.fillStyle = particle.color;
-      context.globalAlpha = alpha;
-      context.beginPath();
-      context.arc(
-        particle.x * TILE_SIZE,
-        particle.y * TILE_SIZE,
-        particle.radius * TILE_SIZE,
-        0,
-        Math.PI * 2
-      );
-      context.fill();
-      context.globalAlpha = 1;
-    }
-  }
-}
-
-class MinimapRenderer {
-  constructor(minimapCanvas, atlasCanvas) {
-    this.canvas = minimapCanvas;
-    this.ctx = minimapCanvas?.getContext('2d') ?? null;
-    this.atlasCanvas = atlasCanvas;
-    this.atlasCtx = atlasCanvas?.getContext('2d') ?? null;
-    this.baseMini = null;
-    this.baseAtlas = null;
-  }
-
-  setWorld(world) {
-    this.world = world;
-    if (!world) return;
-    this.#renderMinimapBase();
-    this.#renderAtlasBase();
-  }
-
-  draw(player) {
-    if (!this.ctx || !this.baseMini || !this.world) return;
-    const { ctx, canvas } = this;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(this.baseMini, 0, 0, canvas.width, canvas.height);
-    const scaleX = canvas.width / this.world.width;
-    const scaleY = canvas.height / this.world.height;
-    ctx.fillStyle = '#facc15';
-    ctx.beginPath();
-    ctx.arc(player.x * scaleX, player.y * scaleY, 4, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  drawAtlas(player) {
-    if (!this.atlasCtx || !this.baseAtlas || !this.world) return;
-    const { atlasCtx: ctx, atlasCanvas: canvas } = this;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(this.baseAtlas, 0, 0, canvas.width, canvas.height);
-    const scaleX = canvas.width / this.world.width;
-    const scaleY = canvas.height / this.world.height;
-    ctx.fillStyle = '#facc15';
-    ctx.beginPath();
-    ctx.arc(player.x * scaleX, player.y * scaleY, 6, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  #renderMinimapBase() {
-    if (!this.canvas || !this.world) return;
-    const offscreen = document.createElement('canvas');
-    offscreen.width = this.world.width;
-    offscreen.height = this.world.height;
-    const ctx = offscreen.getContext('2d');
-    if (!ctx) return;
-    const imageData = ctx.createImageData(offscreen.width, offscreen.height);
-    let index = 0;
-    for (let y = 0; y < this.world.height; y += 1) {
-      for (let x = 0; x < this.world.width; x += 1) {
-        const tile = this.world.getTile(x, y);
-        const color = TILE_TYPES[tile.type]?.color ?? '#111827';
-        const rgb = hexToRgb(color);
-        imageData.data[index++] = rgb.r;
-        imageData.data[index++] = rgb.g;
-        imageData.data[index++] = rgb.b;
-        imageData.data[index++] = 255;
-      }
-    }
-    ctx.putImageData(imageData, 0, 0);
-    this.baseMini = offscreen;
-  }
-
-  #renderAtlasBase() {
-    if (!this.atlasCanvas || !this.world) return;
-    const offscreen = document.createElement('canvas');
-    offscreen.width = this.world.width;
-    offscreen.height = this.world.height;
-    const ctx = offscreen.getContext('2d');
-    if (!ctx) return;
-    ctx.fillStyle = '#111827';
-    ctx.fillRect(0, 0, offscreen.width, offscreen.height);
-    for (let y = 0; y < this.world.height; y += 1) {
-      for (let x = 0; x < this.world.width; x += 1) {
-        const tile = this.world.getTile(x, y);
-        const info = TILE_TYPES[tile.type];
-        ctx.fillStyle = info?.color ?? '#111827';
-        ctx.fillRect(x, y, 1, 1);
-      }
-    }
-    ctx.fillStyle = '#f59e0b';
-    for (const town of this.world.towns ?? []) {
-      ctx.fillRect(town.center.x - 2, town.center.y - 2, 4, 4);
-    }
-    ctx.fillStyle = '#38bdf8';
-    for (const dungeon of this.world.dungeons ?? []) {
-      ctx.fillRect(dungeon.bounds.x1, dungeon.bounds.y1, dungeon.bounds.x2 - dungeon.bounds.x1, 1);
-      ctx.fillRect(dungeon.bounds.x1, dungeon.bounds.y2, dungeon.bounds.x2 - dungeon.bounds.x1, 1);
-    }
-    this.baseAtlas = offscreen;
-  }
-}
-
-class World {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
-    this.tiles = Array.from({ length: height }, () =>
-      Array.from({ length: width }, () => ({ type: 'meadow', variant: randInt(0, 2), zone: 'wilds' }))
-    );
-    this.decorations = [];
-    this.lamps = [];
-    this.signs = [];
-    this.mapClues = [];
-    this.shops = [];
-    this.npcs = [];
-    this.towns = [];
-    this.dungeons = [];
-    this.housePlots = [];
-    this.chests = [];
-    this.enemySpawns = [];
-  }
-
-  static generate(width, height) {
-    const world = new World(width, height);
-    world.#generateTerrain();
-    world.#buildSettlements();
-    world.#carveDungeons();
-    world.#decorate();
-    world.#placeSignsAndClues();
-    return world;
-  }
-
-  getTile(x, y) {
-    if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
-      return { type: 'stone', variant: 0, zone: 'void' };
-    }
-    return this.tiles[Math.floor(y)][Math.floor(x)];
-  }
-
-  #setTile(x, y, type, zone) {
-    if (x < 0 || y < 0 || x >= this.width || y >= this.height) return;
-    const tile = this.tiles[Math.floor(y)][Math.floor(x)];
-    tile.type = type;
-    tile.variant = randInt(0, (TILE_TYPES[type]?.variants?.length || 1) - 1);
-    if (zone) {
-      tile.zone = zone;
-    }
-  }
-
-  isWalkable(x, y) {
-    const tile = this.getTile(Math.floor(x), Math.floor(y));
-    if (!tile) return false;
-    const info = TILE_TYPES[tile.type];
-    return !(info?.blocked ?? false);
-  }
-
-  isTown(x, y) {
-    return this.getTile(Math.floor(x), Math.floor(y)).zone === 'town';
-  }
-
-  isSanctuary(x, y) {
-    const zone = this.getTile(Math.floor(x), Math.floor(y)).zone;
-    return zone === 'sanctuary';
-  }
-
-  getTownAt(x, y) {
-    return this.towns.find((town) =>
-      x >= town.bounds.x1 &&
-      x <= town.bounds.x2 &&
-      y >= town.bounds.y1 &&
-      y <= town.bounds.y2
-    );
-  }
-
-  getZoneName(x, y) {
-    const dungeon = this.getDungeonAt(x, y);
-    if (dungeon) return `${dungeon.name}`;
-    const town = this.getTownAt(x, y);
-    if (town) return town.name;
-    if (this.isSanctuary(x, y)) return 'Neon Sanctuary';
-    return 'Paradise Wilds';
-  }
-
-  getDungeonAt(x, y) {
-    return this.dungeons.find((d) =>
-      x >= d.bounds.x1 &&
-      x <= d.bounds.x2 &&
-      y >= d.bounds.y1 &&
-      y <= d.bounds.y2
-    );
-  }
-
-  getShopNear(x, y) {
-    return this.shops.find((shop) => Math.hypot(shop.x - x, shop.y - y) < 1.6);
-  }
-
-  getNpcNear(x, y) {
-    return this.npcs.find((npc) => Math.hypot(npc.x - x, npc.y - y) < 1.6);
-  }
-
-  getHousePlotNear(x, y) {
-    return this.housePlots.find((plot) => Math.hypot(plot.x - x, plot.y - y) < 1.2);
-  }
-
-  getChestNear(x, y) {
-    return this.chests.find(
-      (chest) => !chest.opened && Math.hypot(chest.x - x, chest.y - y) < 1.1
-    );
-  }
-
-  #generateTerrain() {
-    const centerX = this.width / 2;
-    const centerY = this.height / 2;
-    const radiusX = Math.min(this.width, this.height) / 2 - 12;
-    const radiusY = Math.min(this.width, this.height) / 2 - 16;
-
-    for (let y = 0; y < this.height; y += 1) {
-      for (let x = 0; x < this.width; x += 1) {
-        const nx = (x - centerX) / radiusX;
-        const ny = (y - centerY) / radiusY;
-        const distance = Math.sqrt(nx * nx + ny * ny);
-        if (distance > 1.02) {
-          this.#setTile(x, y, 'water', 'wilds');
-        } else if (distance > 0.9) {
-          this.#setTile(x, y, 'sand', 'shore');
-        } else if (distance > 0.72) {
-          this.#setTile(x, y, 'meadow', 'wilds');
-        } else if (distance > 0.58) {
-          this.#setTile(x, y, 'path', 'harbor');
-        } else if (distance > 0.46) {
-          this.#setTile(x, y, 'cityStreet', 'town');
-        } else {
-          this.#setTile(x, y, 'cityPlaza', 'town');
-        }
-      }
-    }
-
-    const plazaRadius = Math.floor(Math.min(radiusX, radiusY) * 0.32);
-    for (let y = -plazaRadius; y <= plazaRadius; y += 1) {
-      for (let x = -plazaRadius; x <= plazaRadius; x += 1) {
-        if (Math.hypot(x, y) <= plazaRadius) {
-          this.#setTile(Math.floor(centerX + x), Math.floor(centerY + y), 'plaza', 'town');
-        }
-      }
-    }
-
-    this.spawnPoint = {
-      x: Math.floor(centerX + randInt(-3, 3)),
-      y: Math.floor(centerY + radiusY * 0.35 + randInt(-2, 2)),
-    };
-
-    this.#carveLagoon({ x: centerX - radiusX * 0.25, y: centerY - radiusY * 0.15 }, 6, 3.5);
-    this.#carveLagoon({ x: centerX + radiusX * 0.28, y: centerY + radiusY * 0.12 }, 5, 2.5);
-
-    this.#carvePath(
-      this.spawnPoint.x,
-      this.spawnPoint.y,
-      clamp(this.spawnPoint.x + randInt(-10, 10), 6, this.width - 6),
-      clamp(this.spawnPoint.y - randInt(12, 18), 6, this.height - 6),
-      2
-    );
-  }
-
-  #carveLagoon(center, radius, inner) {
-    const cx = Math.floor(center.x);
-    const cy = Math.floor(center.y);
-    for (let y = -Math.ceil(radius); y <= Math.ceil(radius); y += 1) {
-      for (let x = -Math.ceil(radius); x <= Math.ceil(radius); x += 1) {
-        const dist = Math.hypot(x, y);
-        if (dist <= radius) {
-          const tileType = dist <= inner ? 'water' : 'sand';
-          const zone = dist <= inner ? 'wilds' : 'shore';
-          this.#setTile(cx + x, cy + y, tileType, zone);
-        }
-      }
-    }
-  }
-
-  #carvePath(x1, y1, x2, y2, width = 1) {
-    let cx = x1;
-    let cy = y1;
-    const steps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) * 2;
-    for (let i = 0; i < steps; i += 1) {
-      for (let wy = -width; wy <= width; wy += 1) {
-        for (let wx = -width; wx <= width; wx += 1) {
-          this.#setTile(cx + wx, cy + wy, 'path', 'wilds');
-        }
-      }
-      if (Math.hypot(cx - x2, cy - y2) < 2) break;
-      const dirX = clamp(Math.sign(x2 - cx) + randInt(-1, 1), -1, 1);
-      const dirY = clamp(Math.sign(y2 - cy) + randInt(-1, 1), -1, 1);
-      cx = clamp(cx + dirX, 2, this.width - 3);
-      cy = clamp(cy + dirY, 2, this.height - 3);
-    }
-  }
-
-  #buildSettlements() {
-    this.#buildTown({
-      name: 'Paradise Point Plaza',
-      center: this.spawnPoint,
-      size: 12,
-      housePlots: 6,
-      shops: ['weapons', 'armory', 'alchemy'],
-      npcs: ['mayor', 'artisan', 'sage', 'archivist'],
-      chests: 4,
-      hasHome: true,
-      tier: 'capital',
-    });
-
-    const additionalTowns = [
-      {
-        name: 'Mirage Bazaar',
-        offset: { x: -36, y: -12 },
-        size: 7,
-        housePlots: 3,
-        shops: ['alchemy'],
-        npcs: ['scout', 'sage'],
-        chests: 2,
-      },
-      {
-        name: 'Sunset Marina',
-        offset: { x: 32, y: 18 },
-        size: 7,
-        housePlots: 3,
-        shops: ['armory', 'alchemy'],
-        npcs: ['river-warden', 'merchant'],
-        chests: 2,
-      },
-      {
-        name: 'Coral Promenade',
-        offset: { x: -28, y: 28 },
-        size: 6,
-        housePlots: 2,
-        shops: ['weapons'],
-        npcs: ['artisan', 'captain'],
-        chests: 2,
-      },
-      {
-        name: 'Skyline Outlook',
-        offset: { x: 30, y: -28 },
-        size: 6,
-        housePlots: 2,
-        shops: ['weapons', 'armory'],
-        npcs: ['merchant'],
-        chests: 2,
-      },
+  showResults({ victory, wave, materials, kills }) {
+    this.ui.gameOverTitle.textContent = victory ? 'Victory!' : 'Run Over';
+    this.ui.gameOverSubtitle.textContent = victory
+      ? `You survived all ${MAX_WAVES} waves.`
+      : `You fell during wave ${wave}.`;
+    this.ui.gameOverStats.innerHTML = '';
+    const stats = [
+      ['Waves cleared', victory ? MAX_WAVES : Math.max(0, wave - 1)],
+      ['Enemies defeated', kills],
+      ['Materials banked', materials],
     ];
-
-    let lastTownCenter = this.spawnPoint;
-    for (const config of additionalTowns) {
-      const center = {
-        x: clamp(this.spawnPoint.x + config.offset.x, 8, this.width - 8),
-        y: clamp(this.spawnPoint.y + config.offset.y, 8, this.height - 8),
-      };
-      this.#carvePath(this.spawnPoint.x, this.spawnPoint.y, center.x, center.y, 2);
-      if (lastTownCenter !== this.spawnPoint) {
-        this.#carvePath(lastTownCenter.x, lastTownCenter.y, center.x, center.y, 1);
-      }
-      this.#buildTown({
-        name: config.name,
-        center,
-        size: config.size,
-        housePlots: config.housePlots,
-        shops: config.shops,
-        npcs: config.npcs,
-        chests: config.chests,
-      });
-      lastTownCenter = center;
-    }
-
-    const sanctuaryCenter = {
-      x: clamp(this.spawnPoint.x - randInt(18, 24), 6, this.width - 6),
-      y: clamp(this.spawnPoint.y - randInt(18, 24), 6, this.height - 6),
-    };
-    this.#carvePath(this.spawnPoint.x, this.spawnPoint.y, sanctuaryCenter.x, sanctuaryCenter.y, 1);
-    for (let y = -3; y <= 3; y += 1) {
-      for (let x = -3; x <= 3; x += 1) {
-        const dist = Math.hypot(x, y);
-        if (dist <= 3.2) {
-          this.#setTile(sanctuaryCenter.x + x, sanctuaryCenter.y + y, 'sanctuary', 'sanctuary');
-        }
-      }
-    }
-    this.decorations.push({ x: sanctuaryCenter.x, y: sanctuaryCenter.y, type: 'beacon' });
-    this.lamps.push({ x: sanctuaryCenter.x + 0.5, y: sanctuaryCenter.y + 0.4 });
-  }
-
-  #buildTown({
-    name,
-    center,
-    size,
-    housePlots,
-    shops,
-    npcs,
-    chests = 0,
-    hasHome = false,
-    tier = 'town',
-  }) {
-    const bounds = {
-      x1: clamp(center.x - size, 2, this.width - 3),
-      y1: clamp(center.y - size, 2, this.height - 3),
-      x2: clamp(center.x + size, 2, this.width - 3),
-      y2: clamp(center.y + size, 2, this.height - 3),
-    };
-
-    const occupied = new Set();
-    const mark = (x, y) => occupied.add(`${x},${y}`);
-
-    if (tier === 'capital') {
-      for (let y = bounds.y1; y <= bounds.y2; y += 1) {
-        for (let x = bounds.x1; x <= bounds.x2; x += 1) {
-          this.#setTile(x, y, 'cityStreet', 'town');
-        }
-      }
-      const plazaRadius = Math.max(2, Math.floor(size * 0.35));
-      for (let y = -plazaRadius; y <= plazaRadius; y += 1) {
-        for (let x = -plazaRadius; x <= plazaRadius; x += 1) {
-          const px = center.x + x;
-          const py = center.y + y;
-          if (px < bounds.x1 || px > bounds.x2 || py < bounds.y1 || py > bounds.y2) continue;
-          const distance = Math.hypot(x, y);
-          if (distance <= plazaRadius * 0.6) {
-            this.#setTile(px, py, 'cityPlaza', 'town');
-          } else if (distance <= plazaRadius * 1.15) {
-            this.#setTile(px, py, 'cityGarden', 'town');
-          }
-        }
-      }
-      const canalOffset = Math.floor(size * 0.55);
-      for (let y = bounds.y1; y <= bounds.y2; y += 1) {
-        for (const offset of [-canalOffset, canalOffset]) {
-          const cx = clamp(center.x + offset, bounds.x1, bounds.x2);
-          this.#setTile(cx, y, 'cityCanal', 'town');
-          this.#setTile(cx + Math.sign(-offset || 1), y, 'cityBridge', 'town');
-        }
-      }
-      for (let x = bounds.x1; x <= bounds.x2; x += 1) {
-        for (const offset of [-canalOffset, canalOffset]) {
-          const cy = clamp(center.y + offset, bounds.y1, bounds.y2);
-          this.#setTile(x, cy, 'cityCanal', 'town');
-          this.#setTile(x, cy + Math.sign(-offset || 1), 'cityBridge', 'town');
-        }
-      }
-    } else {
-      for (let y = bounds.y1; y <= bounds.y2; y += 1) {
-        for (let x = bounds.x1; x <= bounds.x2; x += 1) {
-          const dx = Math.abs(x - center.x);
-          const dy = Math.abs(y - center.y);
-          if (dx <= 1 && dy <= 1) {
-            this.#setTile(x, y, 'plaza', 'town');
-          } else {
-            this.#setTile(x, y, 'townTile', 'town');
-          }
-        }
-      }
-    }
-
-    const plotCount = Math.max(0, housePlots - (hasHome ? 1 : 0));
-    if (hasHome) {
-      const hx = clamp(center.x + 1, bounds.x1 + 1, bounds.x2 - 1);
-      const hy = clamp(center.y + 1, bounds.y1 + 1, bounds.y2 - 1);
-      this.housePlots.push({ x: hx, y: hy, progress: 0, home: true });
-      this.decorations.push({ x: hx, y: hy, type: 'house-frame' });
-      mark(hx, hy);
-    }
-
-    let attempts = 0;
-    let plotsPlaced = 0;
-    while (plotsPlaced < plotCount && attempts < 200) {
-      attempts += 1;
-      const px = clamp(
-        center.x + randInt(-size + 1, size - 1),
-        bounds.x1 + 1,
-        bounds.x2 - 1
-      );
-      const py = clamp(
-        center.y + randInt(-size + 1, size - 1),
-        bounds.y1 + 1,
-        bounds.y2 - 1
-      );
-      const key = `${px},${py}`;
-      if (occupied.has(key)) continue;
-      this.housePlots.push({ x: px, y: py, progress: 0 });
-      this.decorations.push({ x: px, y: py, type: 'house-frame' });
-      mark(px, py);
-      plotsPlaced += 1;
-    }
-
-    const farmlandRows = tier === 'capital' ? 4 : 3;
-    for (let x = bounds.x1 - 2; x <= bounds.x2 + 2; x += 1) {
-      for (let y = bounds.y2 + 1; y <= bounds.y2 + farmlandRows; y += 1) {
-        this.#setTile(x, y, 'cityGarden', 'town');
-        if (Math.random() < 0.45) {
-          this.decorations.push({ x, y, type: 'blossom' });
-        }
-      }
-    }
-
-    for (const shopId of shops) {
-      const libraryEntry = SHOP_LIBRARY.find((item) => item.id === shopId);
-      if (!libraryEntry) continue;
-      for (let attempt = 0; attempt < 30; attempt += 1) {
-        const sx = clamp(
-          center.x + randInt(-size + 1, size - 1),
-          bounds.x1 + 1,
-          bounds.x2 - 1
-        );
-        const sy = clamp(
-          center.y + randInt(-size + 1, size - 1),
-          bounds.y1 + 1,
-          bounds.y2 - 1
-        );
-        const key = `${sx},${sy}`;
-        if (occupied.has(key)) continue;
-        this.shops.push({
-          id: libraryEntry.id,
-          name: libraryEntry.name,
-          description: libraryEntry.description,
-          stock: libraryEntry.stock.map((item) => ({ ...item })),
-          x: sx + 0.5,
-          y: sy + 0.5,
-        });
-        this.decorations.push({ x: sx, y: sy, type: 'market' });
-        this.lamps.push({ x: sx + 0.5, y: sy - 0.3 });
-        mark(sx, sy);
-        break;
-      }
-    }
-
-    for (const npcId of npcs) {
-      const info = NPC_LIBRARY.find((entry) => entry.id === npcId);
-      if (!info) continue;
-      for (let attempt = 0; attempt < 20; attempt += 1) {
-        const nx = clamp(
-          center.x + randInt(-size + 1, size - 1),
-          bounds.x1 + 1,
-          bounds.x2 - 1
-        );
-        const ny = clamp(
-          center.y + randInt(-size + 1, size - 1),
-          bounds.y1 + 1,
-          bounds.y2 - 1
-        );
-        if (occupied.has(`${nx},${ny}`)) continue;
-        this.npcs.push({
-          id: info.id,
-          name: info.name,
-          line: info.line,
-          journal: info.journal,
-          x: nx + 0.5,
-          y: ny + 0.5,
-          color: pick(SCENERY_COLORS.npcCloak),
-        });
-        mark(nx, ny);
-        break;
-      }
-    }
-
-    for (let i = 0; i < chests; i += 1) {
-      for (let attempt = 0; attempt < 30; attempt += 1) {
-        const cx = clamp(
-          center.x + randInt(-size + 1, size - 1),
-          bounds.x1 + 1,
-          bounds.x2 - 1
-        );
-        const cy = clamp(
-          center.y + randInt(-size + 1, size - 1),
-          bounds.y1 + 1,
-          bounds.y2 - 1
-        );
-        const key = `${cx},${cy}`;
-        if (occupied.has(key)) continue;
-        const chestTheme = tier === 'capital' ? 'capital' : undefined;
-        this.#placeChestAt(cx, cy, tier === 'capital' ? 'capital' : 'town', chestTheme);
-        mark(cx, cy);
-        break;
-      }
-    }
-
-    if (tier === 'capital') {
-      for (let i = 0; i < 6; i += 1) {
-        const angle = (i / 6) * Math.PI * 2;
-        const rx = Math.round(center.x + Math.cos(angle) * Math.max(4, size - 3));
-        const ry = Math.round(center.y + Math.sin(angle) * Math.max(4, size - 3));
-        this.decorations.push({ x: rx, y: ry, type: 'house' });
-      }
-      for (let i = 0; i < 4; i += 1) {
-        const px = center.x + (i % 2 === 0 ? -2 : 2);
-        const py = center.y + (i < 2 ? -2 : 2);
-        this.decorations.push({ x: px, y: py, type: 'market' });
-      }
-      for (let i = 0; i < 10; i += 1) {
-        const gx = clamp(center.x + randInt(-size + 2, size - 2), bounds.x1 + 1, bounds.x2 - 1);
-        const gy = clamp(center.y + randInt(-size + 2, size - 2), bounds.y1 + 1, bounds.y2 - 1);
-        this.decorations.push({ x: gx, y: gy, type: 'blossom' });
-      }
-    }
-
-    this.towns.push({ name, bounds, center, tier });
-  }
-
-  #placeChestAt(x, y, tier = 'town', theme) {
-    this.chests.push({ x: x + 0.5, y: y + 0.5, opened: false, tier, theme });
-  }
-
-  #carveDungeons() {
-    const dungeonConfigs = [
-      {
-        name: 'Coral Depths',
-        center: {
-          x: clamp(this.spawnPoint.x - randInt(26, 20), 6, this.width - 6),
-          y: clamp(this.spawnPoint.y + randInt(22, 30), 6, this.height - 6),
-        },
-        size: randInt(7, 9),
-        chests: 2,
-        themeKey: 'reef',
-      },
-      {
-        name: 'Inferno Crater',
-        center: {
-          x: clamp(this.spawnPoint.x + randInt(24, 34), 6, this.width - 6),
-          y: clamp(this.spawnPoint.y - randInt(18, 26), 6, this.height - 6),
-        },
-        size: randInt(7, 9),
-        chests: 2,
-        themeKey: 'volcano',
-      },
-      {
-        name: 'Skyline Spire',
-        center: {
-          x: clamp(this.spawnPoint.x + randInt(-6, 16), 6, this.width - 6),
-          y: clamp(this.spawnPoint.y + randInt(30, 40), 6, this.height - 6),
-        },
-        size: randInt(8, 10),
-        chests: 2,
-        themeKey: 'skyline',
-      },
-      {
-        name: 'Verdant Warrens',
-        center: {
-          x: clamp(this.spawnPoint.x - randInt(32, 40), 6, this.width - 6),
-          y: clamp(this.spawnPoint.y + randInt(6, 18), 6, this.height - 6),
-        },
-        size: randInt(7, 9),
-        chests: 2,
-        themeKey: 'jungle',
-      },
-      {
-        name: 'Mirage Vault',
-        center: {
-          x: clamp(this.spawnPoint.x + randInt(26, 38), 6, this.width - 6),
-          y: clamp(this.spawnPoint.y - randInt(30, 24), 6, this.height - 6),
-        },
-        size: randInt(9, 10),
-        chests: 3,
-        themeKey: 'mirage',
-      },
-    ];
-
-    for (const config of dungeonConfigs) {
-      const theme = DUNGEON_THEMES[config.themeKey];
-      const size = config.size ?? randInt(6, 8);
-      const bounds = {
-        x1: clamp(config.center.x - size, 3, this.width - 4),
-        y1: clamp(config.center.y - size, 3, this.height - 4),
-        x2: clamp(config.center.x + size, 3, this.width - 4),
-        y2: clamp(config.center.y + size, 3, this.height - 4),
-      };
-
-      for (let y = bounds.y1; y <= bounds.y2; y += 1) {
-        for (let x = bounds.x1; x <= bounds.x2; x += 1) {
-          const edge = x === bounds.x1 || x === bounds.x2 || y === bounds.y1 || y === bounds.y2;
-          this.#setTile(x, y, edge ? 'dungeonWall' : 'dungeonFloor', 'dungeon');
-        }
-      }
-
-      const entranceX = clamp(config.center.x, bounds.x1 + 1, bounds.x2 - 1);
-      const entranceY = bounds.y1;
-      this.#setTile(entranceX, entranceY, 'path', 'wilds');
-      this.#carvePath(entranceX, entranceY, this.spawnPoint.x, this.spawnPoint.y, 1);
-
-      const spawnPoints = [];
-      for (let i = 0; i < 4; i += 1) {
-        spawnPoints.push({
-          x: randInt(bounds.x1 + 1, bounds.x2 - 1) + randRange(-0.2, 0.2),
-          y: randInt(bounds.y1 + 1, bounds.y2 - 1) + randRange(-0.2, 0.2),
-        });
-      }
-
-      this.dungeons.push({
-        name: config.name,
-        bounds,
-        spawnPoints,
-        boss: { spawned: false, defeated: false },
-        entrance: { x: entranceX + 0.5, y: entranceY + 0.5 },
-        theme: theme ? { ...theme, id: config.themeKey } : null,
-      });
-
-      for (let i = 0; i < (config.chests ?? 1); i += 1) {
-        for (let attempt = 0; attempt < 40; attempt += 1) {
-          const cx = randInt(bounds.x1 + 1, bounds.x2 - 1);
-          const cy = randInt(bounds.y1 + 1, bounds.y2 - 1);
-          const tile = this.getTile(cx, cy);
-          if (tile.type !== 'dungeonFloor') continue;
-          this.#placeChestAt(cx, cy, 'dungeon', config.theme?.id ?? config.themeKey);
-          break;
-        }
-      }
-
-      this.signs.push({ x: entranceX, y: entranceY - 1, text: config.name });
-    }
-  }
-
-  #decorate() {
-    const area = this.width * this.height;
-    for (let i = 0; i < area * 0.04; i += 1) {
-      const x = randInt(2, this.width - 3);
-      const y = randInt(2, this.height - 3);
-      const tile = this.getTile(x, y);
-      if (tile.zone === 'wilds' && (tile.type === 'grass' || tile.type === 'meadow' || tile.type === 'sand')) {
-        this.decorations.push({ x, y, type: 'tree', color: pick(SCENERY_COLORS.palmLeaves) });
-        if (Math.random() < 0.16) {
-          this.decorations.push({ x, y, type: 'blossom', color: SCENERY_COLORS.neonBloom });
-        }
-      }
-    }
-
-    for (let i = 0; i < area * 0.02; i += 1) {
-      const x = randInt(3, this.width - 4);
-      const y = randInt(3, this.height - 4);
-      const tile = this.getTile(x, y);
-      if (tile.zone === 'wilds' && tile.type !== 'water') {
-        this.decorations.push({ x, y, type: 'rock', color: SCENERY_COLORS.coralGlow });
-      }
-    }
-
-    for (const town of this.towns) {
-      for (let i = 0; i < 4; i += 1) {
-        const angle = (i / 4) * Math.PI * 2;
-        const radius = randRange(2.5, 3.5);
-        const lx = Math.round(town.center.x + Math.cos(angle) * radius);
-        const ly = Math.round(town.center.y + Math.sin(angle) * radius);
-        this.lamps.push({ x: lx + 0.5, y: ly + 0.5 });
-      }
-      if (town.tier !== 'capital') {
-        const span = Math.max(town.bounds.x2 - town.bounds.x1, town.bounds.y2 - town.bounds.y1);
-        for (let i = 0; i < 6; i += 1) {
-          const fx = randInt(-span - 3, span + 3);
-          const fy = randInt(-span - 3, span + 3);
-          if (Math.hypot(fx, fy) < span * 0.6) continue;
-          const tx = clamp(town.center.x + fx, 3, this.width - 4);
-          const ty = clamp(town.center.y + fy, 3, this.height - 4);
-          this.#setTile(tx, ty, 'cityGarden', 'town');
-          this.decorations.push({ x: tx, y: ty, type: 'blossom' });
-        }
-      }
-    }
-  }
-
-  #placeSignsAndClues() {
-    const clues = [];
-    for (const town of this.towns) {
-      const description =
-        town.tier === 'capital'
-          ? 'The neon heart of Paradise Point and the hub of your rebuild.'
-          : 'A district hub where survivors trade, rest, and share intel.';
-      clues.push({
-        title: town.name,
-        description,
-      });
-    }
-
-    for (const dungeon of this.dungeons) {
-      clues.push({
-        title: dungeon.name,
-        description: 'Themed megadungeons hide relics and bosses. Enemies only awaken inside.',
-      });
-    }
-
-    clues.push({
-      title: 'Neon Sanctuary',
-      description: 'A tranquil lagoon where the island spirit restores your strength.',
+    stats.forEach(([label, value]) => {
+      const dt = document.createElement('dt');
+      dt.textContent = label;
+      const dd = document.createElement('dd');
+      dd.textContent = value;
+      this.ui.gameOverStats.append(dt, dd);
     });
-
-    clues.push({
-      title: 'Radiant Hearth Home',
-      description: 'Bring driftwood crates and coral bricks from dungeons to finish your safehouse.',
-    });
-
-    this.mapClues = clues;
   }
 }
 
-
-function createProjectile({
-  x,
-  y,
-  direction,
-  speed,
-  damage,
-  lifetime,
-  friendly,
-  spread = 0,
-  slowField = false,
-  penetration = 0,
-  element = 'radiant',
-  statusEffect = null,
-  size = 0.15,
-}) {
-  const angle = Math.atan2(direction.y, direction.x) + spread;
-  return {
-    x,
-    y,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
-    damage,
-    lifetime,
-    age: 0,
-    friendly,
-    slowField,
-    penetration,
-    element,
-    statusEffect,
-    size,
-    color: ELEMENT_COLORS[element] ?? BULLET_COLOR,
-  };
-}
-
-export class RoguelikeGame {
+export class BrotatoLikeGame {
   constructor({ canvas, ui }) {
     this.canvas = canvas;
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error('Canvas 2D context unavailable.');
-    }
-    this.context = context;
+    this.ctx = canvas.getContext('2d');
+    this.ui = new HUDController(ui);
     this.input = new InputHandler();
-    this.ui = new UIController(ui);
-    this.log = new EventLog(ui.log);
-    this.particles = new ParticleSystem();
-    this.minimap = new MinimapRenderer(ui.minimap, ui.atlas);
     this.lastTime = 0;
-    this.state = 'menu';
-    this.started = false;
-    this.loopRunning = false;
-    this.timeOfDay = DAY_NIGHT_DURATION * 0.4;
-    this.camera = { x: 0, y: 0 };
-    this.stars = Array.from({ length: SKY_STARS }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      phase: Math.random(),
-    }));
-    this.stats = {
-      distance: 0,
-      enemiesDefeated: 0,
-      damageTaken: 0,
-      skillsUnlocked: 0,
-      timeAlive: 0,
-    };
-
-    this.hotbar = Array.from({ length: HOTBAR_SIZE }, () => null);
-    this.abilityState = new Map();
-    this.activeModifiers = [];
-    this.unlockedSkills = new Set();
-    this.availableSkillPoints = 0;
-    this.quests = [];
-    this.visitedTowns = new Set();
-    this.overlayState = { inventory: false, quests: false, skillTree: false, atlas: false };
-
-    this.input.onShoot(() => this.#handleShoot());
-    this.input.onDash(() => this.#handleDash());
-    this.input.onPause(() => this.toggleMenu());
-    this.input.onInteract(() => this.#handleInteract());
-    this.input.onToggleInventory(() => this.toggleInventory());
-    this.input.onToggleQuests(() => this.toggleQuests());
-    this.input.onToggleSkillTree(() => this.toggleSkillTree());
-    this.input.onToggleMap(() => this.toggleAtlas());
-    for (let i = 0; i < HOTBAR_SIZE; i += 1) {
-      this.input.bindHotbar(i, () => this.#useHotbarItem(i));
-    }
-
-    this.achievements = new Set();
-    this.goal = pick(GOALS);
-    this.gold = 0;
-    this.inventory = [];
-    this.journalEntries = [];
-    this.completedStoryBeats = new Set();
-    this.currentStory = STORY_BEATS[0];
-    this.houseProject = null;
-    this.currentDungeon = null;
-    this.dungeonTimer = 0;
-    this.activeShop = null;
-    this.nearbyShop = null;
-    this.nearbyNpc = null;
-    this.nearbyPlot = null;
-    this.lastZoneName = null;
-
-    for (const button of ui.closeButtons ?? []) {
-      button.addEventListener('click', () => {
-        const overlay = button.closest('.overlay');
-        if (overlay?.id === 'inventory-overlay') this.overlayState.inventory = false;
-        if (overlay?.id === 'quests-overlay') this.overlayState.quests = false;
-        if (overlay?.id === 'skilltree-overlay') this.overlayState.skillTree = false;
-        if (overlay?.id === 'map-overlay') this.overlayState.atlas = false;
-        overlay?.setAttribute('aria-hidden', 'true');
-      });
-    }
-
-    this.#startLoop();
-  }
-
-  start() {
-    this.#startLoop();
-    this.started = true;
-    this.restart();
-  }
-
-  restart() {
-    this.state = 'running';
-    this.ui.showMenu(false);
-    this.ui.showStartMenu(false);
-    this.ui.hideShop();
-    this.ui.clearPrompt();
-    this.ui.showInventory(false);
-    this.ui.showQuests(false);
-    this.ui.showSkillTree(false);
-    this.ui.showAtlas(false);
-
-    this.overlayState = { inventory: false, quests: false, skillTree: false, atlas: false };
-    this.availableSkillPoints = 0;
-    this.unlockedSkills.clear();
-    this.abilityState.clear();
-    this.activeModifiers = [];
-    this.hotbar = Array.from({ length: HOTBAR_SIZE }, () => null);
-    this.achievements.clear();
-    this.goal = pick(GOALS);
-    this.stats = {
-      distance: 0,
-      enemiesDefeated: 0,
-      damageTaken: 0,
-      skillsUnlocked: 0,
-      timeAlive: 0,
-    };
-    this.gold = 0;
-    this.inventory = [];
-    this.journalEntries = [];
-    this.completedStoryBeats = new Set();
-    this.currentStory = STORY_BEATS[0];
-    this.houseProject = {
-      label: 'Raise Neon Haven',
-      progress: 0,
-      target: PLAYER_HOUSE_PROGRESS_TARGET,
-      completed: false,
-    };
-    this.currentDungeon = null;
-    this.dungeonTimer = 0;
-    this.activeShop = null;
-    this.nearbyShop = null;
-    this.nearbyNpc = null;
-    this.nearbyPlot = null;
-    this.nearbyChest = null;
-    this.timeOfDay = DAY_NIGHT_DURATION * 0.4;
-    this.quests = [];
-    this.visitedTowns.clear();
-
-    this.world = World.generate(
-      Math.max(
-        Math.floor(this.canvas.width / TILE_SIZE) + WORLD_PADDING_TILES,
-        MIN_WORLD_WIDTH_TILES
-      ),
-      Math.max(
-        Math.floor(this.canvas.height / TILE_SIZE) + WORLD_PADDING_TILES,
-        MIN_WORLD_HEIGHT_TILES
-      )
-    );
-
-    this.player = {
-      x: this.world.spawnPoint.x + 0.5,
-      y: this.world.spawnPoint.y + 0.5,
-      vx: 0,
-      vy: 0,
-      health: PLAYER_BASE_HEALTH,
-      maxHealth: PLAYER_BASE_HEALTH,
-      level: 1,
-      experience: 0,
-      experienceToLevel: XP_PER_LEVEL,
-      shootInterval: PLAYER_SHOT_INTERVAL,
-      baseShootInterval: PLAYER_SHOT_INTERVAL,
-      effectiveShootInterval: PLAYER_SHOT_INTERVAL,
-      shootTimer: 0,
-      dashCooldown: PLAYER_DASH_COOLDOWN,
-      dashTimer: 0,
-      dashDistance: PLAYER_DASH_DISTANCE,
-      projectileSpeed: PLAYER_PROJECTILE_SPEED,
-      projectileLifetime: PLAYER_PROJECTILE_LIFETIME,
-      damage: PLAYER_BASE_DAMAGE,
-      doubleShot: false,
-      dashTrail: false,
-      glowShots: false,
-      spiritWalk: false,
-      piercingShots: false,
-      shield: null,
-      onLevelUpRegen: 0,
-      speed: PLAYER_BASE_SPEED,
-      attackSpeed: 1,
-      critChance: 0.05,
-      critMultiplier: 1.6,
-      damageReduction: 0,
-      regen: 0,
-      goldFind: 0,
-      activeSlow: 1,
-      statusEffects: [],
-      weaponProfile: { ...DEFAULT_WEAPON_PROFILE },
-      aim: { x: 0, y: -1 },
-      upgrades: [],
-      superCharge: 0,
-      superChargeMax: 100,
-      superReady: false,
-      superAnnouncement: false,
-      equipment: {
-        weapon: null,
-        armor: null,
-        shield: null,
-        trinket: null,
-      },
-      abilities: [],
-      xpBonus: 0,
-      sanctuaryRegen: 0,
-      abilityEmpowered: false,
-    };
-
-    this.camera.x = this.player.x;
-    this.camera.y = this.player.y;
-
+    this.state = 'start';
+    this.stats = { kills: 0 };
     this.projectiles = [];
     this.enemyProjectiles = [];
     this.enemies = [];
     this.pickups = [];
-    this.particles = new ParticleSystem();
-    this.spawnTimer = ENEMY_SPAWN_INTERVAL;
-    this.slowFields = [];
-
-    this.minimap?.setWorld(this.world);
-    this.minimap?.draw(this.player);
-
-    this.log.entries = [];
-    this.log.render();
-
-    this.ui.setHealth(this.player.health, this.player.maxHealth);
-    this.ui.setExperience(
-      this.player.level,
-      this.player.experience,
-      this.player.experienceToLevel
-    );
-    this.ui.setPower(this.player.superCharge, this.player.superChargeMax, '0%');
-    this.ui.setSkillPoints(this.availableSkillPoints);
-    this.ui.setUpgrades([]);
-    this.ui.setAchievements([]);
-    this.ui.setGoal(this.goal);
-    this.ui.setMapClues(this.world.mapClues);
-    this.ui.setGold(this.gold);
-    this.#refreshInventoryUI();
-    this.ui.setEquipment(this.player.equipment);
-    this.ui.setAbilities(this.#describeAbilities());
-    this.ui.setQuests(this.quests);
-    this.ui.setJournal(this.journalEntries);
-    this.ui.setStory(this.currentStory.text);
-    this.ui.setZone(this.world.getZoneName(this.player.x, this.player.y));
-    this.ui.setTimeOfDay(this.#describeTimeOfDay());
-    this.ui.setTownProgress(this.houseProject.label, 0);
-    this.ui.setHotbar(this.hotbar);
-    this.#refreshSkillTreeUI();
-
-    this.log.push('Neon Tides buzzes with potential. Press F to chat, trade, and rebuild.');
-    this.log.push('Press I for gear, K for the neon drive, and J for contracts.');
-
-    this.lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
-  }
-
-  toggleInventory(force) {
-    if (this.state !== 'running' && force !== true) return;
-    const next = force ?? !this.overlayState.inventory;
-    this.overlayState.inventory = next;
-    this.ui.showInventory(next);
-    if (next) {
-      this.#refreshInventoryUI();
-    }
-  }
-
-  toggleQuests(force) {
-    if (this.state !== 'running' && force !== true) return;
-    const next = force ?? !this.overlayState.quests;
-    this.overlayState.quests = next;
-    this.ui.showQuests(next);
-    if (next) {
-      this.ui.setQuests(this.quests);
-    }
-  }
-
-  toggleSkillTree(force) {
-    if (this.state !== 'running' && force !== true) return;
-    const next = force ?? !this.overlayState.skillTree;
-    this.overlayState.skillTree = next;
-    this.ui.showSkillTree(next);
-    if (next) {
-      this.#refreshSkillTreeUI();
-    }
-  }
-
-  #refreshSkillTreeUI() {
-    if (!this.ui?.renderSkillTree) return;
-    if (!this.player) return;
-    const unlocked = this.unlockedSkills ?? new Set();
-    const available = new Set();
-    for (const node of SKILL_TREE_NODES) {
-      const requirements = node.prerequisites ?? [];
-      if (requirements.every((id) => unlocked.has(id))) {
-        available.add(node.id);
-      }
-    }
-
-    this.ui.renderSkillTree(
-      SKILL_TREE_NODES,
-      unlocked,
-      available,
-      (node) => this.#unlockSkill(node.id),
-      this.availableSkillPoints
-    );
-
-    const unlockedNodes = SKILL_TREE_NODES.filter((node) => unlocked.has(node.id));
-    this.player.upgrades = unlockedNodes;
-    this.ui.setUpgrades(unlockedNodes);
-    this.ui.setSkillPoints(this.availableSkillPoints);
-  }
-
-  #unlockSkill(skillId) {
-    const node = SKILL_TREE_NODES.find((entry) => entry.id === skillId);
-    if (!node) return;
-    if (this.unlockedSkills.has(node.id)) return;
-    const requirements = node.prerequisites ?? [];
-    const missing = requirements.filter((id) => !this.unlockedSkills.has(id));
-    if (missing.length > 0) {
-      this.ui.showToast('Unlock prerequisite skills first.');
-      return;
-    }
-    const cost = Math.max(1, node.cost ?? 1);
-    if (this.availableSkillPoints < cost) {
-      this.ui.showToast('You need more sparks to learn this skill.');
-      return;
-    }
-
-    this.availableSkillPoints -= cost;
-    this.unlockedSkills.add(node.id);
-    if (typeof node.apply === 'function') {
-      node.apply(this);
-    }
-    let toastMessage = `${node.name} unlocked.`;
-    if (node.unlocksAbility) {
-      const ability = ABILITY_LIBRARY[node.unlocksAbility];
-      this.#unlockAbility(node.unlocksAbility, { silent: true });
-      if (ability) {
-        toastMessage = `${node.name} unlocked. Ability ready: ${ability.name}.`;
-      }
-    }
-
-    this.stats.skillsUnlocked += 1;
-    this.ui.showToast(toastMessage);
-    this.ui.setHealth(this.player.health, this.player.maxHealth);
-    this.ui.setSkillPoints(this.availableSkillPoints);
-    this.#refreshSkillTreeUI();
-  }
-
-  toggleAtlas(force) {
-    if (this.state !== 'running' && force !== true) return;
-    const next = force ?? !this.overlayState.atlas;
-    this.overlayState.atlas = next;
-    this.ui.showAtlas(next);
-    if (next) {
-      this.minimap?.drawAtlas?.(this.player);
-    }
-  }
-
-  #refreshInventoryUI() {
-    const items = this.inventory.map((item) => ({ ...item }));
-    this.ui.setInventory(items, {
-      onEquip: (item) => this.#equipItem(item.instanceId),
-      onUse: (item) => this.#useItem(item.instanceId),
-      onAssign: (item) => this.#assignHotbar(item.instanceId),
-    });
-  }
-
-  #equipItem(instanceId) {
-    const item = this.inventory.find((entry) => entry.instanceId === instanceId);
-    if (!item || !item.slot) return;
-    const slot = item.slot;
-    const current = this.player.equipment[slot];
-    if (current?.instanceId === instanceId) {
-      this.ui.showToast(`${item.name} already equipped`);
-      return;
-    }
-    if (current) {
-      this.#unequipSlot(slot);
-    }
-    this.player.equipment[slot] = item;
-    item.equipped = true;
-    this.#applyEquipmentBonuses(item, true);
-    if (typeof item.onEquip === 'function') {
-      item.onEquip(this.player);
-    }
-    this.ui.showToast(`${item.name} equipped`);
-    this.#refreshInventoryUI();
-    this.ui.setEquipment(this.player.equipment);
-  }
-
-  #unequipSlot(slot) {
-    const current = this.player.equipment[slot];
-    if (!current) return;
-    current.equipped = false;
-    this.#applyEquipmentBonuses(current, false);
-    if (typeof current.onUnequip === 'function') {
-      current.onUnequip(this.player);
-    }
-    this.player.equipment[slot] = null;
-  }
-
-  #applyEquipmentBonuses(item, apply) {
-    const direction = apply ? 1 : -1;
-    const bonuses = item.bonuses || {};
-    if (bonuses.damage) {
-      this.player.damage += bonuses.damage * direction;
-    }
-    if (bonuses.maxHealth) {
-      this.player.maxHealth += bonuses.maxHealth * direction;
-      this.player.health = clamp(this.player.health, 0, this.player.maxHealth);
-    }
-    if (bonuses.dashDistance) {
-      this.player.dashDistance += bonuses.dashDistance * direction;
-    }
-    if (bonuses.speedMultiplier) {
-      const multiplier = bonuses.speedMultiplier;
-      this.player.speed = apply
-        ? this.player.speed * multiplier
-        : this.player.speed / multiplier;
-    }
-    if (bonuses.attackSpeed) {
-      this.player.attackSpeed += bonuses.attackSpeed * direction;
-    }
-    if (bonuses.critChance) {
-      this.player.critChance = Math.max(0, this.player.critChance + bonuses.critChance * direction);
-    }
-    if (bonuses.critMultiplier) {
-      this.player.critMultiplier = Math.max(
-        1.2,
-        this.player.critMultiplier + bonuses.critMultiplier * direction
-      );
-    }
-    if (bonuses.projectileSpeed) {
-      const factor = 1 + bonuses.projectileSpeed;
-      this.player.projectileSpeed = apply
-        ? this.player.projectileSpeed * factor
-        : this.player.projectileSpeed / factor;
-    }
-    if (bonuses.projectileLifetime) {
-      this.player.projectileLifetime += bonuses.projectileLifetime * direction;
-    }
-    if (bonuses.damageReduction) {
-      this.player.damageReduction = clamp(
-        this.player.damageReduction + bonuses.damageReduction * direction,
-        0,
-        0.7
-      );
-    }
-    if (bonuses.regen) {
-      this.player.regen = Math.max(0, this.player.regen + bonuses.regen * direction);
-    }
-    if (bonuses.goldFind) {
-      this.player.goldFind = Math.max(0, this.player.goldFind + bonuses.goldFind * direction);
-    }
-    if (bonuses.xpGain) {
-      this.player.xpBonus = Math.max(0, this.player.xpBonus + bonuses.xpGain * direction);
-    }
-    if (bonuses.abilityPower) {
-      this.player.abilityEmpowered = apply ? true : this.player.abilityEmpowered && false;
-    }
-    if (item.weaponProfile) {
-      if (apply) {
-        this.player.weaponProfile = { ...DEFAULT_WEAPON_PROFILE, ...item.weaponProfile };
-      } else {
-        const equipped = this.player.equipment.weapon;
-        this.player.weaponProfile = equipped?.weaponProfile
-          ? { ...DEFAULT_WEAPON_PROFILE, ...equipped.weaponProfile }
-          : { ...DEFAULT_WEAPON_PROFILE };
-      }
-    }
-    this.#refreshCombatStats();
-  }
-
-  #refreshCombatStats() {
-    if (!this.player) return;
-    const attackSpeed = Math.max(0.5, this.player.attackSpeed ?? 1);
-    const baseInterval = this.player.shootInterval ?? PLAYER_SHOT_INTERVAL;
-    this.player.effectiveShootInterval = Math.max(0.12, baseInterval / attackSpeed);
-  }
-
-  #useItem(instanceId) {
-    const item = this.inventory.find((entry) => entry.instanceId === instanceId);
-    if (!item) return;
-    if (item.type !== 'consumable') {
-      this.ui.showToast('Only consumables can be used directly.');
-      return;
-    }
-    let consumed = false;
-    if (item.heal) {
-      const before = this.player.health;
-      this.player.health = clamp(this.player.health + item.heal, 0, this.player.maxHealth);
-      const healed = Math.round(this.player.health - before);
-      if (healed > 0) {
-        this.ui.showToast(`Restored ${healed} health`);
-        consumed = true;
-      }
-    }
-    if (typeof item.onUse === 'function') {
-      item.onUse(this);
-      consumed = true;
-    }
-    if (consumed) {
-      item.quantity = Math.max(0, (item.quantity ?? 1) - 1);
-      if (item.quantity <= 0) {
-        this.inventory = this.inventory.filter((entry) => entry.instanceId !== instanceId);
-      }
-      this.#syncHotbar();
-      this.ui.setHealth(this.player.health, this.player.maxHealth);
-      this.#refreshInventoryUI();
-    } else {
-      this.ui.showToast('Already at full effect.');
-    }
-  }
-
-  #assignHotbar(instanceId) {
-    const slotIndex = this.hotbar.findIndex((slot) => !slot);
-    if (slotIndex === -1) {
-      this.ui.showToast('Hotbar full. Remove an item before assigning.');
-      return;
-    }
-    const item = this.inventory.find((entry) => entry.instanceId === instanceId);
-    if (!item) return;
-    this.hotbar[slotIndex] = {
-      type: 'item',
-      instanceId,
-      label: item.name,
-      rarity: item.rarity,
-    };
-    this.#syncHotbar();
-    this.ui.showToast(`${item.name} added to hotbar slot ${slotIndex + 1}`);
-  }
-
-  #useHotbarItem(index) {
-    const slot = this.hotbar[index];
-    if (!slot) return;
-    if (slot.type === 'item') {
-      this.#useItem(slot.instanceId);
-    }
-  }
-
-  #syncHotbar() {
-    const display = this.hotbar.map((slot) => {
-      if (!slot) return null;
-      if (slot.type === 'item') {
-        const item = this.inventory.find((entry) => entry.instanceId === slot.instanceId);
-        if (!item) {
-          return null;
-        }
-        return {
-          label: item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name,
-          cooldownLabel: '',
-          active: false,
-          rarity: item.rarity,
-        };
-      }
-      return null;
-    });
-    this.ui.setHotbar(display);
-  }
-
-  #describeAbilities() {
-    return this.player.abilities.map((abilityId) => {
-      const ability = ABILITY_LIBRARY[abilityId];
-      const cooldown = this.abilityState.get(abilityId)?.timer ?? 0;
-      return {
-        id: abilityId,
-        name: ability.name,
-        description: ability.description,
-        key: ability.key,
-        cooldown: cooldown,
-      };
-    });
-  }
-
-  #unlockAbility(abilityId, options = {}) {
-    if (this.player.abilities.includes(abilityId)) return;
-    const ability = ABILITY_LIBRARY[abilityId];
-    if (!ability) return;
-    this.player.abilities.push(abilityId);
-    this.abilityState.set(abilityId, { cooldown: ability.cooldown, timer: 0 });
-    this.input.bindAbility(ability.key, () => this.#triggerAbility(abilityId));
-    if (!options.silent) {
-      this.ui.showToast(`${ability.name} unlocked`);
-    }
-    this.ui.setAbilities(this.#describeAbilities());
-  }
-
-  #triggerAbility(abilityId) {
-    const state = this.abilityState.get(abilityId);
-    if (!state) return;
-    if (state.timer > 0) {
-      this.ui.showToast('Ability recharging');
-      return;
-    }
-    const ability = ABILITY_LIBRARY[abilityId];
-    if (!ability) return;
-    if (ability.requiresSuper && !this.player.superReady) {
-      this.ui.showToast('Supercharge not ready yet. Fight to fill the meter.');
-      return;
-    }
-    this.#activateAbility(abilityId, ability);
-    state.timer = ability.cooldown;
-    this.ui.setAbilities(this.#describeAbilities());
-    this.#syncHotbar();
-  }
-
-  #activateAbility(abilityId, ability) {
-    if (abilityId === 'sonic-crash') {
-      const radius = 4.5;
-      for (const enemy of [...this.enemies]) {
-        const distance = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
-        if (distance <= radius) {
-          enemy.health -= this.player.damage * 2.2;
-          enemy.slowTimer = 1.5;
-          if (enemy.health <= 0) {
-            this.#onEnemyDefeated(enemy);
-            this.enemies = this.enemies.filter((target) => target !== enemy);
-          }
-        }
-      }
-      this.particles.spawn({ x: this.player.x, y: this.player.y }, { color: '#ff6f61', radius: 0.6, life: 0.8 });
-      this.ui.showToast('Sonic Crash unleashed');
-      this.grantSuperCharge(10);
-    } else if (abilityId === 'flux-step') {
-      const direction = normalize(this.player.aim);
-      const distance = 3.5;
-      const targetX = this.player.x + direction.x * distance;
-      const targetY = this.player.y + direction.y * distance;
-      if (this.world.isWalkable(targetX, targetY)) {
-        this.player.x = targetX;
-        this.player.y = targetY;
-        this.player.vx = 0;
-        this.player.vy = 0;
-        this.slowFields = this.slowFields || [];
-        this.slowFields.push({ x: targetX, y: targetY, radius: 2, slow: 0.45, age: 0, duration: 3 });
-        this.ui.showToast('Flux Step executed');
-      }
-    } else if (abilityId === 'tempest-field') {
-      const center = { x: this.player.x, y: this.player.y };
-      this.slowFields = this.slowFields || [];
-      this.slowFields.push({ x: center.x, y: center.y, radius: 5, slow: 0.35, damage: 12, age: 0, duration: 6 });
-      this.ui.showToast('Tempest Field conjured');
-    } else if (abilityId === 'sunset-overdrive') {
-      const spent = this.#spendSuperCharge(this.player.superChargeMax ?? 100);
-      if (!spent) {
-        this.ui.showToast('Need a full supercharge to unleash Overdrive.');
-        return;
-      }
-      const direction = normalize(this.player.aim);
-      const volley = 6;
-      for (let i = 0; i < volley; i += 1) {
-        const angleOffset = (i / Math.max(1, volley - 1) - 0.5) * Math.PI / 6;
-        const angle = Math.atan2(direction.y, direction.x) + angleOffset;
-        const projectile = createProjectile({
-          x: this.player.x,
-          y: this.player.y,
-          direction: { x: Math.cos(angle), y: Math.sin(angle) },
-          speed: this.player.projectileSpeed * 1.6,
-          damage: this.player.damage * 2.2,
-          lifetime: this.player.projectileLifetime + 0.6,
-          friendly: true,
-          spread: 0,
-          slowField: false,
-          penetration: 2,
-          element: 'radiant',
-          statusEffect: { type: 'burn', damage: 6, duration: 4 },
-          size: 0.2,
-        });
-        this.projectiles.push(projectile);
-      }
-      this.particles.spawn({ x: this.player.x, y: this.player.y }, { color: '#d946ef', radius: 0.8, life: 1 });
-      this.ui.showToast('Sunset Overdrive unleashed!');
-    }
-  }
-
-  grantSuperCharge(amount) {
-    this.#gainSuperCharge(amount);
-  }
-
-  #gainSuperCharge(amount) {
-    if (!this.player || amount <= 0) return;
-    const max = this.player.superChargeMax ?? 100;
-    const next = clamp((this.player.superCharge ?? 0) + amount, 0, max);
-    this.player.superCharge = next;
-    this.player.superReady = next >= max - 0.01;
-    if (this.player.superReady && !this.player.superAnnouncement) {
-      this.ui.showToast('Supercharge ready! Press V to unleash.');
-      this.player.superAnnouncement = true;
-    }
-    const label = this.player.superReady ? 'Ready' : `${Math.round((next / max) * 100)}%`;
-    this.ui.setPower(next, max, label);
-  }
-
-  #spendSuperCharge(cost) {
-    if (!this.player) return false;
-    const max = this.player.superChargeMax ?? 100;
-    const current = this.player.superCharge ?? 0;
-    const required = cost ?? max;
-    if (current + 0.01 < required) {
-      return false;
-    }
-    this.player.superCharge = clamp(current - required, 0, max);
-    this.player.superReady = false;
-    this.player.superAnnouncement = false;
-    const label = `${Math.round((this.player.superCharge / max) * 100)}%`;
-    this.ui.setPower(this.player.superCharge, max, label);
-    return true;
-  }
-
-  addTimedModifier(modifier) {
-    const existing = this.activeModifiers.find((mod) => mod.id === modifier.id);
-    if (existing) {
-      existing.remaining = modifier.duration;
-      return;
-    }
-    this.activeModifiers.push({
-      ...modifier,
-      remaining: modifier.duration,
-      applied: false,
-    });
-  }
-
-  #updateAbilityCooldowns(dt) {
-    for (const [id, state] of this.abilityState.entries()) {
-      if (state.timer > 0) {
-        state.timer = Math.max(0, state.timer - dt);
-      }
-    }
-  }
-
-  #updateModifiers(dt) {
-    const survivors = [];
-    let statsChanged = false;
-    for (const mod of this.activeModifiers) {
-      if (!mod.applied) {
-        mod.apply?.(this.player);
-        mod.applied = true;
-        statsChanged = true;
-      }
-      mod.remaining -= dt;
-      if (mod.remaining > 0) {
-        survivors.push(mod);
-      } else {
-        if (mod.remove) {
-          mod.remove(this.player);
-          statsChanged = true;
-        }
-      }
-    }
-    this.activeModifiers = survivors;
-    if (statsChanged) {
-      this.#refreshCombatStats();
-    }
-  }
-  showStartMenu(show) {
-    this.ui.showStartMenu(show);
+    this.shopOptions = [];
+    this.selectedHero = null;
+    this.hero = null;
+    this.loop = this.loop.bind(this);
+    requestAnimationFrame(this.loop);
+    this.ui.toggleStartScreen(true);
+    this.ui.toggleShop(false);
+    this.ui.toggleGameOver(false);
   }
 
   handleResize() {
-    if (!this.started) {
-      return;
-    }
-    this.restart();
+    if (!this.player) return;
+    this.player.x = clamp(this.player.x, this.player.radius, this.canvas.width - this.player.radius);
+    this.player.y = clamp(this.player.y, this.player.radius, this.canvas.height - this.player.radius);
   }
 
-  toggleMenu() {
-    if (this.state === 'running') {
-      this.state = 'menu';
-      this.ui.showMenu(true);
-    } else if (this.state === 'menu' && this.player?.health > 0) {
-      this.state = 'running';
-      this.ui.showMenu(false);
+  start(heroId) {
+    if (heroId) {
+      this.selectedHero = heroId;
     }
+    if (!this.selectedHero) return;
+    this.reset();
+    this.ui.toggleStartScreen(false);
+    this.ui.toggleGameOver(false);
+    this.startWave(1);
   }
 
-  resume() {
-    if (this.state !== 'menu') return;
-    if (this.player?.health <= 0) return;
+  backToHeroSelect() {
+    this.state = 'start';
+    this.ui.toggleGameOver(false);
+    this.ui.toggleShop(false);
+    this.ui.toggleStartScreen(true);
+  }
+
+  reset() {
+    const hero = CHARACTERS.find((entry) => entry.id === this.selectedHero) || CHARACTERS[0];
+    this.hero = hero;
+    this.player = {
+      ...PLAYER_BASE_STATS,
+      x: this.canvas.width / 2,
+      y: this.canvas.height / 2,
+      health: PLAYER_BASE_STATS.maxHealth,
+    };
+    if (hero?.apply) {
+      hero.apply(this.player);
+    }
+    this.ui.setHero(hero?.name || 'Hero');
+    this.enemies = [];
+    this.projectiles = [];
+    this.enemyProjectiles = [];
+    this.pickups = [];
+    this.materials = 0;
+    this.wave = 1;
+    this.waveTimer = 0;
+    this.waveDuration = 0;
+    this.spawnTimer = 0;
     this.state = 'running';
-    this.ui.showMenu(false);
-  }
-
-  openShop(shop) {
-    if (this.activeShop === shop) return;
-    this.activeShop = shop;
-    this.ui.showShop(
-      shop,
-      (item) => this.#purchaseShopItem(shop, item),
-      () => this.leaveShop()
-    );
-    this.log.push(`You browse the wares at ${shop.name}.`);
-  }
-
-  leaveShop() {
-    if (!this.activeShop) return;
-    this.activeShop = null;
-    this.ui.hideShop();
-    this.ui.clearPrompt();
-  }
-
-  #purchaseShopItem(shop, item) {
-    if (!this.activeShop || this.activeShop !== shop) return;
-    if (this.gold < item.cost) {
-      this.ui.showToast('Not enough gold. Explore dungeons for more.');
-      return;
-    }
-    this.gold -= item.cost;
-    this.ui.setGold(this.gold);
-    item.effect(this.player, this);
-    this.#refreshCombatStats();
+    this.rerollCost = REROLL_BASE_COST;
+    this.stats = { kills: 0 };
+    this.ui.setMaterials(this.materials);
     this.ui.setHealth(this.player.health, this.player.maxHealth);
-    this.ui.showToast(`Purchased ${item.label}!`);
-    this.log.push(`You purchase ${item.label} from ${shop.name}.`);
   }
 
-  #handleInteract() {
-    if (this.state !== 'running') return;
-    if (this.activeShop) {
-      this.leaveShop();
-      return;
-    }
-
-    const shop = this.world.getShopNear(this.player.x, this.player.y);
-    if (shop) {
-      this.openShop(shop);
-      return;
-    }
-
-    const chest = this.world.getChestNear(this.player.x, this.player.y);
-    if (chest) {
-      this.#openChest(chest);
-      return;
-    }
-
-    const npc = this.world.getNpcNear(this.player.x, this.player.y);
-    if (npc) {
-      this.#talkToNpc(npc);
-      return;
-    }
-
-    const plot = this.world.getHousePlotNear(this.player.x, this.player.y);
-    if (plot) {
-      this.#progressHouse(plot);
-    }
-  }
-
-  #talkToNpc(npc) {
-    this.log.push(`${npc.name}: ${npc.line}`);
-    if (!this.journalEntries.find((entry) => entry.id === npc.id)) {
-      this.journalEntries.push({ id: npc.id, name: npc.name, note: npc.journal });
-      this.ui.setJournal(this.journalEntries);
-      this.ui.showToast(`${npc.name} shares guidance.`);
-      if (npc.id === 'mayor') {
-        this.#advanceStory('arrival');
-      }
-    }
-  }
-
-  #progressHouse(plot) {
-    if (this.houseProject?.completed) {
-      this.ui.showToast('Your home already gleams with lantern light.');
-      return;
-    }
-    const materialIndex = this.inventory.findIndex((item) =>
-      item.id === 'timber' || item.id === 'stone'
-    );
-    if (materialIndex === -1) {
-      this.ui.showToast('Bring driftwood or coral bricks from a dungeon to keep building.');
-      return;
-    }
-    const item = this.inventory.splice(materialIndex, 1)[0];
-    const contribution = item.id === 'timber' ? 15 : 12;
-    this.houseProject.progress = clamp(
-      this.houseProject.progress + contribution,
-      0,
-      this.houseProject.target
-    );
-    plot.progress = this.houseProject.progress;
-    this.ui.setInventory(this.inventory);
-    this.ui.setTownProgress(
-      this.houseProject.label,
-      this.houseProject.progress / this.houseProject.target
-    );
-    this.ui.showToast(`Contributed materials toward your home (+${contribution}).`);
-    this.log.push('You add sturdy beams to your future home.');
-
-    if (this.houseProject.progress >= this.houseProject.target) {
-      this.houseProject.completed = true;
-      this.houseProject.label = 'Home Complete';
-      this.log.push('Your home stands finished, welcoming and warm.');
-      this.ui.showToast('Home completed!');
-      this.ui.setTownProgress('Home Complete', 1);
-      this.#advanceStory('house-finished');
-      // swap decoration to a finished house
-      const deco = this.world.decorations.find(
-        (entry) => entry.x === plot.x && entry.y === plot.y && entry.type === 'house-frame'
-      );
-      if (deco) deco.type = 'house';
-    }
-  }
-
-  #openChest(chest) {
-    if (chest.opened) {
-      this.ui.showToast('The chest has already been emptied.');
-      return;
-    }
-    chest.opened = true;
-    this.ui.showToast('Chest opened!');
-    this.log.push('You crack open the chest and collect its trove.');
-    this.#spawnChestLoot(chest);
-    this.nearbyChest = null;
-    this.ui.clearPrompt();
-  }
-
-  #spawnChestLoot(chest) {
-    const tier = chest.tier ?? 'town';
-    const table = CHEST_LOOT_TABLES[tier] ?? CHEST_LOOT_TABLES.town;
-    const dropCount = tier === 'capital' ? 3 : tier === 'dungeon' ? 3 : 2;
-    for (let i = 0; i < dropCount; i += 1) {
-      const loot = drawFromLootTable(table, {
-        theme: chest.theme ?? this.world.getDungeonAt(chest.x, chest.y)?.theme?.id,
-        bias: tier === 'capital' ? 0.8 : tier === 'dungeon' ? 0.6 : 0.2,
-        powerBonus: tier === 'capital' ? 0.4 : tier === 'dungeon' ? 0.25 : 0.05,
-      });
-      if (loot) {
-        this.#spawnLootItem(loot, chest.x, chest.y, 0.55, 24);
-      }
-    }
-    const goldRange =
-      tier === 'capital'
-        ? GOLD_RANGES.chestCapital
-        : tier === 'dungeon'
-        ? GOLD_RANGES.chestDungeon
-        : GOLD_RANGES.chestTown;
-    this.#dropGold(chest.x, chest.y, randomGold(goldRange), 0.45);
-    if (tier !== 'town') {
-      const rareId = tier === 'capital' ? 'moondrop-elixir' : 'sun-elixir';
-      this.#spawnLootItem(rareId, chest.x, chest.y, 0.5, 24);
-    }
-  }
-
-  #advanceStory(id) {
-    if (this.completedStoryBeats.has(id)) return;
-    this.completedStoryBeats.add(id);
-    const next = STORY_BEATS.find((beat) => !this.completedStoryBeats.has(beat.id));
-    if (next) {
-      this.currentStory = next;
-      this.ui.setStory(next.text);
-    } else {
-      this.currentStory = {
-        id: 'free',
-        text: 'Enjoy the paradise. Help survivors, rebuild districts, and chase high scores.',
-      };
-      this.ui.setStory(this.currentStory.text);
-    }
-  }
-
-  #loop(time) {
-    const dt = Math.min(0.06, (time - this.lastTime) / 1000 || 0);
-    this.lastTime = time;
-
-    if (this.state === 'running') {
-      this.#update(dt);
-    }
-
-    this.#render();
-    requestAnimationFrame((next) => this.#loop(next));
-  }
-
-  #startLoop() {
-    if (this.loopRunning) {
-      return;
-    }
-    this.loopRunning = true;
-    this.lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
-    requestAnimationFrame((time) => this.#loop(time));
-  }
-
-  #update(dt) {
-    this.stats.timeAlive += dt;
-    this.timeOfDay = (this.timeOfDay + dt * 0.45) % DAY_NIGHT_DURATION;
-    this.#updateCamera(dt);
-    this.ui.setTimeOfDay(this.#describeTimeOfDay());
-    this.#tickPlayerEffects(dt);
-    if (this.player.regen > 0 && this.player.health < this.player.maxHealth) {
-      const before = this.player.health;
-      this.player.health = clamp(
-        this.player.health + this.player.regen * dt,
-        0,
-        this.player.maxHealth
-      );
-      if (this.player.health !== before) {
-        this.ui.setHealth(this.player.health, this.player.maxHealth);
-      }
-    }
-    const movement = this.input.getMovementVector();
-    const aim = this.input.getAimVector(this.player.aim);
-    this.player.aim = aim;
-
-    const slowFactor = this.player.activeSlow ?? 1;
-    const desiredVx = movement.x * this.player.speed * slowFactor;
-    const desiredVy = movement.y * this.player.speed * slowFactor;
-    const acceleration = PLAYER_ACCELERATION * (this.player.spiritWalk ? 1.25 : 1);
-    const friction = PLAYER_FRICTION;
-
-    const applyAcceleration = (current, desired) => {
-      const delta = desired - current;
-      const step = acceleration * dt;
-      if (Math.abs(delta) <= step) return desired;
-      return current + Math.sign(delta) * step;
-    };
-
-    this.player.vx = applyAcceleration(this.player.vx, desiredVx);
-    this.player.vy = applyAcceleration(this.player.vy, desiredVy);
-
-    if (movement.x === 0 && movement.y === 0) {
-      const decay = clamp(friction * dt, 0, 1);
-      this.player.vx = lerp(this.player.vx, 0, decay);
-      this.player.vy = lerp(this.player.vy, 0, decay);
-    }
-
-    const nextX = this.player.x + this.player.vx * dt;
-    const nextY = this.player.y + this.player.vy * dt;
-
-    if (this.world.isWalkable(nextX, this.player.y)) {
-      this.stats.distance += Math.abs(nextX - this.player.x);
-      this.player.x = nextX;
-    } else {
-      this.player.vx = 0;
-    }
-
-    if (this.world.isWalkable(this.player.x, nextY)) {
-      this.stats.distance += Math.abs(nextY - this.player.y);
-      this.player.y = nextY;
-    } else {
-      this.player.vy = 0;
-    }
-
-    this.player.shootTimer = Math.max(0, this.player.shootTimer - dt);
-    this.player.dashTimer = Math.max(0, this.player.dashTimer - dt);
-
-    this.#updateAbilityCooldowns(dt);
-    this.#updateModifiers(dt);
-    if (this.player.abilities.length > 0) {
-      this.ui.setAbilities(this.#describeAbilities());
-    }
-
-    if (this.player.shield) {
-      this.player.shield.timer = Math.min(
-        this.player.shield.cooldown,
-        this.player.shield.timer + dt
-      );
-      if (this.player.shield.timer >= this.player.shield.cooldown) {
-        this.player.shield.active = true;
-      }
-    }
-
-    this.#updateZoneState(dt);
-    this.#updateProjectiles(dt);
-    this.#updateEnemies(dt);
-    this.#updateEnemyProjectiles(dt);
-    this.#updatePickups(dt);
-    this.particles.update(dt);
-    this.#checkAchievements();
-
-    if (this.currentDungeon) {
-      this.spawnTimer -= dt;
-      this.dungeonTimer += dt;
-      if (this.spawnTimer <= 0) {
-        this.#spawnEnemyWave();
-        this.spawnTimer = ENEMY_SPAWN_INTERVAL + randRange(-2, 2);
-      }
-      if (
-        !this.currentDungeon.boss.spawned &&
-        !this.currentDungeon.boss.defeated &&
-        this.dungeonTimer > 25
-      ) {
-        this.#spawnBoss(this.currentDungeon);
-      }
-    } else {
-      this.spawnTimer = ENEMY_SPAWN_INTERVAL;
-    }
-  }
-
-  #updateZoneState(dt) {
-    const zoneName = this.world.getZoneName(this.player.x, this.player.y);
-    if (zoneName !== this.lastZoneName) {
-      this.ui.setZone(zoneName);
-      this.lastZoneName = zoneName;
-    }
-
-    const shop = this.world.getShopNear(this.player.x, this.player.y);
-    const npc = this.world.getNpcNear(this.player.x, this.player.y);
-    const chest = this.world.getChestNear(this.player.x, this.player.y);
-    const plot = this.world.getHousePlotNear(this.player.x, this.player.y);
-
-    if (
-      this.activeShop &&
-      Math.hypot(this.activeShop.x - this.player.x, this.activeShop.y - this.player.y) > 2.2
-    ) {
-      this.leaveShop();
-    }
-
-    this.nearbyShop = shop;
-    this.nearbyNpc = npc;
-    this.nearbyChest = chest;
-    this.nearbyPlot = plot;
-
-    let prompt = '';
-    if (this.activeShop) {
-      prompt = 'Press F to leave the shop';
-    } else if (shop) {
-      prompt = `Press F to trade with ${shop.name}`;
-    } else if (chest && !chest.opened) {
-      prompt = 'Press F to open the chest';
-    } else if (plot && this.houseProject && !this.houseProject.completed) {
-      const hasMaterials = this.inventory.some(
-        (item) => item.id === 'timber' || item.id === 'stone'
-      );
-      prompt = hasMaterials
-        ? 'Press F to deliver rebuild materials'
-        : 'Find driftwood or coral bricks to keep building your haven';
-    } else if (npc) {
-      prompt = `Press F to speak with ${npc.name}`;
-    }
-
-    if (prompt) {
-      this.ui.showPrompt(prompt);
-    } else {
-      this.ui.clearPrompt();
-    }
-
-    const inTown = this.world.isTown(this.player.x, this.player.y);
-    const inSanctuary = this.world.isSanctuary(this.player.x, this.player.y);
-    if ((inTown || inSanctuary) && this.player.health < this.player.maxHealth) {
-      const rate = inSanctuary ? 26 : 14;
-      this.player.health = clamp(this.player.health + rate * dt, 0, this.player.maxHealth);
-      this.ui.setHealth(this.player.health, this.player.maxHealth);
-    }
-
-    const dungeon = this.world.getDungeonAt(this.player.x, this.player.y);
-    if (dungeon !== this.currentDungeon) {
-      if (dungeon) {
-        this.currentDungeon = dungeon;
-        this.spawnTimer = 1.5;
-        this.dungeonTimer = 0;
-        if (!dungeon.visited) {
-          dungeon.visited = true;
-          this.log.push(`You descend into ${dungeon.name}.`);
-        } else {
-          this.log.push(`You return to ${dungeon.name}.`);
-        }
-        this.ui.showToast(`${dungeon.name} awakens!`);
-        this.#advanceStory('first-dungeon');
-      } else if (this.currentDungeon) {
-        this.log.push('You surface into the salt-sweet Paradise breeze.');
-        this.currentDungeon = null;
-        this.enemies = [];
-        this.enemyProjectiles = [];
-        this.dungeonTimer = 0;
-        this.spawnTimer = ENEMY_SPAWN_INTERVAL;
-      }
-    }
-
-    if (!this.currentDungeon && (inTown || inSanctuary)) {
-      this.spawnTimer = ENEMY_SPAWN_INTERVAL;
-    }
-  }
-
-  #spawnBoss(dungeon) {
-    const spawn = pick(dungeon.spawnPoints);
-    const boss = {
-      x: spawn.x,
-      y: spawn.y,
-      health: BOSS_HEALTH,
-      color: pick(BOSS_PALETTE),
-      boss: true,
-      fireTimer: 0.8,
-      patternTimer: 0,
-      dungeon,
-    };
-    this.enemies.push(boss);
-    dungeon.boss.spawned = true;
-    dungeon.boss.defeated = false;
-    this.ui.showToast('A guardian emerges!');
-    this.log.push(`The guardian of ${dungeon.name} materializes.`);
-  }
-
-  #handleShoot() {
-    if (this.state !== 'running') return;
-    if (this.player.shootTimer > 0) return;
-    const direction = this.player.aim;
-    if (vectorLength(direction) === 0) return;
-
-    const interval = this.player.effectiveShootInterval ?? this.player.shootInterval;
-    this.player.shootTimer = interval;
-    const profile = this.player.weaponProfile ?? DEFAULT_WEAPON_PROFILE;
-    const baseCount = profile.projectileCount ?? 1;
-    const extraShots = this.player.doubleShot ? 1 : 0;
-    const totalProjectiles = baseCount + extraShots;
-    const spread = profile.spread ?? 0;
-    const pierce = (profile.pierce ?? 0) + (this.player.piercingShots ? 1 : 0);
-    const travel = profile.travel ?? {};
-    const speed = this.player.projectileSpeed * (travel.speedMultiplier ?? 1);
-    const lifetime = this.player.projectileLifetime + (travel.lifetimeBonus ?? 0);
-    const element = profile.element ?? 'radiant';
-    const slowField = this.player.glowShots || element === 'frost';
-
-    for (let i = 0; i < totalProjectiles; i += 1) {
-      const distribution = totalProjectiles > 1 ? i / (totalProjectiles - 1) - 0.5 : 0;
-      const spreadAngle = spread ? distribution * spread * 2 : 0;
-      const baseDamage = this.player.damage * (baseCount > 1 ? 0.85 : 1);
-      let damage = baseDamage;
-      if (Math.random() < this.player.critChance) {
-        damage *= this.player.critMultiplier;
-      }
-      const projectile = createProjectile({
-        x: this.player.x,
-        y: this.player.y,
-        direction,
-        speed,
-        damage,
-        lifetime,
-        friendly: true,
-        spread: spreadAngle,
-        slowField,
-        penetration: pierce,
-        element,
-        statusEffect: profile.status,
-        size: profile.style === 'beam' ? 0.22 : profile.style === 'pulse' ? 0.18 : 0.15,
-      });
-      this.projectiles.push(projectile);
-      if (profile.style === 'beam') {
-        const baseAngle = Math.atan2(direction.y, direction.x) + spreadAngle;
-        for (let t = 1; t <= 2; t += 1) {
-          const follow = { ...projectile, lifetime: projectile.lifetime * 0.6, size: 0.18 };
-          follow.x += Math.cos(baseAngle) * 0.2 * t;
-          follow.y += Math.sin(baseAngle) * 0.2 * t;
-          this.projectiles.push(follow);
-        }
-      }
-    }
-
-    this.particles.spawn({ x: this.player.x, y: this.player.y }, {
-      color: ELEMENT_COLORS[element] ?? BULLET_COLOR,
-      radius: 0.22,
-      life: 0.45,
-      vx: -direction.x * 0.45,
-      vy: -direction.y * 0.45,
-    });
-    this.log.push('You unleash a crafted technique.');
-  }
-
-  #handleDash() {
-    if (this.state !== 'running') return;
-    if (this.player.dashTimer > 0) return;
-    const direction = this.input.getMovementVector();
-    if (vectorLength(direction) === 0) return;
-
-    this.player.dashTimer = this.player.dashCooldown;
-    const dashDistance = this.player.dashDistance;
-    const steps = Math.ceil(dashDistance);
-    let dx = direction.x;
-    let dy = direction.y;
-    if (!this.player.spiritWalk) {
-      const norm = normalize(direction);
-      dx = norm.x;
-      dy = norm.y;
-    }
-    for (let i = 0; i < steps; i += 1) {
-      const nextX = this.player.x + dx;
-      const nextY = this.player.y + dy;
-      if (!this.world.isWalkable(nextX, nextY)) break;
-      this.player.x = nextX;
-      this.player.y = nextY;
-      if (this.player.dashTrail) {
-        this.particles.spawn({ x: nextX, y: nextY }, {
-          color: 'rgba(251, 191, 36, 0.8)',
-          radius: 0.25,
-          life: 0.5,
-          vx: randRange(-0.3, 0.3),
-          vy: randRange(-0.3, 0.3),
-        });
-      }
-    }
-    this.log.push('You dash in a streak of warm light.');
-  }
-
-  resume() {
-    if (this.player?.health <= 0) return;
+  startWave(number) {
+    this.wave = number;
+    this.waveDuration = BASE_WAVE_DURATION + (number - 1) * 1.6;
+    this.waveTimer = this.waveDuration;
+    this.spawnTimer = 0;
+    this.enemies = [];
+    this.projectiles = [];
+    this.enemyProjectiles = [];
+    this.pickups = [];
     this.state = 'running';
-    this.ui.showMenu(false);
+    this.rerollCost = REROLL_BASE_COST + Math.floor(number * 0.8);
+    this.bossQueued = number % 4 === 0;
+    this.bossSpawned = false;
+    this.ui.setWave(this.wave);
+    this.ui.setTimer(this.waveTimer);
+    this.ui.setMaterials(this.materials);
+    this.ui.toggleShop(false);
   }
 
-  #updateProjectiles(dt) {
-    const newProjectiles = [];
-    for (const projectile of this.projectiles) {
+  startNextWave() {
+    if (this.state !== 'shop') return;
+    this.startWave(this.wave + 1);
+  }
+
+  rerollShop() {
+    if (this.state !== 'shop') return;
+    if (this.materials < this.rerollCost) return;
+    this.materials -= this.rerollCost;
+    this.ui.setMaterials(this.materials);
+    this.generateShop();
+    this.rerollCost = Math.ceil(this.rerollCost * 1.5);
+    this.ui.setRerollCost(this.rerollCost);
+  }
+
+  loop(timestamp) {
+    const delta = (timestamp - this.lastTime) / 1000 || 0;
+    this.lastTime = timestamp;
+    if (this.state === 'running') {
+      this.update(delta);
+    }
+    this.render();
+    requestAnimationFrame(this.loop);
+  }
+
+  update(dt) {
+    this.updatePlayer(dt);
+    this.updateProjectiles(dt);
+    this.updateEnemyProjectiles(dt);
+    this.updateEnemies(dt);
+    this.updatePickups(dt);
+    this.handleWave(dt);
+  }
+
+  updatePlayer(dt) {
+    const movement = this.input.getMovementVector();
+    this.player.x = clamp(
+      this.player.x + movement.x * this.player.speed * dt,
+      this.player.radius,
+      this.canvas.width - this.player.radius
+    );
+    this.player.y = clamp(
+      this.player.y + movement.y * this.player.speed * dt,
+      this.player.radius,
+      this.canvas.height - this.player.radius
+    );
+    this.player.cooldown = (this.player.cooldown || 0) - dt;
+    if (this.player.cooldown <= 0) {
+      const target = this.getClosestEnemy();
+      if (target) {
+        this.fireAt(target);
+      }
+    }
+  }
+
+  fireAt(target) {
+    this.player.cooldown = this.player.attackDelay;
+    const origin = { x: this.player.x, y: this.player.y };
+    for (let i = 0; i < this.player.projectiles; i += 1) {
+      const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+      const spread = (Math.random() - 0.5) * this.player.spread * Math.PI;
+      const heading = angle + spread;
+      const speed = this.player.projectileSpeed;
+      this.projectiles.push({
+        x: origin.x,
+        y: origin.y,
+        vx: Math.cos(heading) * speed,
+        vy: Math.sin(heading) * speed,
+        life: this.player.projectileLifetime,
+        damage: this.player.damage,
+      });
+    }
+  }
+
+  updateProjectiles(dt) {
+    this.projectiles = this.projectiles.filter((projectile) => {
       projectile.x += projectile.vx * dt;
       projectile.y += projectile.vy * dt;
-      projectile.age += dt;
-
-      if (!this.world.isWalkable(projectile.x, projectile.y)) {
-        if (projectile.slowField) {
-          this.#spawnSlowField(projectile.x, projectile.y);
-        }
-        continue;
+      projectile.life -= dt;
+      if (projectile.life <= 0) return false;
+      if (
+        projectile.x < -50 ||
+        projectile.y < -50 ||
+        projectile.x > this.canvas.width + 50 ||
+        projectile.y > this.canvas.height + 50
+      ) {
+        return false;
       }
-
-      let consumed = false;
       for (const enemy of this.enemies) {
-        const distance = Math.hypot(enemy.x - projectile.x, enemy.y - projectile.y);
-        if (distance < 0.6) {
-          enemy.health -= projectile.damage;
-          this.particles.spawn({ x: enemy.x, y: enemy.y }, {
-            color: '#fbbf24',
-            radius: 0.18,
-            life: 0.5,
-            vx: randRange(-0.6, 0.6),
-            vy: randRange(-0.6, 0.6),
-          });
-          this.grantSuperCharge(projectile.damage * 0.35);
-          if (projectile.slowField) {
-            this.#spawnSlowField(enemy.x, enemy.y);
+        if (enemy.dead) continue;
+        const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
+        if (dist < enemy.radius + 4) {
+          let damage = projectile.damage;
+          if (Math.random() < this.player.critChance) {
+            damage *= this.player.critMultiplier;
           }
-          if (projectile.statusEffect) {
-            this.#applyStatusToEnemy(enemy, projectile.statusEffect);
+          enemy.health -= damage;
+          if (enemy.health <= 0) {
+            enemy.dead = true;
+            this.stats.kills += 1;
+            if (this.player.lifeOnKill) {
+              this.player.health = Math.min(
+                this.player.maxHealth,
+                this.player.health + this.player.lifeOnKill
+              );
+              this.ui.setHealth(this.player.health, this.player.maxHealth);
+            }
+            this.dropMaterials(enemy);
           }
-          if (projectile.penetration && projectile.penetration > 0) {
-            projectile.penetration -= 1;
-            continue;
-          }
-          consumed = true;
-          break;
+          return false;
         }
       }
-
-      if (!consumed && projectile.age < projectile.lifetime) {
-        newProjectiles.push(projectile);
-      }
-    }
-    this.projectiles = newProjectiles;
-
-    this.enemies = this.enemies.filter((enemy) => {
-      if (enemy.health > 0) return true;
-      this.#onEnemyDefeated(enemy);
-      return false;
+      return true;
     });
   }
 
-  #spawnSlowField(x, y) {
-    const field = {
-      x,
-      y,
-      radius: 1.8,
-      duration: 3,
-      age: 0,
-    };
-    if (!this.slowFields) this.slowFields = [];
-    this.slowFields.push(field);
-  }
-
-  #applyStatusToEnemy(enemy, status) {
-    if (!status) return;
-    if (!enemy.effects) enemy.effects = [];
-    const existing = enemy.effects.find((effect) => effect.type === status.type);
-    if (existing) {
-      existing.remaining = Math.max(existing.remaining, status.duration ?? existing.remaining);
-      if (status.damage) existing.damage = Math.max(existing.damage ?? 0, status.damage);
-      if (status.slow) existing.slow = Math.max(existing.slow ?? 0, status.slow);
-      return;
-    }
-    enemy.effects.push({
-      type: status.type,
-      remaining: status.duration ?? 2.5,
-      damage: status.damage,
-      slow: status.slow,
-    });
-  }
-
-  #tickEnemyEffects(enemy, dt) {
-    if (!enemy.effects || enemy.effects.length === 0) {
-      enemy.effects = [];
-      enemy.slowMultiplier = 1;
-      return;
-    }
-    let slowMultiplier = 1;
-    const survivors = [];
-    for (const effect of enemy.effects) {
-      effect.remaining -= dt;
-      if (effect.type === 'burn' && effect.damage) {
-        enemy.health -= effect.damage * dt;
-      }
-      if (effect.type === 'slow' && effect.slow) {
-        slowMultiplier = Math.min(slowMultiplier, Math.max(0.35, 1 - effect.slow));
-      }
-      if (effect.remaining > 0) {
-        survivors.push(effect);
-      }
-    }
-    enemy.effects = survivors;
-    enemy.slowMultiplier = slowMultiplier;
-  }
-
-  #applyStatusToPlayer(status) {
-    if (!status) return;
-    this.player.statusEffects = this.player.statusEffects ?? [];
-    const existing = this.player.statusEffects.find((effect) => effect.type === status.type);
-    if (existing) {
-      existing.remaining = Math.max(existing.remaining, status.duration ?? existing.remaining);
-      if (status.damage) existing.damage = Math.max(existing.damage ?? 0, status.damage);
-      if (status.slow) existing.slow = Math.max(existing.slow ?? 0, status.slow);
-      return;
-    }
-    this.player.statusEffects.push({
-      type: status.type,
-      remaining: status.duration ?? 2.5,
-      damage: status.damage,
-      slow: status.slow,
-    });
-  }
-
-  #tickPlayerEffects(dt) {
-    if (!this.player.statusEffects || this.player.statusEffects.length === 0) {
-      this.player.statusEffects = [];
-      this.player.activeSlow = 1;
-      return;
-    }
-    let slowMultiplier = 1;
-    const survivors = [];
-    for (const effect of this.player.statusEffects) {
-      effect.remaining -= dt;
-      if (effect.type === 'burn' && effect.damage) {
-        const before = this.player.health;
-        this.player.health = clamp(
-          this.player.health - effect.damage * dt,
-          0,
-          this.player.maxHealth
-        );
-        if (this.player.health !== before) {
-          this.ui.setHealth(this.player.health, this.player.maxHealth);
-        }
-      }
-      if (effect.type === 'slow' && effect.slow) {
-        slowMultiplier = Math.min(slowMultiplier, Math.max(0.4, 1 - effect.slow));
-      }
-      if (effect.remaining > 0) {
-        survivors.push(effect);
-      }
-    }
-    this.player.statusEffects = survivors;
-    this.player.activeSlow = slowMultiplier;
-  }
-
-  #dropGold(x, y, amount, scatter = 0.45) {
-    if (amount <= 0) return;
-    const bonus = 1 + (this.player?.goldFind ?? 0);
-    this.pickups.push({
-      kind: 'gold',
-      x: x + randRange(-scatter, scatter),
-      y: y + randRange(-scatter, scatter),
-      vx: randRange(-0.25, 0.25),
-      vy: randRange(-0.25, 0.25),
-      amount: Math.round(amount * bonus),
-      life: 18,
-    });
-  }
-
-  #spawnLootItem(itemOrId, x, y, scatter = 0.4, life = 18) {
-    const item = itemOrId?.instanceId
-      ? { ...itemOrId }
-      : resolveLootEntry(itemOrId, {
-          theme: this.currentDungeon?.theme?.id,
-          bias: this.currentDungeon ? 0.6 : 0.2,
-          powerBonus: this.currentDungeon ? 0.3 : 0,
-        });
-    if (!item) return;
-    if (!item.instanceId) {
-      item.instanceId = `loot-${ITEM_UID++}`;
-    }
-    this.pickups.push({
-      kind: 'loot',
-      x: x + randRange(-scatter, scatter),
-      y: y + randRange(-scatter, scatter),
-      vx: randRange(-0.3, 0.3),
-      vy: randRange(-0.3, 0.3),
-      item,
-      life,
-    });
-  }
-
-  #updateEnemyProjectiles(dt) {
-    const survivors = [];
-    for (const projectile of this.enemyProjectiles) {
+  updateEnemyProjectiles(dt) {
+    this.enemyProjectiles = this.enemyProjectiles.filter((projectile) => {
       projectile.x += projectile.vx * dt;
       projectile.y += projectile.vy * dt;
-      projectile.age += dt;
-
-      const distance = Math.hypot(
-        projectile.x - this.player.x,
-        projectile.y - this.player.y
-      );
-      if (distance < 0.6) {
-        this.#damagePlayer(projectile.damage ?? ENEMY_PROJECTILE_DAMAGE);
-        if (projectile.statusEffect) {
-          this.#applyStatusToPlayer(projectile.statusEffect);
+      projectile.life -= dt;
+      if (projectile.life <= 0) return false;
+      if (
+        projectile.x < -60 ||
+        projectile.y < -60 ||
+        projectile.x > this.canvas.width + 60 ||
+        projectile.y > this.canvas.height + 60
+      ) {
+        return false;
+      }
+      const dist = Math.hypot(projectile.x - this.player.x, projectile.y - this.player.y);
+      if (dist < this.player.radius + 6) {
+        if (this.damagePlayer(projectile.damage)) {
+          return false;
         }
-        continue;
+        return false;
       }
-
-      if (!this.world.isWalkable(projectile.x, projectile.y)) {
-        continue;
-      }
-
-      if (projectile.age < projectile.lifetime) {
-        survivors.push(projectile);
-      }
-    }
-    this.enemyProjectiles = survivors;
+      return true;
+    });
   }
 
-  #updateEnemies(dt) {
-    for (const enemy of this.enemies) {
-      enemy.fireTimer = (enemy.fireTimer ?? 0) - dt;
-      this.#tickEnemyEffects(enemy, dt);
+  updateEnemies(dt) {
+    this.enemies = this.enemies.filter((enemy) => {
+      if (enemy.dead) return false;
       const dx = this.player.x - enemy.x;
       const dy = this.player.y - enemy.y;
-      const distance = Math.hypot(dx, dy);
-      const dir = distance === 0 ? { x: 0, y: 0 } : { x: dx / distance, y: dy / distance };
-      const slowed = this.#isInSlowField(enemy.x, enemy.y);
-      const slowFactor = (enemy.slowMultiplier ?? 1) * (slowed ? 0.6 : 1);
-      const baseSpeed = (enemy.baseSpeed ?? ENEMY_BASE_SPEED) * slowFactor;
-      const desiredRange = enemy.range ?? ENEMY_RANGE;
+      const distance = Math.hypot(dx, dy) || 1;
+      let speed = enemy.speed;
+      enemy.attackCooldown = (enemy.attackCooldown || randRange(0, 0.6)) - dt;
+      enemy.chargeTimer = (enemy.chargeTimer || randRange(1, 3)) - dt;
 
-      const moveEnemy = (toward = true, extra = 1) => {
-        const stepX = enemy.x + dir.x * baseSpeed * extra * dt * (toward ? 1 : -1);
-        const stepY = enemy.y + dir.y * baseSpeed * extra * dt * (toward ? 1 : -1);
-        if (this.world.isWalkable(stepX, enemy.y)) enemy.x = stepX;
-        if (this.world.isWalkable(enemy.x, stepY)) enemy.y = stepY;
-      };
-
-      const fireProjectile = (options = {}) => {
-        const projectile = createProjectile({
-          x: enemy.x,
-          y: enemy.y,
-          direction: dir,
-          speed: options.speed ?? ENEMY_PROJECTILE_SPEED,
-          damage: options.damage ?? enemy.damage,
-          lifetime: options.lifetime ?? ENEMY_PROJECTILE_LIFETIME,
-          friendly: false,
-          spread: options.spread ?? 0,
-          element: enemy.element ?? 'void',
-          statusEffect: options.statusEffect ?? null,
-          size: options.size ?? 0.12,
-        });
-        projectile.color = options.color ?? enemy.projectileColor ?? ENEMY_BULLET_COLOR;
-        this.enemyProjectiles.push(projectile);
-        this.particles.spawn({ x: enemy.x, y: enemy.y }, {
-          color: projectile.color,
-          radius: 0.2,
-          life: 0.45,
-        });
-      };
-
-      if (enemy.boss) {
-        moveEnemy(true, 0.8);
-      } else if (enemy.attack === 'firebolt') {
-        if (distance > desiredRange * 0.85) moveEnemy(true);
-        else if (distance < desiredRange * 0.55) moveEnemy(false, 0.6);
-      } else if (enemy.attack === 'slow' || enemy.attack === 'beam') {
-        if (distance > desiredRange * 0.9) moveEnemy(true);
-        else if (distance < desiredRange * 0.5) moveEnemy(false, 0.7);
-      } else if (enemy.attack === 'spread') {
-        if (distance > desiredRange * 0.75) moveEnemy(true, 1.1);
-        else if (distance < desiredRange * 0.6) moveEnemy(false, 0.6);
-      } else if (enemy.attack === 'dash') {
-        enemy.chargeTimer = (enemy.chargeTimer ?? 0) + dt;
-        if (enemy.chargeTimer > 1.4 && distance > 1.5) {
-          moveEnemy(true, 3.5);
-          enemy.chargeTimer = 0;
-        } else if (distance > 2.2) {
-          moveEnemy(true, 1.2);
+      if (enemy.behavior === 'charger') {
+        if (enemy.chargeTimer <= 0) {
+          enemy.charging = 0.8;
+          const [min, max] = enemy.chargeCooldown || [2, 4];
+          enemy.chargeTimer = randRange(min, max);
+        }
+        if (enemy.charging) {
+          enemy.charging -= dt;
+          speed = enemy.chargeSpeed || (enemy.speed * 2);
         }
       }
 
-      const contactRange = enemy.boss ? 1.6 : 1.2;
-      if (distance < contactRange) {
-        this.#damagePlayer(enemy.damage * dt);
-      }
-
-      const canFire = distance < desiredRange + (enemy.boss ? 2 : 0.5) && enemy.fireTimer <= 0;
-      if (!canFire) continue;
-
-      if (enemy.boss) {
-        enemy.fireTimer = BOSS_FIRE_INTERVAL + randRange(-0.3, 0.3);
-        const baseAngle = Math.atan2(dy, dx);
-        const spreads = [-0.35, -0.1, 0.1, 0.35];
-        for (const offset of spreads) {
-          const projectile = {
-            x: enemy.x,
-            y: enemy.y,
-            vx: Math.cos(baseAngle + offset) * BOSS_PROJECTILE_SPEED,
-            vy: Math.sin(baseAngle + offset) * BOSS_PROJECTILE_SPEED,
-            damage: BOSS_PROJECTILE_DAMAGE,
-            lifetime: ENEMY_PROJECTILE_LIFETIME + 1,
-            age: 0,
-            friendly: false,
-            color: enemy.projectileColor ?? ENEMY_BULLET_COLOR,
-          };
-          this.enemyProjectiles.push(projectile);
+      if (enemy.behavior === 'shooter') {
+        if (distance < (enemy.fireRange || 480) && enemy.attackCooldown <= 0) {
+          this.spawnEnemyProjectile(enemy);
+          enemy.attackCooldown = enemy.attackDelay || 1.2;
         }
-        this.particles.spawn({ x: enemy.x, y: enemy.y }, {
-          color: enemy.projectileColor ?? ENEMY_BULLET_COLOR,
-          radius: 0.3,
-          life: 0.55,
-        });
-        continue;
+        speed *= 0.65;
       }
 
-      enemy.fireTimer = ENEMY_FIRE_INTERVAL + randRange(-0.5, 0.5);
-      if (enemy.attack === 'spread') {
-        const baseAngle = Math.atan2(dy, dx);
-        const offsets = [-0.2, 0, 0.2];
-        for (const offset of offsets) {
-          const projectile = createProjectile({
-            x: enemy.x,
-            y: enemy.y,
-            direction: { x: Math.cos(baseAngle + offset), y: Math.sin(baseAngle + offset) },
-            speed: ENEMY_PROJECTILE_SPEED * 0.9,
-            damage: enemy.damage,
-            lifetime: ENEMY_PROJECTILE_LIFETIME,
-            friendly: false,
-            element: enemy.element ?? 'verdant',
-            size: 0.14,
-          });
-          projectile.color = enemy.projectileColor ?? ENEMY_BULLET_COLOR;
-          this.enemyProjectiles.push(projectile);
+      enemy.x += (dx / distance) * speed * dt;
+      enemy.y += (dy / distance) * speed * dt;
+      const newDistance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
+      if (newDistance < enemy.radius + this.player.radius) {
+        if (this.damagePlayer(enemy.damage)) {
+          return false;
         }
-      } else if (enemy.attack === 'dash') {
-        fireProjectile({ speed: ENEMY_PROJECTILE_SPEED * 1.2, damage: enemy.damage, size: 0.16 });
-      } else if (enemy.attack === 'slow') {
-        fireProjectile({ statusEffect: { type: 'slow', slow: 0.35, duration: 2 }, size: 0.16 });
-      } else if (enemy.attack === 'beam') {
-        fireProjectile({ speed: ENEMY_PROJECTILE_SPEED * 1.4, damage: enemy.damage + 4, size: 0.2 });
-      } else {
-        fireProjectile();
+        if (!enemy.boss) {
+          enemy.dead = true;
+          this.stats.kills += 1;
+          this.dropMaterials(enemy);
+          return false;
+        }
+        return true;
       }
-    }
-
-    if (this.slowFields) {
-      this.slowFields = this.slowFields
-        .map((field) => ({ ...field, age: field.age + dt }))
-        .filter((field) => field.age < field.duration);
-    }
+      if (enemy.health <= 0) {
+        enemy.dead = true;
+        this.stats.kills += 1;
+        this.dropMaterials(enemy);
+        return false;
+      }
+      return true;
+    });
   }
 
-  #updatePickups(dt) {
-    const survivors = [];
-    for (const pickup of this.pickups) {
+  spawnEnemyProjectile(enemy) {
+    const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x);
+    const speed = enemy.projectileSpeed || 260;
+    this.enemyProjectiles.push({
+      x: enemy.x,
+      y: enemy.y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 2.5,
+      damage: enemy.projectileDamage || enemy.damage,
+    });
+  }
+
+  updatePickups(dt) {
+    this.pickups = this.pickups.filter((pickup) => {
       const dx = this.player.x - pickup.x;
       const dy = this.player.y - pickup.y;
       const distance = Math.hypot(dx, dy);
-      if (distance < 0.6) {
-        if (pickup.kind === 'xp') {
-          const xpMultiplier = 1 + (this.player.xpBonus ?? 0);
-          this.player.experience += pickup.value * xpMultiplier;
-          this.log.push('You collect a glowing memory shard.');
-          this.ui.showToast(`+${Math.round(pickup.value * xpMultiplier)} experience`);
-          this.#checkLevelUp();
-        } else if (pickup.kind === 'loot' && pickup.item) {
-          this.#collectLoot(pickup.item);
-        } else if (pickup.kind === 'gold') {
-          const amount = Math.max(1, Math.round(pickup.amount ?? 0));
-          this.gold += amount;
-          this.ui.setGold(this.gold);
-          this.ui.showToast(`+${amount} gold`);
-          this.log.push('You gather glittering coins.');
-        }
-        continue;
+      if (distance < this.player.pickupRange && distance > 0) {
+        const pull = clamp((this.player.pickupRange - distance) / this.player.pickupRange, 0.2, 1);
+        pickup.vx = (dx / distance) * 150 * pull;
+        pickup.vy = (dy / distance) * 150 * pull;
       }
-
-      if (distance < PICKUP_ATTRACTION_RANGE) {
-        const dir = normalize({ x: dx, y: dy });
-        pickup.vx = lerp(pickup.vx, dir.x * PICKUP_ATTRACTION_SPEED, 0.2);
-        pickup.vy = lerp(pickup.vy, dir.y * PICKUP_ATTRACTION_SPEED, 0.2);
-      }
-
       pickup.x += pickup.vx * dt;
       pickup.y += pickup.vy * dt;
       pickup.life -= dt;
-
-      if (pickup.life > 0) {
-        survivors.push(pickup);
+      const postDistance = Math.hypot(this.player.x - pickup.x, this.player.y - pickup.y);
+      if (postDistance < this.player.radius + 4) {
+        this.materials += pickup.value;
+        this.ui.setMaterials(this.materials);
+        return false;
       }
-    }
-    this.pickups = survivors;
-  }
-
-  #collectLoot(item) {
-    if (item.type === 'medal' && item.goldValue) {
-      const amount = Math.round(item.goldValue);
-      this.gold += amount;
-      this.ui.setGold(this.gold);
-      this.ui.showToast(`+${amount} gold (medal traded)`);
-      this.log.push('You trade the radiant medal for a pouch of gold.');
-      return;
-    }
-
-    if (item.consumedOnPickup) {
-      if (item.heal) {
-        const healed = Math.round(
-          Math.max(0, Math.min(item.heal, this.player.maxHealth - this.player.health))
-        );
-        this.player.health = clamp(this.player.health + item.heal, 0, this.player.maxHealth);
-        this.ui.setHealth(this.player.health, this.player.maxHealth);
-        if (healed > 0) {
-          this.ui.showToast(`Restored ${healed} health`);
-        }
-      }
-      return;
-    }
-
-    const stackable = item.stackable ?? false;
-    if (stackable) {
-      const existing = this.inventory.find((entry) => entry.id === item.id);
-      if (existing) {
-        existing.quantity = (existing.quantity ?? 1) + 1;
-        this.ui.showToast(`+1 ${item.name}`);
-        this.log.push(`You gather more ${item.name.toLowerCase()}.`);
-        this.#refreshInventoryUI();
-        this.#syncHotbar();
-        return;
-      }
-    } else if (item.type !== 'equipment') {
-      const duplicate = this.inventory.some((entry) => entry.id === item.id);
-      if (duplicate) {
-        const stipend = item.goldValue ?? randInt(18, 32);
-        this.gold += stipend;
-        this.ui.setGold(this.gold);
-        this.ui.showToast(`Duplicate ${item.name} traded for ${stipend} gold`);
-        this.log.push(`You exchange a spare ${item.name} for supplies.`);
-        return;
-      }
-    }
-
-    this.inventory.push(item);
-    if (item.rarityLabel) {
-      this.ui.showToast(`${item.rarityLabel} ${item.name} added to your satchel.`);
-    } else {
-      this.ui.showToast(`${item.name} added to your satchel.`);
-    }
-    this.log.push(`You collect ${item.name.toLowerCase()}.`);
-    this.#refreshInventoryUI();
-    this.#syncHotbar();
-  }
-
-  #checkLevelUp() {
-    let leveled = false;
-    while (this.player.experience >= this.player.experienceToLevel) {
-      this.player.experience -= this.player.experienceToLevel;
-      this.player.level += 1;
-      this.player.experienceToLevel = Math.round(
-        this.player.experienceToLevel + LEVEL_XP_GROWTH
-      );
-      this.availableSkillPoints += 1;
-      leveled = true;
-      if (this.player.onLevelUpRegen) {
-        this.player.health = clamp(
-          this.player.health + this.player.onLevelUpRegen,
-          0,
-          this.player.maxHealth
-        );
-      }
-      this.ui.showToast(`Level ${this.player.level}! Skill spark earned.`);
-      this.log.push('A new spark flares within you.');
-    }
-
-    if (leveled) {
-      this.#refreshSkillTreeUI();
-    }
-
-    this.ui.setSkillPoints(this.availableSkillPoints);
-    this.ui.setExperience(
-      this.player.level,
-      this.player.experience,
-      this.player.experienceToLevel
-    );
-    this.ui.setHealth(this.player.health, this.player.maxHealth);
-  }
-
-  #onEnemyDefeated(enemy) {
-    this.stats.enemiesDefeated += 1;
-    this.grantSuperCharge(enemy.boss ? 40 : 12);
-    if (enemy.boss) {
-      this.log.push('The guardian shatters into chromatic embers.');
-      this.ui.showToast('Boss defeated!');
-      this.#advanceStory('boss-victory');
-      if (enemy.dungeon?.boss) {
-        enemy.dungeon.boss.spawned = false;
-        enemy.dungeon.boss.defeated = true;
-      }
-    } else {
-      this.log.push('A synth raider dissolves into sparks.');
-    }
-    const xpValue = (enemy.boss ? 40 : 12) + Math.round(Math.random() * (enemy.boss ? 20 : 6));
-    this.pickups.push({
-      kind: 'xp',
-      x: enemy.x,
-      y: enemy.y,
-      vx: randRange(-0.2, 0.2),
-      vy: randRange(-0.2, 0.2),
-      value: xpValue,
-      life: 14,
+      return pickup.life > 0;
     });
-    if (enemy.boss) {
+  }
+
+  handleWave(dt) {
+    this.waveTimer -= dt;
+    if (this.waveTimer <= 0 && this.enemies.length === 0 && this.enemyProjectiles.length === 0) {
+      if (this.wave >= MAX_WAVES) {
+        this.gameOver(true);
+        return;
+      }
+      this.openShop();
+      return;
+    }
+    this.ui.setTimer(Math.max(0, this.waveTimer));
+    if (this.bossQueued && !this.bossSpawned && this.waveTimer < this.waveDuration - 5) {
+      this.spawnBoss();
+      this.bossSpawned = true;
+    }
+    this.spawnTimer -= dt;
+    if (this.spawnTimer <= 0 && this.waveTimer > 0) {
+      this.spawnEnemy();
+      const baseInterval = Math.max(0.35, 1.4 - this.wave * 0.08);
+      this.spawnTimer = randRange(baseInterval * 0.6, baseInterval * 1.2);
+    }
+  }
+
+  openShop() {
+    this.state = 'shop';
+    this.generateShop();
+    this.ui.setRerollCost(this.rerollCost);
+    this.ui.toggleShop(true);
+  }
+
+  generateShop() {
+    const choices = new Set();
+    while (choices.size < 3) {
+      const item = pickShopItem();
+      choices.add(item.id);
+    }
+    this.shopOptions = Array.from(choices).map((id) => {
+      const base = SHOP_ITEMS_BY_ID[id];
+      return {
+        ...base,
+        disabled: this.materials < base.cost,
+        soldOut: false,
+      };
+    });
+    this.ui.setShopOptions(this.shopOptions, (option) => this.purchase(option));
+  }
+
+  purchase(option) {
+    if (option.soldOut) return;
+    if (this.materials < option.cost) return;
+    this.materials -= option.cost;
+    this.ui.setMaterials(this.materials);
+    option.apply(this);
+    this.ui.setHealth(this.player.health, this.player.maxHealth);
+    option.soldOut = true;
+    option.disabled = true;
+    this.shopOptions = this.shopOptions.map((entry) => ({
+      ...entry,
+      soldOut: entry === option ? true : entry.soldOut,
+      disabled: entry === option ? true : this.materials < entry.cost,
+    }));
+    this.ui.setShopOptions(this.shopOptions, (opt) => this.purchase(opt));
+  }
+
+  spawnEnemy() {
+    const available = ENEMY_TYPES.filter((type) => this.wave >= type.minWave);
+    const type = available[randInt(0, available.length - 1)];
+    const { x, y } = this.randomEdgeSpawn();
+    this.enemies.push({
+      ...type,
+      x,
+      y,
+      attackCooldown: randRange(0.2, 0.8),
+    });
+  }
+
+  spawnBoss() {
+    const index = Math.min(BOSS_TYPES.length - 1, Math.floor(this.wave / 4) - 1);
+    const boss = BOSS_TYPES[index];
+    const { x, y } = this.randomEdgeSpawn();
+    this.enemies.push({
+      ...boss,
+      x,
+      y,
+      boss: true,
+      health: boss.health,
+      attackCooldown: 0,
+    });
+  }
+
+  randomEdgeSpawn() {
+    const edge = Math.floor(Math.random() * 4);
+    let x;
+    let y;
+    if (edge === 0) {
+      x = randRange(0, this.canvas.width);
+      y = -40;
+    } else if (edge === 1) {
+      x = this.canvas.width + 40;
+      y = randRange(0, this.canvas.height);
+    } else if (edge === 2) {
+      x = randRange(0, this.canvas.width);
+      y = this.canvas.height + 40;
+    } else {
+      x = -40;
+      y = randRange(0, this.canvas.height);
+    }
+    return { x, y };
+  }
+
+  dropMaterials(enemy) {
+    const drops = enemy.boss ? enemy.dropMultiplier || 6 : 1;
+    for (let i = 0; i < drops; i += 1) {
+      const bonus = enemy.boss ? randInt(18, 28) : 0;
+      const value = randInt(MATERIAL_DROP.min, MATERIAL_DROP.max) + bonus;
       this.pickups.push({
-        kind: 'xp',
-        x: enemy.x + randRange(-0.5, 0.5),
-        y: enemy.y + randRange(-0.5, 0.5),
-        vx: randRange(-0.2, 0.2),
-        vy: randRange(-0.2, 0.2),
-        value: xpValue / 2,
-        life: 14,
+        x: enemy.x,
+        y: enemy.y,
+        vx: randRange(-40, 40),
+        vy: randRange(-40, 40),
+        value,
+        life: 10,
       });
     }
-
-    const goldRange = enemy.boss ? GOLD_RANGES.boss : GOLD_RANGES.mob;
-    this.#dropGold(enemy.x, enemy.y, randomGold(goldRange), enemy.boss ? 0.55 : 0.4);
-
-    if (enemy.boss) {
-      this.#spawnLootItem('moondrop-elixir', enemy.x, enemy.y, 0.45, 24);
-      for (let i = 0; i < 2; i += 1) {
-        const loot = drawFromLootTable(BOSS_LOOT_TABLE, {
-          theme: enemy.dungeon?.theme?.id,
-          bias: 0.9,
-          powerBonus: 0.45,
-        });
-        if (loot) {
-          this.#spawnLootItem(loot, enemy.x, enemy.y, 0.55, 26);
-        }
-      }
-    } else {
-      if (Math.random() < 0.45) {
-        this.#spawnLootItem(pick(RESOURCE_DROPS), enemy.x, enemy.y);
-      }
-      if (Math.random() < 0.3) {
-        this.#spawnLootItem('sun-elixir', enemy.x, enemy.y, 0.35, 18);
-      }
-    }
-    this.particles.spawn({ x: enemy.x, y: enemy.y }, {
-      color: '#fbbf24',
-      radius: 0.3,
-      life: 0.6,
-    });
   }
 
-  #damagePlayer(amount) {
-    if (amount <= 0) return;
-    if (this.player.shield?.active) {
-      this.player.shield.active = false;
-      this.player.shield.timer = 0;
-      this.log.push('Your aurora shell absorbs the impact.');
-      this.ui.showToast('Shield absorbed a hit');
-      return;
+  getClosestEnemy() {
+    let closest = null;
+    let bestDist = Infinity;
+    for (const enemy of this.enemies) {
+      if (enemy.dead) continue;
+      const dist = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
+      if (dist < bestDist) {
+        bestDist = dist;
+        closest = enemy;
+      }
     }
-    const mitigation = clamp(this.player.damageReduction ?? 0, 0, 0.8);
-    const finalAmount = amount * (1 - mitigation);
-    this.player.health = clamp(this.player.health - finalAmount, 0, this.player.maxHealth);
-    this.stats.damageTaken += amount;
+    return closest;
+  }
+
+  damagePlayer(amount) {
+    const armorReduction = clamp(1 - this.player.armor * 0.02, 0.25, 1);
+    const damage = Math.max(2, amount * armorReduction);
+    this.player.health -= damage;
     this.ui.setHealth(this.player.health, this.player.maxHealth);
-    this.particles.spawn({ x: this.player.x, y: this.player.y }, {
-      color: '#f87171',
-      radius: 0.25,
-      life: 0.6,
-    });
     if (this.player.health <= 0) {
-      this.log.push('You drift as Paradise rewinds itself. Press Restart to dive back in.');
-      this.state = 'menu';
-      this.ui.showMenu(true);
+      this.player.health = 0;
+      this.gameOver(false);
+      return true;
     }
+    return false;
   }
 
-  #spawnEnemyWave() {
-    if (!this.currentDungeon) return;
-    if (this.enemies.length > 18) return;
-    const spawnCount = (this.currentDungeon.boss.spawned ? 2 : 4) + randInt(0, 1);
-    const theme = this.currentDungeon.theme;
-    const pool = theme?.enemyPool ?? Object.keys(ENEMY_TYPES);
-    for (let i = 0; i < spawnCount; i += 1) {
-      const source = pick(this.currentDungeon.spawnPoints);
-      const typeKey = pick(pool);
-      const archetype = ENEMY_TYPES[typeKey] ?? ENEMY_TYPES.emberkin;
-      const enemy = {
-        x: source.x + randRange(-1.5, 1.5),
-        y: source.y + randRange(-1.5, 1.5),
-        health: archetype.health * randRange(0.95, 1.2),
-        maxHealth: archetype.health,
-        color: archetype.color,
-        fireTimer: randRange(0.4, ENEMY_FIRE_INTERVAL),
-        boss: false,
-        dungeon: this.currentDungeon,
-        baseSpeed: archetype.speed,
-        attack: archetype.attack,
-        damage: archetype.damage,
-        range: archetype.range ?? ENEMY_RANGE,
-        projectileColor: archetype.projectileColor ?? ENEMY_BULLET_COLOR,
-        element: archetype.element ?? 'void',
-        effects: [],
-        slowMultiplier: 1,
-        typeId: typeKey,
-      };
-      if (this.world.isWalkable(enemy.x, enemy.y)) {
-        this.enemies.push(enemy);
-      }
-    }
-    this.log.push(`Shadows gather within ${this.currentDungeon.name}.`);
+  gameOver(victory) {
+    if (this.state === 'gameover') return;
+    this.state = 'gameover';
+    this.ui.toggleShop(false);
+    this.ui.toggleGameOver(true);
+    this.ui.showResults({
+      victory,
+      wave: this.wave,
+      materials: this.materials,
+      kills: this.stats.kills,
+    });
   }
 
-  #checkAchievements() {
-    const unlocked = [];
-    for (const achievement of ACHIEVEMENT_LIBRARY) {
-      if (this.achievements.has(achievement.id)) continue;
-      if (achievement.check(this.stats)) {
-        this.achievements.add(achievement.id);
-        unlocked.push(achievement);
-        this.log.push(`Achievement unlocked: ${achievement.label}`);
-        this.ui.showToast(`Achievement: ${achievement.label}`);
-      }
-    }
-    if (unlocked.length > 0) {
-      const list = [...this.achievements]
-        .map((id) => ACHIEVEMENT_LIBRARY.find((item) => item.id === id))
-        .filter(Boolean);
-      this.ui.setAchievements(list);
-    }
-  }
-
-  #render() {
-    const ctx = this.context;
+  render() {
+    const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.#drawSky(ctx);
-    if (!this.world) {
-      this.#drawAtmosphere(ctx);
-      return;
-    }
-    const view = this.#getCameraView();
-    ctx.save();
-    ctx.translate(-view.offsetX * TILE_SIZE, -view.offsetY * TILE_SIZE);
-    this.#drawWorld(ctx, view);
-    this.#drawDecorations(ctx, view);
-    this.#drawChests(ctx, view);
-    this.#drawNpcs(ctx, view);
-    this.#drawSigns(ctx, view);
-    this.#drawPlayer(ctx, view);
-    this.#drawEnemies(ctx, view);
-    this.#drawProjectiles(ctx, view);
-    this.#drawPickups(ctx, view);
-    if (this.slowFields) {
-      for (const field of this.slowFields) {
-        this.#drawSlowField(ctx, field, view);
-      }
-    }
-    this.particles.draw(ctx, view);
-    ctx.restore();
-    this.#drawAtmosphere(ctx, view);
+    this.drawBackground(ctx);
+    this.drawPickups(ctx);
+    this.drawEnemies(ctx);
+    this.drawEnemyProjectiles(ctx);
+    this.drawProjectiles(ctx);
+    this.drawPlayer(ctx);
   }
 
-  #getCameraView() {
-    const viewWidth = Math.ceil(this.canvas.width / TILE_SIZE);
-    const viewHeight = Math.ceil(this.canvas.height / TILE_SIZE);
-    const offsetX = this.camera.x - viewWidth / 2;
-    const offsetY = this.camera.y - viewHeight / 2;
-    return {
-      viewWidth,
-      viewHeight,
-      offsetX,
-      offsetY,
-    };
-  }
-
-  #drawSky(ctx) {
-    const t = (this.timeOfDay % DAY_NIGHT_DURATION) / DAY_NIGHT_DURATION;
-    const light = this.#getLightLevel();
-    const top = mixColor('#020617', '#0ea5e9', light);
-    const mid = mixColor('#111827', '#38bdf8', light);
-    const horizon = mixColor('#1f2937', '#fcd34d', Math.pow(light, 0.6));
+  drawBackground(ctx) {
     const gradient = ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    gradient.addColorStop(0, top);
-    gradient.addColorStop(0.45, mid);
-    gradient.addColorStop(1, horizon);
+    gradient.addColorStop(0, '#050912');
+    gradient.addColorStop(1, '#020308');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    if (light < 0.55) {
-      ctx.save();
-      ctx.globalAlpha = clamp((0.55 - light) * 1.6, 0, 0.85);
-      ctx.fillStyle = '#f8fafc';
-      for (const star of this.stars) {
-        const twinkle = (Math.sin((t + star.phase) * Math.PI * 2) + 1) / 2;
-        const alpha = clamp(0.35 + twinkle * 0.65, 0, 1);
-        ctx.globalAlpha = alpha * clamp((0.55 - light) * 1.2, 0, 1);
-        const x = star.x * this.canvas.width;
-        const y = star.y * this.canvas.height * 0.6;
-        ctx.fillRect(x, y, 2, 2);
-      }
-      ctx.restore();
-    }
-  }
-
-  #drawAtmosphere(ctx, view) {
-    const light = this.#getLightLevel();
-    if (light < 0.6) {
-      ctx.fillStyle = `rgba(15, 23, 42, ${0.25 * (0.6 - light)})`;
-      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-
-    const glow = ctx.createRadialGradient(
-      this.canvas.width / 2,
-      this.canvas.height / 2,
-      Math.min(this.canvas.width, this.canvas.height) * 0.1,
-      this.canvas.width / 2,
-      this.canvas.height / 2,
-      Math.max(this.canvas.width, this.canvas.height) * 0.75
-    );
-    glow.addColorStop(0, `rgba(251, 191, 36, ${0.05 + light * 0.08})`);
-    glow.addColorStop(1, 'rgba(15, 23, 42, 0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-  }
-
-  #updateCamera(dt) {
-    const smoothing = 1 - Math.exp(-dt * 6);
-    this.camera.x = lerp(this.camera.x, this.player.x, smoothing);
-    this.camera.y = lerp(this.camera.y, this.player.y, smoothing);
-  }
-
-  #getLightLevel() {
-    const t = (this.timeOfDay % DAY_NIGHT_DURATION) / DAY_NIGHT_DURATION;
-    return (Math.sin(t * Math.PI * 2 - Math.PI / 2) + 1) / 2;
-  }
-
-  #describeTimeOfDay() {
-    const t = (this.timeOfDay % DAY_NIGHT_DURATION) / DAY_NIGHT_DURATION;
-    if (t < 0.18 || t >= 0.92) return 'Starlit Night';
-    if (t < 0.3) return 'Aurora Dawn';
-    if (t < 0.52) return 'Golden Noon';
-    if (t < 0.7) return 'Amber Afternoon';
-    if (t < 0.85) return 'Rose Dusk';
-    return 'Violet Evening';
-  }
-
-  #drawWorld(ctx, view) {
-    const shimmer = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
-    const light = this.#getLightLevel();
-    const startX = Math.max(0, Math.floor(view.offsetX) - 2);
-    const endX = Math.min(this.world.width - 1, Math.ceil(view.offsetX + view.viewWidth) + 2);
-    const startY = Math.max(0, Math.floor(view.offsetY) - 2);
-    const endY = Math.min(this.world.height - 1, Math.ceil(view.offsetY + view.viewHeight) + 2);
-
-    for (let y = startY; y <= endY; y += 1) {
-      for (let x = startX; x <= endX; x += 1) {
-        const tile = this.world.getTile(x, y);
-        const info = TILE_TYPES[tile.type];
-        const color = info?.variants?.[tile.variant] ?? info?.color ?? '#000';
-        const screenX = x * TILE_SIZE;
-        const screenY = y * TILE_SIZE;
-        const gradient = ctx.createLinearGradient(
-          screenX,
-          screenY,
-          screenX,
-          screenY + TILE_SIZE
-        );
-        gradient.addColorStop(0, mixColor(color, '#f8fafc', 0.15));
-        gradient.addColorStop(1, mixColor(color, '#0f172a', 0.18));
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.moveTo(screenX + 4, screenY);
-        ctx.quadraticCurveTo(screenX, screenY, screenX, screenY + 4);
-        ctx.lineTo(screenX, screenY + TILE_SIZE - 4);
-        ctx.quadraticCurveTo(
-          screenX,
-          screenY + TILE_SIZE,
-          screenX + 4,
-          screenY + TILE_SIZE
-        );
-        ctx.lineTo(screenX + TILE_SIZE - 4, screenY + TILE_SIZE);
-        ctx.quadraticCurveTo(
-          screenX + TILE_SIZE,
-          screenY + TILE_SIZE,
-          screenX + TILE_SIZE,
-          screenY + TILE_SIZE - 4
-        );
-        ctx.lineTo(screenX + TILE_SIZE, screenY + 4);
-        ctx.quadraticCurveTo(
-          screenX + TILE_SIZE,
-          screenY,
-          screenX + TILE_SIZE - 4,
-          screenY
-        );
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = mixColor(color, '#020617', 0.4);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        if (tile.type === 'water') {
-          const wave = Math.sin(shimmer * 1.4 + x * 0.7 + y * 0.4);
-          const highlight = clamp((wave + 1) / 2, 0, 1);
-          const gradient = ctx.createLinearGradient(
-            screenX,
-            screenY,
-            screenX,
-            screenY + TILE_SIZE
-          );
-          gradient.addColorStop(0, `rgba(59, 130, 246, ${0.25 + highlight * 0.2})`);
-          gradient.addColorStop(1, `rgba(14, 165, 233, ${0.18 + highlight * 0.15})`);
-          ctx.fillStyle = gradient;
-          ctx.fillRect(screenX, screenY, TILE_SIZE + 1, TILE_SIZE + 1);
-        } else if (tile.type === 'sanctuary') {
-          ctx.fillStyle = 'rgba(96, 165, 250, 0.18)';
-          ctx.fillRect(screenX, screenY, TILE_SIZE + 1, TILE_SIZE + 1);
-        } else if (tile.type === 'farmland') {
-          ctx.save();
-          ctx.strokeStyle = 'rgba(245, 158, 11, 0.38)';
-          ctx.lineWidth = 1.2;
-          ctx.strokeRect(screenX + 2, screenY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-          ctx.restore();
-        }
-
-        const distance = Math.hypot(x - this.player.x, y - this.player.y);
-        const glow = clamp(1 - distance / 24, 0, 1) * (0.14 + light * 0.08);
-        if (glow > 0) {
-          ctx.fillStyle = `rgba(248, 250, 252, ${glow})`;
-          ctx.fillRect(screenX, screenY, TILE_SIZE + 1, TILE_SIZE + 1);
-        }
-
-        const duskShade = clamp(0.45 - light * 0.35, 0, 0.45);
-        if (duskShade > 0) {
-          ctx.fillStyle = `rgba(15, 23, 42, ${duskShade})`;
-          ctx.fillRect(screenX, screenY, TILE_SIZE + 1, TILE_SIZE + 1);
-        } else if (light > 0.6) {
-          const sunKiss = (light - 0.6) * 0.18;
-          if (sunKiss > 0) {
-            ctx.fillStyle = `rgba(253, 224, 71, ${sunKiss})`;
-            ctx.fillRect(screenX, screenY, TILE_SIZE + 1, TILE_SIZE + 1);
-          }
-        }
-      }
-    }
-  }
-
-  #drawDecorations(ctx, view) {
-    for (const deco of this.world.decorations) {
-      if (
-        deco.x < view.offsetX - 2 ||
-        deco.x > view.offsetX + view.viewWidth + 2 ||
-        deco.y < view.offsetY - 2 ||
-        deco.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = deco.x * TILE_SIZE;
-      const screenY = deco.y * TILE_SIZE;
-      if (deco.type === 'tree') {
-        ctx.fillStyle = SCENERY_COLORS.palmTrunk;
-        ctx.fillRect(screenX + TILE_SIZE * 0.48, screenY + TILE_SIZE * 0.42, TILE_SIZE * 0.06, TILE_SIZE * 0.58);
-        ctx.beginPath();
-        ctx.moveTo(screenX + TILE_SIZE * 0.51, screenY + TILE_SIZE * 0.42);
-        ctx.lineTo(screenX + TILE_SIZE * 0.65, screenY + TILE_SIZE * 0.18);
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = SCENERY_COLORS.palmTrunk;
-        ctx.stroke();
-        const leafGradient = ctx.createLinearGradient(
-          screenX + TILE_SIZE * 0.3,
-          screenY + TILE_SIZE * 0.12,
-          screenX + TILE_SIZE * 0.8,
-          screenY + TILE_SIZE * 0.36
-        );
-        const leafColor = deco.color ?? SCENERY_COLORS.palmLeaves[0];
-        leafGradient.addColorStop(0, `${leafColor}cc`);
-        leafGradient.addColorStop(1, `${leafColor}55`);
-        ctx.fillStyle = leafGradient;
-        ctx.beginPath();
-        ctx.ellipse(
-          screenX + TILE_SIZE * 0.58,
-          screenY + TILE_SIZE * 0.2,
-          TILE_SIZE * 0.34,
-          TILE_SIZE * 0.22,
-          Math.PI / 6,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      } else if (deco.type === 'blossom') {
-        const glow = deco.color ?? SCENERY_COLORS.neonBloom;
-        ctx.fillStyle = `${glow}55`;
-        ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE / 2, screenY + TILE_SIZE * 0.32, TILE_SIZE * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE / 2, screenY + TILE_SIZE * 0.32, TILE_SIZE * 0.18, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (deco.type === 'rock') {
-        ctx.fillStyle = (deco.color ?? SCENERY_COLORS.coralGlow) + 'aa';
-        ctx.beginPath();
-        ctx.ellipse(
-          screenX + TILE_SIZE / 2,
-          screenY + TILE_SIZE * 0.68,
-          TILE_SIZE * 0.38,
-          TILE_SIZE * 0.24,
-          0,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-        ctx.fillStyle = SCENERY_COLORS.coralGlow;
-        ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE * 0.42, screenY + TILE_SIZE * 0.58, TILE_SIZE * 0.12, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (deco.type === 'house-frame') {
-        ctx.strokeStyle = 'rgba(248, 250, 252, 0.45)';
-        ctx.lineWidth = 2.2;
-        ctx.strokeRect(screenX + TILE_SIZE * 0.15, screenY + TILE_SIZE * 0.35, TILE_SIZE * 0.7, TILE_SIZE * 0.58);
-        ctx.strokeStyle = 'rgba(248, 250, 252, 0.25)';
-        ctx.beginPath();
-        ctx.moveTo(screenX + TILE_SIZE * 0.15, screenY + TILE_SIZE * 0.35);
-        ctx.lineTo(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.1);
-        ctx.lineTo(screenX + TILE_SIZE * 0.85, screenY + TILE_SIZE * 0.35);
-        ctx.stroke();
-      } else if (deco.type === 'market') {
-        ctx.fillStyle = SCENERY_COLORS.vendorAwning;
-        ctx.fillRect(screenX + TILE_SIZE * 0.12, screenY + TILE_SIZE * 0.42, TILE_SIZE * 0.76, TILE_SIZE * 0.4);
-        const stripes = [0, 0.33, 0.66];
-        ctx.fillStyle = 'rgba(249, 112, 167, 0.6)';
-        for (const stripe of stripes) {
-          ctx.fillRect(
-            screenX + TILE_SIZE * (0.12 + stripe * 0.76),
-            screenY + TILE_SIZE * 0.28,
-            TILE_SIZE * 0.25,
-            TILE_SIZE * 0.15
-          );
-        }
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(screenX + TILE_SIZE * 0.22, screenY + TILE_SIZE * 0.58, TILE_SIZE * 0.12, TILE_SIZE * 0.28);
-        ctx.fillRect(screenX + TILE_SIZE * 0.68, screenY + TILE_SIZE * 0.58, TILE_SIZE * 0.12, TILE_SIZE * 0.28);
-      } else if (deco.type === 'house') {
-        ctx.fillStyle = SCENERY_COLORS.villaWall;
-        ctx.fillRect(screenX + TILE_SIZE * 0.1, screenY + TILE_SIZE * 0.32, TILE_SIZE * 0.8, TILE_SIZE * 0.58);
-        const roofGradient = ctx.createLinearGradient(
-          screenX + TILE_SIZE * 0.05,
-          screenY + TILE_SIZE * 0.1,
-          screenX + TILE_SIZE * 0.95,
-          screenY + TILE_SIZE * 0.35
-        );
-        roofGradient.addColorStop(0, '#ffd1a4');
-        roofGradient.addColorStop(1, SCENERY_COLORS.villaRoof);
-        ctx.fillStyle = roofGradient;
-        ctx.beginPath();
-        ctx.moveTo(screenX + TILE_SIZE * 0.05, screenY + TILE_SIZE * 0.35);
-        ctx.lineTo(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.05);
-        ctx.lineTo(screenX + TILE_SIZE * 0.95, screenY + TILE_SIZE * 0.35);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-        ctx.fillRect(screenX + TILE_SIZE * 0.4, screenY + TILE_SIZE * 0.55, TILE_SIZE * 0.2, TILE_SIZE * 0.35);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-        ctx.fillRect(screenX + TILE_SIZE * 0.22, screenY + TILE_SIZE * 0.5, TILE_SIZE * 0.16, TILE_SIZE * 0.16);
-        ctx.fillRect(screenX + TILE_SIZE * 0.62, screenY + TILE_SIZE * 0.5, TILE_SIZE * 0.16, TILE_SIZE * 0.16);
-      } else if (deco.type === 'beacon') {
-        ctx.fillStyle = SCENERY_COLORS.beaconAura;
-        ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.5, TILE_SIZE * 0.42, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = SCENERY_COLORS.beaconGlow;
-        ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.45, TILE_SIZE * 0.2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(screenX + TILE_SIZE * 0.5, screenY + TILE_SIZE * 0.35, TILE_SIZE * 0.08, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    for (const lamp of this.world.lamps) {
-      if (
-        lamp.x < view.offsetX - 2 ||
-        lamp.x > view.offsetX + view.viewWidth + 2 ||
-        lamp.y < view.offsetY - 2 ||
-        lamp.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = lamp.x * TILE_SIZE;
-      const screenY = lamp.y * TILE_SIZE;
-      ctx.fillStyle = 'rgba(250, 204, 21, 0.35)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    const grid = 64;
+    for (let x = 0; x < this.canvas.width; x += grid) {
       ctx.beginPath();
-      ctx.arc(screenX, screenY, TILE_SIZE * 0.8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = SCENERY_COLORS.lampPost;
+      ctx.moveTo(x + (Date.now() * 0.01) % grid, 0);
+      ctx.lineTo(x + (Date.now() * 0.01) % grid, this.canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < this.canvas.height; y += grid) {
       ctx.beginPath();
-      ctx.arc(screenX, screenY, TILE_SIZE * 0.15, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.canvas.width, y);
+      ctx.stroke();
     }
   }
 
-  #drawChests(ctx, view) {
-    for (const chest of this.world.chests) {
-      if (
-        chest.x < view.offsetX - 2 ||
-        chest.x > view.offsetX + view.viewWidth + 2 ||
-        chest.y < view.offsetY - 2 ||
-        chest.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = chest.x * TILE_SIZE;
-      const screenY = chest.y * TILE_SIZE;
-      if (!chest.opened) {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.2)';
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, TILE_SIZE * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.save();
-      ctx.translate(screenX, screenY);
-      const bodyColor = chest.opened ? 'rgba(148, 163, 184, 0.45)' : '#f59e0b';
-      ctx.fillStyle = bodyColor;
-      ctx.fillRect(-TILE_SIZE * 0.24, -TILE_SIZE * 0.05, TILE_SIZE * 0.48, TILE_SIZE * 0.3);
-      ctx.fillRect(-TILE_SIZE * 0.2, -TILE_SIZE * 0.22, TILE_SIZE * 0.4, TILE_SIZE * 0.18);
-      if (!chest.opened) {
-        ctx.fillStyle = '#92400e';
-        ctx.fillRect(-TILE_SIZE * 0.24, -TILE_SIZE * 0.05, TILE_SIZE * 0.48, TILE_SIZE * 0.06);
-        ctx.fillStyle = '#fcd34d';
-        ctx.fillRect(-TILE_SIZE * 0.02, -TILE_SIZE * 0.05, TILE_SIZE * 0.04, TILE_SIZE * 0.16);
-      } else {
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
-        ctx.fillRect(-TILE_SIZE * 0.2, -TILE_SIZE * 0.22, TILE_SIZE * 0.4, TILE_SIZE * 0.06);
-      }
-      ctx.restore();
-    }
-  }
-
-  #drawNpcs(ctx, view) {
-    for (const npc of this.world.npcs) {
-      if (
-        npc.x < view.offsetX - 2 ||
-        npc.x > view.offsetX + view.viewWidth + 2 ||
-        npc.y < view.offsetY - 2 ||
-        npc.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = npc.x * TILE_SIZE;
-      const screenY = npc.y * TILE_SIZE;
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
-      ctx.beginPath();
-      ctx.ellipse(screenX, screenY + TILE_SIZE * 0.28, TILE_SIZE * 0.18, TILE_SIZE * 0.12, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = npc.color ?? pick(SCENERY_COLORS.npcCloak);
-      ctx.fillRect(screenX - TILE_SIZE * 0.14, screenY - TILE_SIZE * 0.3, TILE_SIZE * 0.28, TILE_SIZE * 0.42);
-      ctx.fillStyle = '#fef9c3';
-      ctx.beginPath();
-      ctx.arc(screenX, screenY - TILE_SIZE * 0.38, TILE_SIZE * 0.12, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  #drawSigns(ctx, view) {
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = `${Math.floor(TILE_SIZE * 0.35)}px 'Trebuchet MS', sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-
-    for (const sign of this.world.signs) {
-      if (
-        sign.x < view.offsetX - 2 ||
-        sign.x > view.offsetX + view.viewWidth + 2 ||
-        sign.y < view.offsetY - 2 ||
-        sign.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = sign.x * TILE_SIZE;
-      const screenY = sign.y * TILE_SIZE;
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(
-        screenX - TILE_SIZE * 0.3,
-        screenY - TILE_SIZE * 0.9,
-        TILE_SIZE * 0.6,
-        TILE_SIZE * 0.4
-      );
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(
-        screenX - TILE_SIZE * 0.04,
-        screenY - TILE_SIZE * 0.5,
-        TILE_SIZE * 0.08,
-        TILE_SIZE * 0.5
-      );
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillText(sign.text, screenX, screenY - TILE_SIZE * 0.95);
-    }
-  }
-
-  #drawPlayer(ctx, view) {
-    const screenX = this.player.x * TILE_SIZE;
-    const screenY = this.player.y * TILE_SIZE;
-    const ready = this.player.superReady;
-
+  drawPlayer(ctx) {
+    if (!this.player) return;
     ctx.save();
-    ctx.translate(screenX, screenY);
-
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+    ctx.shadowColor = '#f7ca57';
+    ctx.shadowBlur = 25;
+    const gradient = ctx.createRadialGradient(
+      this.player.x - 5,
+      this.player.y - 5,
+      6,
+      this.player.x,
+      this.player.y,
+      this.player.radius
+    );
+    gradient.addColorStop(0, '#f7ca57');
+    gradient.addColorStop(1, '#ff6f91');
+    ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.ellipse(0, TILE_SIZE * 0.32, TILE_SIZE * 0.32, TILE_SIZE * 0.18, 0, 0, Math.PI * 2);
+    ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
     ctx.fill();
-
-    const torso = ctx.createLinearGradient(-TILE_SIZE * 0.2, -TILE_SIZE * 0.38, TILE_SIZE * 0.2, TILE_SIZE * 0.34);
-    torso.addColorStop(0, '#ff6f61');
-    torso.addColorStop(1, '#d946ef');
-    ctx.fillStyle = torso;
-    ctx.fillRect(-TILE_SIZE * 0.18, -TILE_SIZE * 0.34, TILE_SIZE * 0.36, TILE_SIZE * 0.54);
-
-    ctx.fillStyle = '#ffe7d9';
-    ctx.beginPath();
-    ctx.arc(0, -TILE_SIZE * 0.44, TILE_SIZE * 0.18, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    ctx.fillRect(-TILE_SIZE * 0.18, -TILE_SIZE * 0.02, TILE_SIZE * 0.36, TILE_SIZE * 0.18);
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(-TILE_SIZE * 0.16, -TILE_SIZE * 0.02, TILE_SIZE * 0.12, TILE_SIZE * 0.34);
-    ctx.fillRect(TILE_SIZE * 0.04, -TILE_SIZE * 0.02, TILE_SIZE * 0.12, TILE_SIZE * 0.34);
-
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(-TILE_SIZE * 0.12, -TILE_SIZE * 0.26, TILE_SIZE * 0.24, TILE_SIZE * 0.08);
-
-    if (this.player.shield?.active) {
-      ctx.strokeStyle = 'rgba(96, 239, 255, 0.65)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(0, -TILE_SIZE * 0.05, TILE_SIZE * 0.42, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    if (ready) {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, -TILE_SIZE * 0.05, TILE_SIZE * 0.5, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
     ctx.restore();
   }
 
-  #drawEnemies(ctx, view) {
-    ctx.lineWidth = 2;
-    for (const enemy of this.enemies) {
-      if (
-        enemy.x < view.offsetX - 3 ||
-        enemy.x > view.offsetX + view.viewWidth + 3 ||
-        enemy.y < view.offsetY - 3 ||
-        enemy.y > view.offsetY + view.viewHeight + 3
-      ) {
-        continue;
-      }
-      const screenX = enemy.x * TILE_SIZE;
-      const screenY = enemy.y * TILE_SIZE;
-      const isBoss = enemy.boss === true;
-      if (isBoss) {
-        const aura = ctx.createRadialGradient(screenX, screenY, TILE_SIZE * 0.25, screenX, screenY, TILE_SIZE * 0.78);
-        aura.addColorStop(0, `${enemy.color ?? '#f472b6'}44`);
-        aura.addColorStop(1, 'rgba(15, 23, 42, 0)');
-        ctx.fillStyle = aura;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, TILE_SIZE * 0.78, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = enemy.color ?? '#f472b6';
-      ctx.fillRect(
-        screenX - TILE_SIZE * 0.2,
-        screenY - TILE_SIZE * 0.28,
-        TILE_SIZE * 0.4,
-        TILE_SIZE * (isBoss ? 0.7 : 0.55)
-      );
-      ctx.fillStyle = '#1e293b';
+  drawProjectiles(ctx) {
+    ctx.save();
+    ctx.fillStyle = '#fdd663';
+    ctx.shadowColor = '#fdd663';
+    ctx.shadowBlur = 15;
+    this.projectiles.forEach((projectile) => {
       ctx.beginPath();
-      ctx.arc(screenX, screenY - TILE_SIZE * (isBoss ? 0.45 : 0.38), TILE_SIZE * (isBoss ? 0.18 : 0.14), 0, Math.PI * 2);
+      ctx.arc(projectile.x, projectile.y, 4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = isBoss ? 'rgba(255, 255, 255, 0.6)' : 'rgba(148, 163, 184, 0.35)';
-      ctx.lineWidth = isBoss ? 3 : 1.5;
-      ctx.strokeRect(
-        screenX - TILE_SIZE * 0.2,
-        screenY - TILE_SIZE * 0.28,
-        TILE_SIZE * 0.4,
-        TILE_SIZE * (isBoss ? 0.7 : 0.55)
-      );
-
-      const maxHealth = enemy.maxHealth ?? (isBoss ? BOSS_HEALTH : ENEMY_BASE_HEALTH);
-      const ratio = clamp(enemy.health / maxHealth, 0, 1);
-      const barWidth = TILE_SIZE * (isBoss ? 0.9 : 0.6);
-      const barHeight = TILE_SIZE * 0.12;
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
-      ctx.fillRect(screenX - barWidth / 2, screenY - TILE_SIZE * 0.55, barWidth, barHeight);
-      ctx.fillStyle = isBoss ? 'rgba(250, 204, 21, 0.9)' : 'rgba(251, 191, 36, 0.8)';
-      ctx.fillRect(screenX - barWidth / 2, screenY - TILE_SIZE * 0.55, barWidth * ratio, barHeight);
-    }
+    });
+    ctx.restore();
   }
 
-  #drawProjectiles(ctx, view) {
-    for (const projectile of this.projectiles) {
-      if (
-        projectile.x < view.offsetX - 2 ||
-        projectile.x > view.offsetX + view.viewWidth + 2 ||
-        projectile.y < view.offsetY - 2 ||
-        projectile.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = projectile.x * TILE_SIZE;
-      const screenY = projectile.y * TILE_SIZE;
-      ctx.fillStyle = projectile.color ?? BULLET_COLOR;
+  drawEnemyProjectiles(ctx) {
+    ctx.save();
+    ctx.fillStyle = '#7dd3fc';
+    ctx.shadowColor = '#7dd3fc';
+    ctx.shadowBlur = 12;
+    this.enemyProjectiles.forEach((projectile) => {
       ctx.beginPath();
-      ctx.arc(screenX, screenY, TILE_SIZE * (projectile.size ?? 0.15), 0, Math.PI * 2);
+      ctx.arc(projectile.x, projectile.y, 5, 0, Math.PI * 2);
       ctx.fill();
-    }
-
-    for (const projectile of this.enemyProjectiles) {
-      if (
-        projectile.x < view.offsetX - 2 ||
-        projectile.x > view.offsetX + view.viewWidth + 2 ||
-        projectile.y < view.offsetY - 2 ||
-        projectile.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = projectile.x * TILE_SIZE;
-      const screenY = projectile.y * TILE_SIZE;
-      ctx.fillStyle = projectile.color ?? ENEMY_BULLET_COLOR;
-      ctx.beginPath();
-      ctx.arc(screenX, screenY, TILE_SIZE * (projectile.size ?? 0.12), 0, Math.PI * 2);
-      ctx.fill();
-    }
+    });
+    ctx.restore();
   }
 
-  #drawPickups(ctx, view) {
-    for (const pickup of this.pickups) {
-      if (
-        pickup.x < view.offsetX - 2 ||
-        pickup.x > view.offsetX + view.viewWidth + 2 ||
-        pickup.y < view.offsetY - 2 ||
-        pickup.y > view.offsetY + view.viewHeight + 2
-      ) {
-        continue;
-      }
-      const screenX = pickup.x * TILE_SIZE;
-      const screenY = pickup.y * TILE_SIZE;
-      if (pickup.kind === 'gold') {
-        const gradient = ctx.createRadialGradient(
-          screenX,
-          screenY,
-          TILE_SIZE * 0.05,
-          screenX,
-          screenY,
-          TILE_SIZE * 0.24
-        );
-        gradient.addColorStop(0, '#fff7cc');
-        gradient.addColorStop(1, '#facc15');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, TILE_SIZE * 0.22, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        continue;
-      }
-      if (pickup.kind === 'loot') {
-        const rarityColor = pickup.item?.rarity
-          ? ITEM_RARITIES[pickup.item.rarity]?.color ?? '#94a3f5'
-          : '#94a3f5';
-        ctx.fillStyle = `${rarityColor}cc`;
-        ctx.strokeStyle = '#0f172a';
+  drawEnemies(ctx) {
+    ctx.save();
+    this.enemies.forEach((enemy) => {
+      ctx.fillStyle = enemy.color;
+      ctx.shadowColor = enemy.color;
+      ctx.shadowBlur = enemy.boss ? 40 : 15;
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+      ctx.fill();
+      if (enemy.boss) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
         ctx.lineWidth = 2;
-        const width = TILE_SIZE * 0.36;
-        const height = TILE_SIZE * 0.44;
-        const radius = TILE_SIZE * 0.08;
-        const left = screenX - width / 2;
-        const top = screenY - height / 2;
-        ctx.beginPath();
-        ctx.moveTo(left + radius, top);
-        ctx.lineTo(left + width - radius, top);
-        ctx.quadraticCurveTo(left + width, top, left + width, top + radius);
-        ctx.lineTo(left + width, top + height - radius);
-        ctx.quadraticCurveTo(left + width, top + height, left + width - radius, top + height);
-        ctx.lineTo(left + radius, top + height);
-        ctx.quadraticCurveTo(left, top + height, left, top + height - radius);
-        ctx.lineTo(left, top + radius);
-        ctx.quadraticCurveTo(left, top, left + radius, top);
-        ctx.closePath();
-        ctx.fill();
         ctx.stroke();
-      } else {
-        ctx.fillStyle = pickup.kind === 'xp' ? 'rgba(99, 102, 241, 0.85)' : 'rgba(56, 189, 248, 0.85)';
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, TILE_SIZE * 0.18, 0, Math.PI * 2);
-        ctx.fill();
       }
-    }
+    });
+    ctx.restore();
   }
 
-  #drawSlowField(ctx, field, view) {
-    if (
-      field.x < view.offsetX - 3 ||
-      field.x > view.offsetX + view.viewWidth + 3 ||
-      field.y < view.offsetY - 3 ||
-      field.y > view.offsetY + view.viewHeight + 3
-    ) {
-      return;
-    }
-    const screenX = field.x * TILE_SIZE;
-    const screenY = field.y * TILE_SIZE;
-    const alpha = clamp(1 - field.age / field.duration, 0, 1) * 0.4;
-    ctx.fillStyle = `rgba(96, 165, 250, ${alpha})`;
-    ctx.beginPath();
-    ctx.arc(screenX, screenY, field.radius * TILE_SIZE, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  #isInSlowField(x, y) {
-    if (!this.slowFields) return false;
-    return this.slowFields.some((field) => Math.hypot(field.x - x, field.y - y) < field.radius);
+  drawPickups(ctx) {
+    ctx.save();
+    ctx.fillStyle = '#7cfc92';
+    ctx.shadowColor = '#7cfc92';
+    ctx.shadowBlur = 12;
+    this.pickups.forEach((pickup) => {
+      ctx.beginPath();
+      ctx.arc(pickup.x, pickup.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
   }
 }

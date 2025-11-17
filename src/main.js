@@ -1,25 +1,19 @@
-import { RoguelikeGame, TILE_SIZE } from './roguelike.js';
+import { BrotatoLikeGame, TILE_SIZE, CHARACTERS } from './roguelike.js';
 
-const MIN_WIDTH_TILES = 30;
-const MIN_HEIGHT_TILES = 22;
+const MIN_WIDTH_TILES = 52;
+const MIN_HEIGHT_TILES = 30;
 
 function resizeCanvas(canvas) {
-  const widthTiles = Math.max(
-    MIN_WIDTH_TILES,
-    Math.ceil(window.innerWidth / TILE_SIZE)
-  );
-  const heightTiles = Math.max(
-    MIN_HEIGHT_TILES,
-    Math.ceil(window.innerHeight / TILE_SIZE)
-  );
+  const widthTiles = Math.max(MIN_WIDTH_TILES, Math.ceil(window.innerWidth / TILE_SIZE));
+  const heightTiles = Math.max(MIN_HEIGHT_TILES, Math.ceil(window.innerHeight / TILE_SIZE));
   const width = widthTiles * TILE_SIZE;
   const height = heightTiles * TILE_SIZE;
-  const changed = canvas.width !== width || canvas.height !== height;
-  canvas.width = width;
-  canvas.height = height;
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
-  return changed;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+    return true;
+  }
+  return false;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,50 +21,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const ui = {
     healthFill: document.querySelector('[data-health-fill]'),
     healthValue: document.getElementById('health-value'),
-    powerFill: document.querySelector('[data-power-fill]'),
-    powerValue: document.getElementById('power-value'),
-    progressFill: document.querySelector('[data-progress-fill]'),
-    progressValue: document.getElementById('xp-value'),
-    skillPointsValue: document.getElementById('skill-points'),
+    waveLabel: document.getElementById('wave-label'),
+    waveTimer: document.getElementById('wave-timer'),
     currencyValue: document.getElementById('currency'),
-    goalValue: document.getElementById('current-goal'),
-    zoneLabel: document.getElementById('zone-label'),
-    timeOfDayValue: document.getElementById('time-of-day'),
-    townFill: document.querySelector('[data-town-fill]'),
-    townLabel: document.getElementById('town-progress-label'),
-    hotbarSlots: Array.from(document.querySelectorAll('.hotbar-slot')),
-    minimap: document.getElementById('minimap'),
-    atlas: document.getElementById('atlas'),
-    skillList: document.getElementById('skills'),
-    inventoryList: document.getElementById('inventory'),
-    equipmentList: document.getElementById('equipment'),
-    abilitiesList: document.getElementById('abilities'),
-    questsList: document.getElementById('quests'),
-    achievementList: document.getElementById('achievements'),
-    log: document.getElementById('log'),
-    mapInfo: document.getElementById('map-info'),
-    storyline: document.getElementById('storyline'),
-    npcJournal: document.getElementById('npc-journal'),
-    startMenu: document.getElementById('start-menu'),
-    playButton: document.getElementById('play-button'),
-    pauseMenu: document.getElementById('pause-menu'),
-    resumeButton: document.getElementById('resume-button'),
-    restartButton: document.getElementById('restart-button'),
+    heroLabel: document.getElementById('hero-label'),
+    startScreen: document.getElementById('start-screen'),
+    startButton: document.getElementById('start-button'),
+    characterGrid: document.getElementById('character-grid'),
     shopOverlay: document.getElementById('shop-overlay'),
-    shopName: document.getElementById('shop-name'),
-    shopDescription: document.getElementById('shop-description'),
     shopOptions: document.getElementById('shop-options'),
-    leaveShop: document.getElementById('leave-shop'),
-    toast: document.getElementById('toast'),
-    prompt: document.getElementById('prompt'),
-    inventoryOverlay: document.getElementById('inventory-overlay'),
-    questsOverlay: document.getElementById('quests-overlay'),
-    skillTreeOverlay: document.getElementById('skilltree-overlay'),
-    mapOverlay: document.getElementById('map-overlay'),
-    skillTree: document.getElementById('skill-tree'),
-    skillTreeSummary: document.getElementById('skilltree-summary'),
-    skillTreePoints: document.getElementById('skill-sparks-available'),
-    closeButtons: Array.from(document.querySelectorAll('[data-close-overlay]')),
+    shopWave: document.getElementById('shop-wave'),
+    shopMaterials: document.getElementById('shop-materials'),
+    rerollButton: document.getElementById('reroll-button'),
+    skipButton: document.getElementById('skip-button'),
+    gameOverOverlay: document.getElementById('game-over'),
+    gameOverTitle: document.getElementById('game-over-title'),
+    gameOverSubtitle: document.getElementById('game-over-subtitle'),
+    gameOverStats: document.getElementById('game-over-stats'),
+    playAgainButton: document.getElementById('play-again'),
+    changeHeroButton: document.getElementById('change-hero'),
   };
 
   for (const [key, element] of Object.entries(ui)) {
@@ -80,9 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   resizeCanvas(canvas);
-
-  const game = new RoguelikeGame({ canvas, ui });
-  game.showStartMenu(true);
+  const game = new BrotatoLikeGame({ canvas, ui });
 
   window.addEventListener('resize', () => {
     if (resizeCanvas(canvas)) {
@@ -90,8 +57,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  ui.playButton.addEventListener('click', () => game.start());
-  ui.resumeButton.addEventListener('click', () => game.resume());
-  ui.restartButton.addEventListener('click', () => game.restart());
-  ui.leaveShop.addEventListener('click', () => game.leaveShop());
+  let selectedHero = null;
+
+  function selectHero(hero) {
+    selectedHero = hero;
+    ui.startButton.disabled = !hero;
+    Array.from(ui.characterGrid.children).forEach((card) => {
+      const match = card.dataset.id === hero?.id;
+      card.setAttribute('data-selected', match ? 'true' : 'false');
+      card.setAttribute('aria-selected', match ? 'true' : 'false');
+    });
+  }
+
+  CHARACTERS.forEach((hero) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'character-card';
+    card.dataset.id = hero.id;
+    card.setAttribute('role', 'option');
+    card.setAttribute('aria-selected', 'false');
+    card.innerHTML = `
+      <div class="tag">${hero.role}</div>
+      <h3>${hero.name}</h3>
+      <p>${hero.description}</p>
+    `;
+    card.addEventListener('click', () => selectHero(hero));
+    ui.characterGrid.appendChild(card);
+  });
+
+  ui.startButton.addEventListener('click', () => {
+    if (!selectedHero) return;
+    game.start(selectedHero.id);
+  });
+
+  ui.skipButton.addEventListener('click', () => game.startNextWave());
+  ui.rerollButton.addEventListener('click', () => game.rerollShop());
+  ui.playAgainButton.addEventListener('click', () => {
+    if (selectedHero) {
+      game.start(selectedHero.id);
+    }
+  });
+
+  ui.changeHeroButton.addEventListener('click', () => {
+    game.backToHeroSelect();
+    selectedHero = null;
+    ui.startButton.disabled = true;
+    Array.from(ui.characterGrid.children).forEach((card) => {
+      card.setAttribute('data-selected', 'false');
+      card.setAttribute('aria-selected', 'false');
+    });
+  });
 });
