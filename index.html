@@ -24,15 +24,18 @@
           <p><span>Wave</span><strong id="wave-label">0</strong></p>
           <p><span>Timer</span><strong id="wave-timer">0.0s</strong></p>
           <p><span>Materials</span><strong id="currency">0</strong></p>
+          <p><span>Hero</span><strong id="hero-label">—</strong></p>
         </div>
         <p class="hud-hint">Move with <kbd>WASD</kbd>. Your potato fires automatically—kite the swarm and live.</p>
       </section>
 
       <section id="start-screen" class="overlay">
-        <article class="overlay-card">
+        <article class="overlay-card start-card">
           <h1>Neon Spud</h1>
-          <p>Survive waves of synth critters, spend materials on upgrades, and push to Wave 12.</p>
-          <button id="start-button" class="primary">Start Run</button>
+          <p>Pick a hero, lean into their passive, and hold out for twelve waves of neon nightmares.</p>
+          <div id="character-grid" class="character-grid" role="listbox" aria-label="Choose a hero"></div>
+          <p class="start-hint">Each hero starts with different stats and passives. You can reroll shop items between waves.</p>
+          <button id="start-button" class="primary" disabled>Launch Run</button>
         </article>
       </section>
 
@@ -56,7 +59,10 @@
           <h2 id="game-over-title">Run Over</h2>
           <p id="game-over-subtitle"></p>
           <dl class="stats" id="game-over-stats"></dl>
-          <button id="play-again" class="primary">Play Again</button>
+          <div class="game-over-actions">
+            <button id="play-again" class="primary">Play Again</button>
+            <button id="change-hero" class="secondary">Change Hero</button>
+          </div>
         </article>
       </section>
     </main>

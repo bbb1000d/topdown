@@ -1,12 +1,16 @@
 :root {
   color-scheme: dark;
-  --bg: #05070d;
-  --panel: rgba(11, 14, 22, 0.86);
+  --bg: #03050b;
+  --panel: rgba(8, 12, 22, 0.88);
+  --panel-strong: rgba(12, 18, 32, 0.95);
   --accent: #f7ca57;
   --accent-strong: #ff8c42;
   --text: #eef3ff;
   --text-muted: #8590ad;
   --danger: #ff5678;
+  --rarity-common: #7dd3fc;
+  --rarity-rare: #c084fc;
+  --rarity-epic: #f472b6;
   font-family: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
 }
 
@@ -18,7 +22,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background: radial-gradient(circle at 20% 20%, rgba(66, 123, 255, 0.25), transparent 60%),
-    radial-gradient(circle at 80% 30%, rgba(255, 90, 123, 0.2), transparent 50%),
+    radial-gradient(circle at 80% 30%, rgba(255, 90, 123, 0.28), transparent 50%),
     var(--bg);
   color: var(--text);
   display: flex;
@@ -28,17 +32,18 @@ body {
 
 .game-root {
   position: relative;
-  width: min(1200px, calc(100vw - 2rem));
-  margin: 1.5rem auto;
+  width: min(1280px, calc(100vw - 1rem));
+  margin: 1.5rem auto 3rem;
 }
 
 canvas {
   width: 100%;
   height: auto;
-  border-radius: 1rem;
+  border-radius: 1.2rem;
   border: 3px solid rgba(255, 255, 255, 0.08);
   background: #03040a;
   display: block;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
 }
 
 .hud {
@@ -52,10 +57,10 @@ canvas {
 }
 
 .meter {
-  width: min(360px, 60%);
-  background: rgba(0, 0, 0, 0.55);
-  padding: 0.65rem;
-  border-radius: 0.8rem;
+  width: min(420px, 60%);
+  background: rgba(0, 0, 0, 0.65);
+  padding: 0.75rem;
+  border-radius: 0.9rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -83,9 +88,14 @@ canvas {
 
 .hud-stats {
   display: inline-flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1.2rem;
   font-size: 0.9rem;
   font-weight: 500;
+}
+
+.hud-stats p {
+  margin: 0;
 }
 
 .hud-stats span {
@@ -114,8 +124,8 @@ canvas {
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(4, 6, 12, 0.82);
-  backdrop-filter: blur(12px);
+  background: rgba(4, 6, 12, 0.86);
+  backdrop-filter: blur(14px);
   display: grid;
   place-items: center;
   transition: opacity 200ms ease;
@@ -130,7 +140,7 @@ canvas {
   background: var(--panel);
   border-radius: 1rem;
   padding: 2rem;
-  width: min(460px, 90vw);
+  width: min(880px, 94vw);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
   text-align: center;
@@ -140,6 +150,91 @@ canvas {
 .overlay-card h2 {
   margin-top: 0;
   margin-bottom: 0.4rem;
+}
+
+.game-over-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.start-card {
+  text-align: left;
+}
+
+.start-card > h1 {
+  font-size: 2.4rem;
+}
+
+.start-card p {
+  margin-top: 0;
+  color: var(--text-muted);
+}
+
+.start-hint {
+  margin: 1rem 0 1.5rem;
+}
+
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.character-card {
+  background: var(--panel-strong);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 1rem;
+  min-height: 180px;
+  cursor: pointer;
+  transition: border 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  text-align: left;
+  width: 100%;
+  color: var(--text);
+}
+
+.character-card h3 {
+  margin: 0 0 0.35rem;
+}
+
+.character-card p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.character-card .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.character-card[data-selected='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 25px rgba(247, 202, 87, 0.35);
+}
+
+.character-card:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+}
+
+.character-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .stats {
@@ -165,7 +260,7 @@ button {
   padding: 0.65rem 1.5rem;
   border: none;
   cursor: pointer;
-  transition: transform 120ms ease, background 120ms ease;
+  transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
 }
 
 button.primary {
@@ -189,7 +284,7 @@ button:active {
 }
 
 .shop-card {
-  width: min(720px, 90vw);
+  width: min(760px, 92vw);
 }
 
 .shop-options {
@@ -212,8 +307,14 @@ button:active {
   gap: 1rem;
 }
 
+.shop-option header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .shop-option h3 {
-  margin: 0 0 0.25rem;
+  margin: 0;
 }
 
 .shop-option p {
@@ -221,14 +322,34 @@ button:active {
   color: var(--text-muted);
 }
 
-.shop-option .cost {
-  font-weight: 600;
-  color: var(--accent);
+.shop-option .rarity {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.shop-option[data-rarity='common'] {
+  border-color: rgba(125, 211, 252, 0.5);
+}
+
+.shop-option[data-rarity='rare'] {
+  border-color: rgba(192, 132, 252, 0.6);
+}
+
+.shop-option[data-rarity='epic'] {
+  border-color: rgba(244, 114, 182, 0.7);
+}
+
+.shop-option button {
+  white-space: nowrap;
 }
 
 .shop-actions {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 }
 
 .shop-meta {
