@@ -3,270 +3,64 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Neon Tides – Paradise Run</title>
+    <title>Neon Spud – Brotato-like Prototype</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="game-root neon-paradise">
-      <canvas
-        id="game"
-        width="1280"
-        height="720"
-        aria-label="Neon Tides game canvas"
-      ></canvas>
+    <main class="game-root">
+      <canvas id="game" width="1280" height="720" aria-label="Neon Spud arena"></canvas>
 
-      <canvas
-        id="minimap"
-        class="minimap"
-        width="256"
-        height="256"
-        aria-label="Paradise minimap"
-      ></canvas>
-
-      <section class="hud hud--neon" aria-live="polite">
-        <div class="hud-column">
-          <article class="status-meter" data-type="health">
-            <header>
-              <span class="status-label">Vitals</span>
-              <span id="health-value" class="status-value">140 / 140</span>
-            </header>
-            <div
-              class="status-track"
-              role="progressbar"
-              aria-label="Player health"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="100"
-            >
-              <div class="status-fill status-fill--health" data-health-fill></div>
-            </div>
-          </article>
-
-          <article class="status-meter" data-type="power">
-            <header>
-              <span class="status-label">Supercharge</span>
-              <span id="power-value" class="status-value">Ready</span>
-            </header>
-            <div
-              class="status-track"
-              role="progressbar"
-              aria-label="Supercharge meter"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="0"
-            >
-              <div class="status-fill status-fill--power" data-power-fill></div>
-            </div>
-          </article>
-
-          <article class="status-meter" data-type="xp">
-            <header>
-              <span class="status-label">Momentum</span>
-              <span id="xp-value" class="status-value">Level 1</span>
-            </header>
-            <div
-              class="status-track"
-              role="progressbar"
-              aria-label="Momentum toward next rank"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="0"
-            >
-              <div class="status-fill status-fill--xp" data-progress-fill></div>
-            </div>
-          </article>
+      <section class="hud" aria-live="polite">
+        <div class="meter" data-type="health">
+          <div class="meter-meta">
+            <span>HP</span>
+            <span id="health-value">100 / 100</span>
+          </div>
+          <div class="meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+            <div class="meter-fill" data-health-fill></div>
+          </div>
         </div>
-
-        <div class="hud-hotbar" role="list" aria-label="Gear belt">
-          <div class="hotbar-slot" data-slot="0"><span class="slot-key">1</span></div>
-          <div class="hotbar-slot" data-slot="1"><span class="slot-key">2</span></div>
-          <div class="hotbar-slot" data-slot="2"><span class="slot-key">3</span></div>
-          <div class="hotbar-slot" data-slot="3"><span class="slot-key">4</span></div>
-          <div class="hotbar-slot" data-slot="4"><span class="slot-key">5</span></div>
-          <div class="hotbar-slot" data-slot="5"><span class="slot-key">6</span></div>
+        <div class="hud-stats">
+          <p><span>Wave</span><strong id="wave-label">0</strong></p>
+          <p><span>Timer</span><strong id="wave-timer">0.0s</strong></p>
+          <p><span>Materials</span><strong id="currency">0</strong></p>
         </div>
-
-        <dl class="hud-badges">
-          <div>
-            <dt>Sparks</dt>
-            <dd id="skill-points">0</dd>
-          </div>
-          <div>
-            <dt>Creds</dt>
-            <dd id="currency">0</dd>
-          </div>
-          <div>
-            <dt>Mission</dt>
-            <dd id="current-goal">Reclaim Paradise Point</dd>
-          </div>
-          <div>
-            <dt>Region</dt>
-            <dd id="zone-label">Sunrise Boardwalk</dd>
-          </div>
-          <div>
-            <dt>Cycle</dt>
-            <dd id="time-of-day">Dawnshift</dd>
-          </div>
-          <div>
-            <dt>City Rebuild</dt>
-            <dd>
-              <span id="town-progress-label">Neon Haven</span>
-              <span class="town-progress">
-                <span class="town-progress-fill" data-town-fill></span>
-              </span>
-            </dd>
-          </div>
-        </dl>
+        <p class="hud-hint">Move with <kbd>WASD</kbd>. Your potato fires automatically—kite the swarm and live.</p>
       </section>
 
-      <div class="ui-hints" role="presentation">
-        <p>
-          Move with <kbd>WASD</kbd>, aim with <kbd>Arrows</kbd>, fire guns with <kbd>Space</kbd>, dash with
-          <kbd>E</kbd>, trigger powers with <kbd>Q</kbd>, <kbd>R</kbd>, <kbd>C</kbd>, and overload with <kbd>V</kbd>.
-        </p>
-      </div>
+      <section id="start-screen" class="overlay">
+        <article class="overlay-card">
+          <h1>Neon Spud</h1>
+          <p>Survive waves of synth critters, spend materials on upgrades, and push to Wave 12.</p>
+          <button id="start-button" class="primary">Start Run</button>
+        </article>
+      </section>
 
-      <div id="toast" role="status" aria-live="assertive" class="toast hidden"></div>
-      <div id="prompt" class="prompt" aria-live="polite"></div>
-
-      <div id="inventory-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Gear locker">
-          <header class="overlay-header">
-            <h2>Gear Locker</h2>
-            <button type="button" class="overlay-close" data-close-overlay>×</button>
+      <section id="shop-overlay" class="overlay hidden" aria-live="polite">
+        <article class="overlay-card shop-card">
+          <header>
+            <h2>Wave Cleared</h2>
+            <p>Spend your materials before the next onslaught.</p>
+            <p class="shop-meta">Wave <span id="shop-wave">1</span> • Materials: <span id="shop-materials">0</span></p>
           </header>
-          <div class="inventory-grid">
-            <section>
-              <h3>Backpack</h3>
-              <ul id="inventory" class="list list--inventory" aria-live="polite"></ul>
-            </section>
-            <section>
-              <h3>Equipped</h3>
-              <ul id="equipment" class="list list--equipment" aria-live="polite"></ul>
-            </section>
-            <section>
-              <h3>Superpowers</h3>
-              <ul id="abilities" class="list list--abilities" aria-live="polite"></ul>
-            </section>
-          </div>
-        </div>
-      </div>
-
-      <div id="quests-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Mission log">
-          <header class="overlay-header">
-            <h2>Mission Log</h2>
-            <button type="button" class="overlay-close" data-close-overlay>×</button>
-          </header>
-          <div class="journal-grid">
-            <section>
-              <h3>Active Contracts</h3>
-              <ul id="quests" class="list list--quests" aria-live="polite"></ul>
-            </section>
-            <section>
-              <h3>Paradise Intel</h3>
-              <ul id="map-info" class="list"></ul>
-            </section>
-            <section>
-              <h3>Story Beat</h3>
-              <p id="storyline" class="storyline" aria-live="polite">
-                Touch down on Neon Tides and rally the survivors of Paradise Point.
-              </p>
-              <ul id="npc-journal" class="list list--journal" aria-live="polite"></ul>
-            </section>
-            <section>
-              <h3>Action Feed</h3>
-              <ul id="log" class="list list--log" aria-live="polite"></ul>
-            </section>
-            <section>
-              <h3>Accolades</h3>
-              <ul id="achievements" class="list" aria-live="polite"></ul>
-            </section>
-          </div>
-        </div>
-      </div>
-
-      <div id="skilltree-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Neon drive">
-          <header class="overlay-header">
-            <h2>Neon Drive</h2>
-            <p id="skilltree-summary">Spend sparks to unlock combat tricks and superpowers.</p>
-            <button type="button" class="overlay-close" data-close-overlay>×</button>
-          </header>
-          <div id="skill-tree" class="skill-tree" role="presentation"></div>
-          <section>
-            <h3>Unlocked Techniques</h3>
-            <ul id="skills" class="list list--abilities" aria-live="polite"></ul>
-          </section>
-          <footer class="overlay-footer">
-            <p>Skill sparks available: <span id="skill-sparks-available">0</span></p>
+          <ul id="shop-options" class="shop-options"></ul>
+          <footer class="shop-actions">
+            <button id="reroll-button" class="secondary">Reroll (5)</button>
+            <button id="skip-button" class="primary">Start Next Wave</button>
           </footer>
-        </div>
-      </div>
+        </article>
+      </section>
 
-      <div id="start-menu" class="overlay overlay--start" aria-hidden="false">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Start menu">
-          <h2>Welcome to Neon Tides</h2>
-          <p>
-            Paradise Point fell to rogue synth gangs and warped creatures. The survivors lit the boardwalk with
-            neon flares and called for you. Explore the paradise expanse, dive into themed megadungeons, and rebuild
-            the city block by block.
-          </p>
-          <div class="overlay-actions">
-            <button id="play-button" class="button">Enter the Run</button>
-          </div>
-          <div class="overlay-footer">
-            <p>Highlights</p>
-            <ul>
-              <li>Loot blazing firearms and chromatic melee weapons with unique mods.</li>
-              <li>Charge superpowers as you fight to unleash city-shaking finishers.</li>
-              <li>Restore districts, befriend residents, and uncover the paradise storyline.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div id="pause-menu" class="overlay overlay--menu" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Pause menu">
-          <h2>Run Paused</h2>
-          <p>Take a moment to breathe in the neon breeze.</p>
-          <div class="overlay-actions">
-            <button id="resume-button" class="button">Resume Run</button>
-            <button id="restart-button" class="button button--ghost">Restart Campaign</button>
-          </div>
-          <div class="overlay-footer">
-            <p>Controls</p>
-            <ul>
-              <li>Move: WASD</li>
-              <li>Aim: Arrow Keys</li>
-              <li>Fire: Space</li>
-              <li>Dash: E</li>
-              <li>Interact &amp; Loot: F</li>
-              <li>Menu: Escape</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div id="shop-overlay" class="overlay overlay--choices" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Boardwalk shop">
-          <h2 id="shop-name">Boardwalk Vendor</h2>
-          <p id="shop-description">Trade neon creds for paradise-grade gear.</p>
-          <div id="shop-options" class="upgrade-grid"></div>
-          <button id="leave-shop" class="button button--ghost">Leave Shop</button>
-        </div>
-      </div>
-
-      <div id="map-overlay" class="overlay overlay--panel" aria-hidden="true">
-        <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Paradise atlas">
-          <header class="overlay-header">
-            <h2>Paradise Atlas</h2>
-            <button type="button" class="overlay-close" data-close-overlay>×</button>
-          </header>
-          <canvas id="atlas" width="640" height="640" aria-label="Paradise world atlas"></canvas>
-        </div>
-      </div>
+      <section id="game-over" class="overlay hidden">
+        <article class="overlay-card">
+          <h2 id="game-over-title">Run Over</h2>
+          <p id="game-over-subtitle"></p>
+          <dl class="stats" id="game-over-stats"></dl>
+          <button id="play-again" class="primary">Play Again</button>
+        </article>
+      </section>
     </main>
+
     <script type="module" src="src/main.js"></script>
   </body>
 </html>
